@@ -1,0 +1,17 @@
+* Changelog
+
+** [Unreleased]
+*** Added
+
+*** Changed
+
+*** Removed
+
+** [0.0.0] - 2020-02-08
+*** Added
+- Create and instantiate repository with README and Boost LICENSE
+- Invite professor
+- Add .gitignore
+- Create project with meson.build, meson_options.txt and main.cpp
+- Create empty .gitkeep in build directory
+- Create this CHANGELOG
