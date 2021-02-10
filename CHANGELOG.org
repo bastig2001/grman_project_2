@@ -2,6 +2,7 @@
 
 ** [Unreleased]
 *** Added
+- CLI
 
 *** Changed
 
