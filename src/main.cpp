@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     
     if (auto config = get_if<Config>(&config_result)) {
         cout << "This program was called correctly.\n"
-             << "The config is:\n" << config << endl;
+             << "The config is:\n" << (string)*config << endl;
     }
     else {
         return get<int>(config_result);
