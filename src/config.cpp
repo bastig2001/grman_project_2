@@ -1,8 +1,13 @@
 #include "config.h"
 
 #include <CLI11.hpp>
+#include <asio/error_code.hpp>
+#include <asio/ip/address.hpp>
+#include <iostream>
 
 using namespace std;
+
+string is_ip_address(const std::string& address);
 
 
 variant<ExitCode, Config> configure(int argc, char* argv[]) {
@@ -13,7 +18,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
         "-a, --server-address",
         server.address,
         "The address of the server to which to connect for syncing"
-    );
+    )->check(is_ip_address);
     app.add_option(
         "-p, --server-port",
         server.port,
@@ -37,7 +42,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
             "The address to which to bind as server\n"
                 "Defaults to 0.0.0.0 (listen to all)\n"
                 "Enables the flag --serve"
-        );
+        )->check(is_ip_address);
     auto bind_port_option = 
         app.add_option(
             "--bind-port",
@@ -56,4 +61,11 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
         server.address != "0.0.0.0" ? optional{server} : nullopt,
         serve ? optional{act_as_server} : nullopt
     };
+}
+
+string is_ip_address(const std::string& address) {
+    asio::error_code err{};
+    asio::ip::address::from_string(address, err);
+
+    return err ? err.message() : "";
 }

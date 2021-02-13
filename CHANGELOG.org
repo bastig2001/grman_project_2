@@ -8,6 +8,7 @@
 - Option to specify server port
 - Option to specify to which address to bind to as server
 - Option to specify to which port to bind to as server
+- Check if address input is an IP-address
 - Output of the config
 
 *** Changed
