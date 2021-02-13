@@ -3,7 +3,6 @@
 #include <CLI11.hpp>
 #include <asio/error_code.hpp>
 #include <asio/ip/address.hpp>
-#include <iostream>
 
 using namespace std;
 
