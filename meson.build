@@ -1,6 +1,6 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '0.0.0',
+        version : '0.0.1',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 # thread_dep = dependency('threads')
@@ -12,7 +12,7 @@ project('grman_project_2', 'cpp',
 # end asio
 
 # CLI11: https://github.com/CLIUtils/CLI11
-# add_global_arguments('-I' + get_option('cli11_include_dir'), language : 'cpp')
+add_global_arguments('-I' + get_option('cli11_include_dir'), language : 'cpp')
 
 # spdlog: https://github.com/gabime/spdlog
 # add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
@@ -34,9 +34,11 @@ project('grman_project_2', 'cpp',
 # end protobuf
 
 inc_dir = include_directories('include')
-src = ['src/main.cpp']
+src = ['src/main.cpp', 
+       'src/config.cpp'
+      ]
 
-executable('hello',
+executable('sync',
            sources : src,
            include_directories : inc_dir,
 #           dependencies : [thread_dep, protobuf_dep]
