@@ -8,28 +8,22 @@
 
 
 struct Server {
-    std::string address;
-    std::string port;
-
-    Server(
-        std::string address, 
-        std::string port
-    ): address{address},
-       port{port}
-    {}
+    std::string address{"0.0.0.0"};
+    unsigned short port{9876};
 
     operator std::string() {
-        return "{address: " + address + "; port: " + port + "}";
+        return "{\"address\": \"" + address + "\"; " + 
+               "\"port\": \"" + std::to_string(port) + "\"}";
     }
 };
 
 struct Config {
     std::optional<Server> server;
-    std::optional<unsigned long> local_server_port;
+    std::optional<Server> act_as_server;
 
     operator std::string() {
-        return "{server: " + optional_to_string(server) + "\n" +
-               " local server port: " + optional_to_string(local_server_port) + "\n}";
+        return "{\"server\": " + optional_to_string(server, "{}") + ";\n" +
+               " \"act as server\": " + optional_to_string(act_as_server, "{}") + "\n}";
     }
 };
 

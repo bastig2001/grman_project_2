@@ -6,7 +6,10 @@
 
 
 template<typename T>
-std::string optional_to_string(std::optional<T>& option) {
+std::string optional_to_string(
+    std::optional<T>& option, 
+    const std::string& no_value = "None"
+) {
     if (option.has_value()) {
         if constexpr (std::is_arithmetic_v<T>) {
             return std::to_string(option.value());
@@ -19,6 +22,6 @@ std::string optional_to_string(std::optional<T>& option) {
         }
     }
     else {
-        return "None";
+        return no_value;
     }
 }

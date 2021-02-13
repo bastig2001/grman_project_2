@@ -3,6 +3,12 @@
 ** [Unreleased]
 *** Added
 - CLI
+- Flag to specify if the program is a server
+- Option to specify server address
+- Option to specify server port
+- Option to specify to which address to bind to as server
+- Option to specify to which port to bind to as server
+- Output of the config
 
 *** Changed
 
