@@ -18,13 +18,14 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
         "-a, --server-address",
         server.address,
         "The address of the server to which to connect for syncing"
-    )->check(is_ip_address);
+    )->envname("SYNC_SERVER_ADDRESS")
+     ->check(is_ip_address);
     app.add_option(
         "-p, --server-port",
         server.port,
         "The port of the server to which to connect for syncing\n"
             "Defaults to 9876"
-    );
+    )->envname("SYNC_SERVER_PORT");
 
     bool serve{false};
     app.add_flag(
@@ -32,7 +33,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
         serve,
         "Act as server to other clients for syncing\n"
             "For binding address and port see --bind-address and --bind-port"
-    );
+    )->envname("SYNC_SERVE");
 
     Server act_as_server{};
     auto bind_address_option = 
@@ -42,7 +43,8 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
             "The address to which to bind as server\n"
                 "Defaults to 0.0.0.0 (listen to all)\n"
                 "Enables the flag --serve"
-        )->check(is_ip_address);
+        )->envname("SYNC_BIND_ADDRESS")
+         ->check(is_ip_address);
     auto bind_port_option = 
         app.add_option(
             "--bind-port",
@@ -50,7 +52,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
             "The port to which to bind as server\n"
                 "Defaults to 9876\n"
                 "Enables the flag --serve"
-        );
+        )->envname("SYNC_BIND_PORT");
 
     CLI11_PARSE(app, argc, argv);
 
