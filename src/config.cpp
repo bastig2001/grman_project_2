@@ -66,7 +66,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
 
 string is_ip_address(const std::string& address) {
     asio::error_code err{};
-    asio::ip::address::from_string(address, err);
+    asio::ip::make_address(address, err);
 
     return err ? err.message() : "";
 }

@@ -8,7 +8,7 @@ project('grman_project_2', 'cpp',
 # begin asio: https://think-async.com/Asio/
 # add_global_arguments('-I' + get_option('asio_include_dir'), language : 'cpp')
 # add_global_arguments('-DASIO_STANDALONE', language : 'cpp')
-# add_global_arguments('-DASIO_NO_DEPRECATED', language : 'cpp')
+add_global_arguments('-DASIO_NO_DEPRECATED', language : 'cpp')
 # end asio
 
 # CLI11: https://github.com/CLIUtils/CLI11
