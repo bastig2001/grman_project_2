@@ -17,14 +17,17 @@ int run_client(Config config) {
 
         if (server) {
             spdlog::info("Connected to server");
+            return 0;
         }
         else {
             spdlog::error(
                 "Couldn't connect to server: {}", 
                 server.error().message()
             );
+            return 1;
         }
     }
-
-    return 0;
+    else {
+        return 0;
+    }
 }
