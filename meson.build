@@ -26,15 +26,17 @@ fmt = dependency('fmt')
 
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
-# protoc = find_program('protoc', required : true)
-# protobuf_dep = dependency('protobuf', required : true)
+protoc = find_program('protoc', required : true)
+protobuf = dependency('protobuf', required : true)
 
-# gen = generator(protoc, \
-#   output    : ['@BASENAME@.pb.cc', '@BASENAME@.pb.h'],
-#   arguments : ['--proto_path=@CURRENT_SOURCE_DIR@/src', '--cpp_out=@BUILD_DIR@', '@PLAINNAME@'])
+protoc = generator(
+    protoc,
+    output    : ['@BASENAME@.pb.cc', '@BASENAME@.pb.h'],
+    arguments : ['--proto_path=@CURRENT_SOURCE_DIR@/messages', '--cpp_out=@BUILD_DIR@', '@INPUT@']
+)
 
 # change proto file accordingly
-# generated = gen.process('src/dummy.proto')
+test_msg = protoc.process('messages/test.proto')
 # end protobuf
 
 inc_dir = include_directories('include')
@@ -44,8 +46,9 @@ src = ['src/main.cpp',
        'src/server.cpp'
       ]
 
-executable('sync',
-           sources : src,
+executable('sync', 
+           test_msg,
+           sources : src, 
            include_directories : inc_dir,
-           dependencies : [thread, fmt]
+           dependencies : [thread, fmt, protobuf]
           )
