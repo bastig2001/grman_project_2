@@ -2,6 +2,7 @@
 
 ** [Unreleased]
 *** Added
+- Logging
 
 *** Changed
 
