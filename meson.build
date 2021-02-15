@@ -3,7 +3,7 @@ project('grman_project_2', 'cpp',
         version : '0.0.1',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
-# thread_dep = dependency('threads')
+thread = dependency('threads')
 
 # begin asio: https://think-async.com/Asio/
 # add_global_arguments('-I' + get_option('asio_include_dir'), language : 'cpp')
@@ -14,8 +14,12 @@ add_global_arguments('-DASIO_NO_DEPRECATED', language : 'cpp')
 # CLI11: https://github.com/CLIUtils/CLI11
 add_global_arguments('-I' + get_option('cli11_include_dir'), language : 'cpp')
 
+# fmt: https://github.com/fmtlib/fmt
+fmt = dependency('fmt')
+
 # spdlog: https://github.com/gabime/spdlog
 # add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
+# add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
 # json: https://github.com/nlohmann/json
 # add_global_arguments('-I' + get_option('json_include_dir'), language : 'cpp')
@@ -35,11 +39,13 @@ add_global_arguments('-I' + get_option('cli11_include_dir'), language : 'cpp')
 
 inc_dir = include_directories('include')
 src = ['src/main.cpp', 
-       'src/config.cpp'
+       'src/config.cpp',
+       'src/client.cpp',
+       'src/server.cpp'
       ]
 
 executable('sync',
            sources : src,
            include_directories : inc_dir,
-#           dependencies : [thread_dep, protobuf_dep]
+           dependencies : [thread, fmt]
           )

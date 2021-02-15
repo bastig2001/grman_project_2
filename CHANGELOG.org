@@ -3,6 +3,8 @@
 ** [Unreleased]
 *** Added
 - Logging
+- Client connections
+- Server connections
 
 *** Changed
 
