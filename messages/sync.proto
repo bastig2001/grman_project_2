@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+message SyncRequest {
+    string file_name = 1;
+    uint64 offset = 2;
+    string weak_signature = 3;
+    string strong_signature = 4;
+}
+
+message SyncResponse {
+    string file_name = 1;
+    uint64 offset = 2;
+    bool match = 3;
+    oneof optional_correction {
+        string correction = 4;
+    }
+}

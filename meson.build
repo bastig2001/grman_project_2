@@ -35,8 +35,9 @@ protoc = generator(
     arguments : ['--proto_path=@CURRENT_SOURCE_DIR@/messages', '--cpp_out=@BUILD_DIR@', '@INPUT@']
 )
 
-# change proto file accordingly
-test_msg = protoc.process('messages/test.proto')
+# change proto files accordingly
+sync_msgs = protoc.process('messages/sync.proto')
+info_msgs = protoc.process('messages/info.proto')
 # end protobuf
 
 inc_dir = include_directories('include')
@@ -47,7 +48,7 @@ src = ['src/main.cpp',
       ]
 
 executable('sync', 
-           test_msg,
+           sync_msgs, info_msgs,
            sources : src, 
            include_directories : inc_dir,
            dependencies : [thread, fmt, protobuf]
