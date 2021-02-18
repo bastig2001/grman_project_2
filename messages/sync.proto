@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "messages/general.proto";
+
 message SyncRequest {
     Block block = 1;
     string weak_signature = 2;
@@ -14,8 +16,14 @@ message SyncResponse {
     }
 }
 
-message Block {
-    string file_name = 1;
-    uint64 offset = 2;
-    uint32 size = 3;
+message GetRequest {
+    oneof requested {
+        Block block = 1;
+        File file = 2;
+    }
+}
+
+message GetResponse {
+    GetRequest request = 1;
+    string data = 2;
 }

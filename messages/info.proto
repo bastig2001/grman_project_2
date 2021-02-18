@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "messages/general.proto";
+
 message ShowFiles {
     oneof optional_options {
         string options = 1;
@@ -8,10 +10,4 @@ message ShowFiles {
 
 message FileList {
     repeated File files = 1;
-}
-
-message File {
-    string file_name = 1;
-    uint64 timestamp = 2;
-    string signature = 3;
 }

@@ -32,12 +32,15 @@ protobuf = dependency('protobuf', required : true)
 protoc = generator(
     protoc,
     output    : ['@BASENAME@.pb.cc', '@BASENAME@.pb.h'],
-    arguments : ['--proto_path=@CURRENT_SOURCE_DIR@/messages', '--cpp_out=@BUILD_DIR@', '@INPUT@']
+    arguments : ['--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=@BUILD_DIR@', '@INPUT@']
 )
 
 # change proto files accordingly
-sync_msgs = protoc.process('messages/sync.proto')
-info_msgs = protoc.process('messages/info.proto')
+messages = protoc.process('messages/sync.proto', 
+                          'messages/info.proto', 
+                          'messages/general.proto',
+                          preserve_path_from : meson.current_source_dir()
+                         )
 # end protobuf
 
 inc_dir = include_directories('include')
@@ -48,7 +51,7 @@ src = ['src/main.cpp',
       ]
 
 executable('sync', 
-           sync_msgs, info_msgs,
+           messages,
            sources : src, 
            include_directories : inc_dir,
            dependencies : [thread, fmt, protobuf]
