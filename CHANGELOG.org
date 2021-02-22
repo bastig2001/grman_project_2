@@ -10,6 +10,12 @@
 
 *** Removed
 
+** [0.0.2] - 2020-02-21
+*** Added
+- Logging
+- Client connections
+- Server connections
+
 ** [0.0.1] - 2020-02-13
 *** Added
 - CLI
