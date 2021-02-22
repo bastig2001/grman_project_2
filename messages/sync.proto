@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+import "messages/general.proto";
+
+message SyncRequest {
+    Block block = 1;
+    string weak_signature = 2;
+    string strong_signature = 3;
+}
+
+message SyncResponse {
+    Block block = 1;
+    bool match = 2;
+    oneof optional_correction {
+        string correction = 3;
+    }
+}
+
+message GetRequest {
+    oneof requested {
+        Block block = 1;
+        File file = 2;
+    }
+}
+
+message GetResponse {
+    GetRequest request = 1;
+    string data = 2;
+}

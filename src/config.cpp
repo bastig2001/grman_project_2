@@ -13,12 +13,12 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
     CLI::App app("File Synchronisation Client");
 
     Server server{};
-    app.add_option(
-        "-a, --server-address",
-        server.address,
-        "The address of the server to which to connect for syncing"
-    )->envname("SYNC_SERVER_ADDRESS")
-     ->check(is_ip_address);
+    auto server_address_option = 
+        app.add_option(
+            "-a, --server-address",
+            server.address,
+            "The address of the server to which to connect for syncing"
+        )->envname("SYNC_SERVER_ADDRESS");
     app.add_option(
         "-p, --server-port",
         server.port,
@@ -59,7 +59,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
     serve = serve || *bind_address_option || *bind_port_option;
 
     return Config{
-        server.address != "0.0.0.0" ? optional{server} : nullopt,
+        *server_address_option ? optional{server} : nullopt,
         serve ? optional{act_as_server} : nullopt
     };
 }

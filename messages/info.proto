@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "messages/general.proto";
+
+message ShowFiles {
+    oneof optional_options {
+        string options = 1;
+    } 
+}
+
+message FileList {
+    repeated File files = 1;
+}
