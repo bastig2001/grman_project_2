@@ -15,11 +15,12 @@ add_global_arguments('-DASIO_NO_DEPRECATED', language : 'cpp')
 add_global_arguments('-I' + get_option('cli11_include_dir'), language : 'cpp')
 
 # fmt: https://github.com/fmtlib/fmt
-fmt = dependency('fmt')
+add_global_arguments('-I' + get_option('fmt_include_dir'), language : 'cpp')
+add_global_arguments('-DFMT_HEADER_ONLY', language : 'cpp')
 
 # spdlog: https://github.com/gabime/spdlog
-# add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
-# add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
+add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
+add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
 # json: https://github.com/nlohmann/json
 # add_global_arguments('-I' + get_option('json_include_dir'), language : 'cpp')
@@ -54,5 +55,5 @@ executable('sync',
            messages,
            sources : src, 
            include_directories : inc_dir,
-           dependencies : [thread, fmt, protobuf]
+           dependencies : [thread, protobuf]
           )
