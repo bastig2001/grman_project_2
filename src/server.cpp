@@ -1,4 +1,5 @@
 #include "server.h"
+#include "messages/all.pb.h"
 #include "messages/info.pb.h"
 
 #include <asio.hpp>
@@ -29,11 +30,52 @@ int run_server(Config config) {
 
             if (client) {
                 spdlog::info("Connected to client");
-
                 string buffer{};
                 getline(client, buffer);
 
-                
+                Message msg{};
+                auto files = new FileList;
+                auto file = files->add_files();
+                file->set_file_name("Test-File");
+                file->set_signature("abc");
+                file->set_timestamp(42);
+                if (msg.ParseFromString(buffer)) {
+                    switch (msg.message_case()) {
+                        case Message::kShowFiles:
+                            spdlog::info("Got a request to show all files");
+                            if (client) {
+                                msg.Clear();                            
+                                msg.set_allocated_file_list(files);
+                                spdlog::debug("Response to Client:\n{}", msg.DebugString());
+                                client << msg.SerializeAsString();
+                            }
+                            else {
+                                spdlog::error(
+                                    "Couldn't connect to client: {}", 
+                                    client.error().message()
+                                );
+                            }
+                            break;
+                        case Message::kFileList:
+                            spdlog::info("Got a list of files");
+                            break;
+                        case Message::kGetRequest:
+                            spdlog::info("Received a GET-request");
+                            break;
+                        case Message::kGetResponse:
+                            spdlog::info("Received a GET-response");
+                            break;
+                        case Message::kSyncRequest:
+                            spdlog::info("Received a SYNC-request");
+                            break;
+                        case Message::kSyncResponse:
+                            spdlog::info("Received a SYNC-response");
+                            break;
+                        case Message::MESSAGE_NOT_SET:
+                            spdlog::info("Received an undefined message");
+                            break;
+                    }
+                } 
             }
             else {
                 spdlog::error(
