@@ -1,6 +1,9 @@
 #include "config.h"
 #include "server.h"
 #include "client.h"
+#include "messages/general.pb.h"
+#include "messages/info.pb.h"
+#include "messages/sync.pb.h"
 
 #include <spdlog/spdlog.h>
 #include <future>
@@ -11,6 +14,8 @@ int run(const Config&);
 
 
 int main(int argc, char* argv[]) {
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
     auto config_result = configure(argc, argv);
     spdlog::set_level(spdlog::level::debug);
     
@@ -33,6 +38,8 @@ int run(const Config& config) {
 
     int server_return = server.get();
     int client_return = client.get();
+
+    google::protobuf::ShutdownProtobufLibrary();
 
     return server_return | client_return;
 }
