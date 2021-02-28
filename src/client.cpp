@@ -1,4 +1,5 @@
 #include "client.h"
+#include "messages/info.pb.h"
 
 #include <asio.hpp>
 #include <chrono>
@@ -17,6 +18,10 @@ int run_client(Config config) {
 
         if (server) {
             spdlog::info("Connected to server");
+
+            ShowFiles msg{};
+            server << msg.SerializeAsString();
+            
             return 0;
         }
         else {
@@ -24,7 +29,7 @@ int run_client(Config config) {
                 "Couldn't connect to server: {}", 
                 server.error().message()
             );
-            return 1;
+            return server.error().value();
         }
     }
     else {

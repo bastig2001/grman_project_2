@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "messages/general.proto";
+import "messages/basic.proto";
 
 message ShowFiles {
     oneof optional_options {

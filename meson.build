@@ -36,9 +36,10 @@ protoc = generator(
 )
 
 # change proto files accordingly
-messages = protoc.process('messages/sync.proto', 
+messages = protoc.process('messages/all.proto',
+                          'messages/sync.proto', 
                           'messages/info.proto', 
-                          'messages/general.proto',
+                          'messages/basic.proto',
                           preserve_path_from : meson.current_source_dir()
                          )
 # end protobuf

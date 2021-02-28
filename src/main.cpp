@@ -1,9 +1,7 @@
 #include "config.h"
 #include "server.h"
 #include "client.h"
-#include "messages/general.pb.h"
-#include "messages/info.pb.h"
-#include "messages/sync.pb.h"
+#include "messages/all.pb.h"
 
 #include <spdlog/spdlog.h>
 #include <future>

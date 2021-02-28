@@ -1,7 +1,9 @@
 #include "server.h"
+#include "messages/info.pb.h"
 
 #include <asio.hpp>
 #include <chrono>
+#include <google/protobuf/message.h>
 #include <spdlog/spdlog.h>
 
 using namespace std;
@@ -27,6 +29,11 @@ int run_server(Config config) {
 
             if (client) {
                 spdlog::info("Connected to client");
+
+                string buffer{};
+                getline(client, buffer);
+
+                
             }
             else {
                 spdlog::error(
