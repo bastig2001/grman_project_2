@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "messages/sync.proto";
+import "messages/info.proto";
+
+message Message {
+    oneof message {
+        ShowFiles    show_files    = 1;
+        FileList     file_list     = 2;
+        SyncRequest  sync_request  = 3;
+        SyncResponse sync_response = 4;
+        GetRequest   get_request   = 5;
+        GetResponse  get_response  = 6;
+    } 
+}

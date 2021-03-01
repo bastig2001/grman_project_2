@@ -1,6 +1,6 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '0.0.2',
+        version : '0.0.3',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
@@ -37,9 +37,10 @@ protoc = generator(
 )
 
 # change proto files accordingly
-messages = protoc.process('messages/sync.proto', 
+messages = protoc.process('messages/all.proto',
+                          'messages/sync.proto', 
                           'messages/info.proto', 
-                          'messages/general.proto',
+                          'messages/basic.proto',
                           preserve_path_from : meson.current_source_dir()
                          )
 # end protobuf
