@@ -28,9 +28,7 @@ int run_client(Config config) {
             msg.Clear();
             
             /*if (server) {
-                string buffer{};
-                getline(server, buffer);
-                if (msg.ParseFromString(buffer)) {
+                if (msg.ParseFromIstream(&server)) {
                     switch (msg.message_case()) {
                         case Message::kShowFiles:
                             spdlog::info("Got a request to show all files");
