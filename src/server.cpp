@@ -32,6 +32,7 @@ int run_server(Config config) {
                 spdlog::info("Connected to client");
                 string buffer{};
                 getline(client, buffer);
+                spdlog::debug("Got: '{}'", buffer);
 
                 Message msg{};
                 auto files = new FileList;

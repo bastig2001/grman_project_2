@@ -22,10 +22,12 @@ int run_client(Config config) {
 
             Message msg{};
             msg.set_allocated_show_files(new ShowFiles);
-            server << msg.SerializeAsString();
+            string msg_str{msg.SerializeAsString()};
+            spdlog::debug("Sending: '{}'", msg_str);
+            server << msg_str;
             msg.Clear();
             
-            if (server) {
+            /*if (server) {
                 string buffer{};
                 getline(server, buffer);
                 if (msg.ParseFromString(buffer)) {
@@ -61,7 +63,7 @@ int run_client(Config config) {
                     server.error().message()
                 );
                 return server.error().value();
-            }
+            }*/
 
             return 0;
         }
