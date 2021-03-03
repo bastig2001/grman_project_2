@@ -7,7 +7,7 @@ message File {
 }
 
 message Block {
-    string file_name = 1;
+    File file = 1;
     uint64 offset = 2;
     uint32 size = 3;
 }
