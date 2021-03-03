@@ -21,10 +21,14 @@ int run_client(Config config) {
             spdlog::info("Connected to server");
 
             Message msg{};
-            msg.set_allocated_show_files(new ShowFiles);
-            string msg_str{msg.SerializeAsString()};
+            auto show = new ShowFiles;
+            show->add_options()->assign("query_option 1");
+            msg.set_allocated_show_files(show);
+            string msg_str;
+            msg.SerializeToString(&msg_str);
+            spdlog::debug("Message:\n{}", msg.DebugString());
             spdlog::debug("Sending: '{}'", msg_str);
-            server << msg_str;
+            msg.SerializeToOstream(&server);
             msg.Clear();
             
             /*if (server) {
