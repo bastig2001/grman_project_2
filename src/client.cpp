@@ -21,14 +21,18 @@ int run_client(Config config) {
             spdlog::info("Connected to server");
 
             Message msg{};
-            msg.set_allocated_show_files(new ShowFiles);
-            server << msg.SerializeAsString();
+            auto show = new ShowFiles;
+            show->add_options()->assign("query_option 1");
+            msg.set_allocated_show_files(show);
+            string msg_str;
+            msg.SerializeToString(&msg_str);
+            spdlog::debug("Message:\n{}", msg.DebugString());
+            spdlog::debug("Sending: '{}'", msg_str);
+            msg.SerializeToOstream(&server);
             msg.Clear();
             
-            if (server) {
-                string buffer{};
-                getline(server, buffer);
-                if (msg.ParseFromString(buffer)) {
+            /*if (server) {
+                if (msg.ParseFromIstream(&server)) {
                     switch (msg.message_case()) {
                         case Message::kShowFiles:
                             spdlog::info("Got a request to show all files");
@@ -61,7 +65,7 @@ int run_client(Config config) {
                     server.error().message()
                 );
                 return server.error().value();
-            }
+            }*/
 
             return 0;
         }

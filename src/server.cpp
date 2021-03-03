@@ -4,6 +4,7 @@
 
 #include <asio.hpp>
 #include <chrono>
+#include <cstdio>
 #include <google/protobuf/message.h>
 #include <spdlog/spdlog.h>
 
@@ -26,12 +27,10 @@ int run_server(Config config) {
             tcp::socket socket{ip_ctx};
             acceptor.accept(socket);
             tcp::iostream client{move(socket)};
-            client.expires_after(std::chrono::seconds{10});
+            client.expires_after(std::chrono::seconds{5});
 
             if (client) {
                 spdlog::info("Connected to client");
-                string buffer{};
-                getline(client, buffer);
 
                 Message msg{};
                 auto files = new FileList;
@@ -39,14 +38,14 @@ int run_server(Config config) {
                 file->set_file_name("Test-File");
                 file->set_signature("abc");
                 file->set_timestamp(42);
-                if (msg.ParseFromString(buffer)) {
+                if (msg.ParseFromIstream(&client)) {
+                    spdlog::debug("Received Message:\n{}", msg.DebugString());
                     switch (msg.message_case()) {
                         case Message::kShowFiles:
                             spdlog::info("Got a request to show all files");
-                            if (client) {
-                                msg.Clear();                            
-                                msg.set_allocated_file_list(files);
-                                spdlog::debug("Response to Client:\n{}", msg.DebugString());
+                            msg.set_allocated_file_list(files);
+                            spdlog::debug("Response to Client:\n{}", msg.DebugString());
+                            if (client) {                           
                                 client << msg.SerializeAsString();
                             }
                             else {
