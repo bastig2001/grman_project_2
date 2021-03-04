@@ -2,6 +2,7 @@
 
 ** [Unreleased]
 *** Added
+- Message passing test from client to server
 
 *** Changed
 

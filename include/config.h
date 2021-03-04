@@ -7,7 +7,7 @@
 #include <optional>
 
 
-struct Server {
+struct ServerData {
     std::string address{"0.0.0.0"};
     unsigned short port{9876};
 
@@ -18,8 +18,8 @@ struct Server {
 };
 
 struct Config {
-    std::optional<Server> server;
-    std::optional<Server> act_as_server;
+    std::optional<ServerData> server;
+    std::optional<ServerData> act_as_server;
 
     operator std::string() {
         return "{\"server\": " + optional_to_string(server, "{}") + ";\n" +
