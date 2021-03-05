@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <string>
 #include <optional>
 #include <type_traits>
@@ -25,3 +26,7 @@ std::string optional_to_string(
         return no_value;
     }
 }
+
+std::stringstream encode_base64(const std::istream&);
+
+std::stringstream decode_base64(const std::istream&);

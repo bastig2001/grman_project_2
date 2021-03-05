@@ -4,6 +4,8 @@
 
 #include <doctest.h>
 #include <optional>
+#include <sstream>
+#include <tuple>
 
 using namespace std;
 
@@ -94,6 +96,27 @@ TEST_SUITE("utils") {
 
                 CHECK(optional_to_string(opt_val, (string)value) == (string)value);
             }
+        }
+    }
+
+    TEST_CASE("base 64 en- and decoding") {
+        vector<tuple<string, string>> de_encoded_pairs = {
+            {"ABC", "QUJD"}, 
+            {"Test123", "VGVzdDEyMw=="}, 
+            {"Polyfon zwitschernd aßen Mäxchens Vögel Rüben, Joghurt und Quark", "UG9seWZvbiB6d2l0c2NoZXJuZCBhw59lbiBNw6R4Y2hlbnMgVsO2Z2VsIFLDvGJlbiwgSm9naHVydCB1bmQgUXVhcms="}
+        };
+        tuple<string, string> de_encoded_pair;
+
+        SUBCASE("encoding") {
+            DOCTEST_VALUE_PARAMETERIZED_DATA(de_encoded_pair, de_encoded_pairs);
+
+            CHECK(encode_base64(istringstream{get<0>(de_encoded_pair)}).str() == get<1>(de_encoded_pair));
+        }
+
+        SUBCASE("decoding") {
+            DOCTEST_VALUE_PARAMETERIZED_DATA(de_encoded_pair, de_encoded_pairs);
+
+            CHECK(decode_base64(istringstream{get<1>(de_encoded_pair)}).str() == get<0>(de_encoded_pair));
         }
     }
 }
