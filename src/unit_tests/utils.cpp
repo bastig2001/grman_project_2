@@ -110,13 +110,15 @@ TEST_SUITE("utils") {
         SUBCASE("encoding") {
             DOCTEST_VALUE_PARAMETERIZED_DATA(de_encoded_pair, de_encoded_pairs);
 
-            CHECK(encode_base64(istringstream{get<0>(de_encoded_pair)}).str() == get<1>(de_encoded_pair));
+            istringstream to_encode{get<0>(de_encoded_pair)};
+            CHECK(encode_base64(to_encode).str() == get<1>(de_encoded_pair));
         }
 
         SUBCASE("decoding") {
             DOCTEST_VALUE_PARAMETERIZED_DATA(de_encoded_pair, de_encoded_pairs);
 
-            CHECK(decode_base64(istringstream{get<1>(de_encoded_pair)}).str() == get<0>(de_encoded_pair));
+            istringstream to_decode{get<1>(de_encoded_pair)};
+            CHECK(decode_base64(to_decode).str() == get<0>(de_encoded_pair));
         }
     }
 }

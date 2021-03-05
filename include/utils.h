@@ -27,6 +27,6 @@ std::string optional_to_string(
     }
 }
 
-std::stringstream encode_base64(const std::istream&);
+std::stringstream encode_base64(std::istream&);
 
-std::stringstream decode_base64(const std::istream&);
+std::stringstream decode_base64(std::istream&);
