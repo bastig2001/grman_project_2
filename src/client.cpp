@@ -1,72 +1,46 @@
 #include "client.h"
+#include "file_operations.h"
+#include "utils.h"
 #include "messages/all.pb.h"
 #include "messages/info.pb.h"
 
-#include <asio.hpp>
-#include <chrono>
+#include <asio/io_context.hpp>
+#include <asio/ip/tcp.hpp>
+#include <asio/socket_base.hpp>
 #include <spdlog/spdlog.h>
+#include <chrono>
 
-using namespace asio::ip;
 using namespace std;
+using namespace asio::ip;
+using namespace asio;
 
 
-int run_client(Config config) {
+int run_client(Config& config) {
     if (config.server.has_value()) {
         auto server_conf = config.server.value();
 
-        tcp::iostream server{server_conf.address, to_string(server_conf.port)};
-        server.expires_after(chrono::seconds{10});
+        tcp::iostream server{
+            server_conf.address, 
+            to_string(server_conf.port)
+        };
+        socket_base::keep_alive keep_alive;
+        server.socket().set_option(keep_alive);
+        server.expires_after(std::chrono::seconds{10});
 
         if (server) {
             spdlog::info("Connected to server");
 
-            Message msg{};
-            auto show = new ShowFiles;
-            show->add_options()->assign("query_option 1");
-            msg.set_allocated_show_files(show);
-            string msg_str;
-            msg.SerializeToString(&msg_str);
-            spdlog::debug("Message:\n{}", msg.DebugString());
-            spdlog::debug("Sending: '{}'", msg_str);
-            msg.SerializeToOstream(&server);
-            msg.Clear();
-            
-            /*if (server) {
-                if (msg.ParseFromIstream(&server)) {
-                    switch (msg.message_case()) {
-                        case Message::kShowFiles:
-                            spdlog::info("Got a request to show all files");
-                            break;
-                        case Message::kFileList:
-                            spdlog::info("Got a list of files");
-                            break;
-                        case Message::kGetRequest:
-                            spdlog::info("Received a GET-request");
-                            break;
-                        case Message::kGetResponse:
-                            spdlog::info("Received a GET-response");
-                            break;
-                        case Message::kSyncRequest:
-                            spdlog::info("Received a SYNC-request");
-                            break;
-                        case Message::kSyncResponse:
-                            spdlog::info("Received a SYNC-response");
-                            break;
-                        case Message::MESSAGE_NOT_SET:
-                            spdlog::info("Received an undefined message");
-                            break;
-                    }
-                    spdlog::debug("Received:\n{}", msg.DebugString());
-                }
-            }
-            else {
-                spdlog::error(
-                    "Couldn't connect to server: {}", 
-                    server.error().message()
-                );
-                return server.error().value();
-            }*/
+            Message request{};
+            request.set_allocated_show_files(
+                get_show_files({"query option 1"})
+            );
+            spdlog::debug("Sending:\n{}", request.DebugString());
+            server << msg_to_base64(request) << "\n";
 
+            Message response{msg_from_base64(server)};
+            spdlog::debug("Received:\n{}", response.DebugString());
+
+            server.close();
             return 0;
         }
         else {
@@ -74,7 +48,8 @@ int run_client(Config config) {
                 "Couldn't connect to server: {}", 
                 server.error().message()
             );
-            return server.error().value();
+
+            return 2;
         }
     }
     else {

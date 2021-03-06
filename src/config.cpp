@@ -12,7 +12,7 @@ string is_ip_address(const std::string& address);
 variant<ExitCode, Config> configure(int argc, char* argv[]) {
     CLI::App app("File Synchronisation Client");
 
-    Server server{};
+    ServerData server{};
     auto server_address_option = 
         app.add_option(
             "-a, --server-address",
@@ -34,7 +34,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
             "For binding address and port see --bind-address and --bind-port"
     )->envname("SYNC_SERVE");
 
-    Server act_as_server{};
+    ServerData act_as_server{};
     auto bind_address_option = 
         app.add_option(
             "--bind-address",

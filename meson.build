@@ -45,15 +45,37 @@ messages = protoc.process('messages/all.proto',
 # end protobuf
 
 inc_dir = include_directories('include')
-src = ['src/main.cpp', 
-       'src/config.cpp',
-       'src/client.cpp',
-       'src/server.cpp'
-      ]
+
+src = [
+    'src/config.cpp',
+    'src/client.cpp',
+    'src/server.cpp',
+    'src/utils.cpp',
+    'src/file_operations.cpp'
+]
+
+unit_tests_src = [
+    'src/unit_tests/main.cpp',
+    'src/unit_tests/utils.cpp'
+]
+
+dependencies = [thread, fmt, protobuf]
 
 executable('sync', 
            messages,
-           sources : src, 
+           sources : ['src/main.cpp'] + src, 
            include_directories : inc_dir,
-           dependencies : [thread, fmt, protobuf]
+           dependencies : dependencies
+          )
+
+executable('unit_tests', 
+           messages,
+           sources : unit_tests_src + src, 
+           include_directories : inc_dir,
+           dependencies : dependencies,
+           cpp_args : [
+               '-DUNIT_TESTS', 
+               '-DDOCTEST_CONFIG_SUPER_FAST_ASSERTS', 
+               '-I' + get_option('doctest_include_dir')
+            ]
           )
