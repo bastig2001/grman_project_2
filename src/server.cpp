@@ -1,6 +1,7 @@
 #include "server.h"
 #include "messages/all.pb.h"
 #include "spdlog/fmt/bundled/format.h"
+#include "utils.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
@@ -67,7 +68,9 @@ void handle_client(tcp::iostream&& client) {
         spdlog::debug("Client connected");
 
         Message msg{};
-        msg.ParsePartialFromIstream(&client);
+        string msg_str{};
+        getline(client, msg_str);
+        msg.ParsePartialFromString(decode_base64(msg_str));
         spdlog::debug("Received:\n{}", msg.DebugString());
 
         client.close();

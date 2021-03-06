@@ -1,6 +1,7 @@
 #include "client.h"
 #include "messages/all.pb.h"
 #include "messages/info.pb.h"
+#include "utils.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
@@ -33,7 +34,8 @@ int run_client(Config& config) {
             show->add_options()->assign("query_option 1");
             msg.set_allocated_show_files(show);
             spdlog::debug("Sending:\n{}", msg.DebugString());
-            msg.SerializeToOstream(&server);
+            string msg_str{msg.SerializeAsString()};
+            server << encode_base64(msg_str) << "\n";
 
             server.close();
             return 0;
