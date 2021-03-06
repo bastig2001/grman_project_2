@@ -102,6 +102,7 @@ TEST_SUITE("utils") {
         vector<tuple<string, string>> de_encoded_pairs = {
             {"ABC", "QUJD"}, 
             {"Test123", "VGVzdDEyMw=="}, 
+            {"Alles gut bei dir?", "QWxsZXMgZ3V0IGJlaSBkaXI/"},
             {"Polyfon zwitschernd aßen Mäxchens Vögel Rüben, Joghurt und Quark", "UG9seWZvbiB6d2l0c2NoZXJuZCBhw59lbiBNw6R4Y2hlbnMgVsO2Z2VsIFLDvGJlbiwgSm9naHVydCB1bmQgUXVhcms="}
         };
         tuple<string, string> de_encoded_pair;
