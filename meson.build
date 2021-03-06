@@ -60,7 +60,7 @@ unit_tests_src = [
     'src/unit_tests/utils.cpp'
 ]
 
-dependencies = [thread, fmt, protobuf]
+dependencies = [thread, protobuf]
 
 executable('sync', 
            messages,
