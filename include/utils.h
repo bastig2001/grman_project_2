@@ -29,10 +29,10 @@ std::string optional_to_string(
     }
 }
 
-std::string encode_msg_base64(const Message&);
+std::string msg_to_base64(const Message&);
 
-Message decode_base64_msg_stream(std::istream&);
+Message msg_from_base64(std::istream&);
 
-std::string encode_base64(const std::string&);
+std::string to_base64(const std::string&);
 
-std::string decode_base64(const std::string&);
+std::string from_base64(const std::string&);

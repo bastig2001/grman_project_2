@@ -35,9 +35,9 @@ int run_client(Config& config) {
                 get_show_files({"query option 1"})
             );
             spdlog::debug("Sending:\n{}", request.DebugString());
-            server << encode_msg_base64(request) << "\n";
+            server << msg_to_base64(request) << "\n";
 
-            Message response{decode_base64_msg_stream(server)};
+            Message response{msg_from_base64(server)};
             spdlog::debug("Received:\n{}", response.DebugString());
 
             server.close();

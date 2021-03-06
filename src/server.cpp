@@ -68,12 +68,12 @@ void handle_client(tcp::iostream&& client) {
     if (client) {
         spdlog::debug("Client connected");
 
-        Message request{decode_base64_msg_stream(client)};
+        Message request{msg_from_base64(client)};
         spdlog::debug("Received:\n{}", request.DebugString());
 
         Message response{get_response(request)};
         spdlog::debug("Sending:\n{}", response.DebugString());
-        client << encode_msg_base64(response) << "\n";
+        client << msg_to_base64(response) << "\n";
 
         client.close();
     }

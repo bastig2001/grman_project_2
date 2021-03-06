@@ -110,13 +110,13 @@ TEST_SUITE("utils") {
         SUBCASE("encoding") {
             DOCTEST_VALUE_PARAMETERIZED_DATA(de_encoded_pair, de_encoded_pairs);
 
-            CHECK(encode_base64(get<0>(de_encoded_pair)) == get<1>(de_encoded_pair));
+            CHECK(to_base64(get<0>(de_encoded_pair)) == get<1>(de_encoded_pair));
         }
 
         SUBCASE("decoding") {
             DOCTEST_VALUE_PARAMETERIZED_DATA(de_encoded_pair, de_encoded_pairs);
 
-            CHECK(decode_base64(get<1>(de_encoded_pair)) == get<0>(de_encoded_pair));
+            CHECK(from_base64(get<1>(de_encoded_pair)) == get<0>(de_encoded_pair));
         }
     }
 }
