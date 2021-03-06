@@ -2,11 +2,19 @@
 
 ** [Unreleased]
 *** Added
-- Message passing test from client to server
 
 *** Changed
 
 *** Removed
+
+** [0.1.0] - 2020-03-06
+*** Added
+- Synchronous communication between client and server
+- Base 64 encoded communication between client and server
+- Continuous client-server connection until bilateral finish agreement
+
+*** Changed
+- Message passing test
 
 ** [0.0.3] - 2020-03-01
 *** Added
