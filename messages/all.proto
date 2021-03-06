@@ -11,7 +11,7 @@ message Message {
         SyncResponse sync_response = 4;
         GetRequest   get_request   = 5;
         GetResponse  get_response  = 6;
-        bool         recieved      = 7; // when there is no other response
+        bool         received      = 7; // when there is no other response
         bool         finish        = 8;
     } 
 }
