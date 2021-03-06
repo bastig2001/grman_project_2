@@ -4,6 +4,7 @@
 #include "messages/all.pb.h"
 
 #include <spdlog/spdlog.h>
+#include <functional>
 #include <future>
 
 using namespace std;
@@ -31,8 +32,8 @@ int main(int argc, char* argv[]) {
 }
 
 int run(const Config& config) {
-    auto server{async(launch::async, run_server, config)};
-    auto client{async(launch::async, run_client, config)};
+    auto server{async(launch::async, bind(run_server, config))};
+    auto client{async(launch::async, bind(run_client, config))};
 
     int server_return = server.get();
     int client_return = client.get();

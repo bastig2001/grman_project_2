@@ -3,4 +3,4 @@
 #include "config.h"
 
 
-int run_server(Config config);
+int run_server(Config&);
