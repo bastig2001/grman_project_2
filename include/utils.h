@@ -1,5 +1,8 @@
 #pragma once
 
+#include "messages/all.pb.h"
+
+#include <istream>
 #include <string>
 #include <optional>
 #include <type_traits>
@@ -25,6 +28,10 @@ std::string optional_to_string(
         return no_value;
     }
 }
+
+std::string encode_msg_base64(const Message&);
+
+Message decode_base64_msg_stream(std::istream&);
 
 std::string encode_base64(const std::string&);
 

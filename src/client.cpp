@@ -34,8 +34,7 @@ int run_client(Config& config) {
             show->add_options()->assign("query_option 1");
             msg.set_allocated_show_files(show);
             spdlog::debug("Sending:\n{}", msg.DebugString());
-            string msg_str{msg.SerializeAsString()};
-            server << encode_base64(msg_str) << "\n";
+            server << encode_msg_base64(msg) << "\n";
 
             server.close();
             return 0;

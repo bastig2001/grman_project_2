@@ -9,6 +9,19 @@ const char base64_chars[]{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0
 const char pad_char{'='};
 
 
+std::string encode_msg_base64(const Message& msg) {
+    return encode_base64(msg.SerializeAsString());
+}
+
+Message decode_base64_msg_stream(std::istream& msg_stream) {
+    string msg_str{};
+    getline(msg_stream, msg_str);
+
+    Message msg{};
+    msg.ParseFromString(decode_base64(msg_str));
+    return msg;
+}
+
 string encode_base64(const string& to_encode) {
     string encoded{""};
 
