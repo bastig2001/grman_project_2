@@ -9,10 +9,14 @@
 #include <asio/socket_base.hpp>
 #include <spdlog/spdlog.h>
 #include <chrono>
+#include <tuple>
 
 using namespace std;
 using namespace asio::ip;
 using namespace asio;
+
+int handle_server(tcp::iostream&);
+bool handle_response(const Message&);
 
 
 int run_client(Config& config) {
@@ -29,19 +33,9 @@ int run_client(Config& config) {
 
         if (server) {
             spdlog::info("Connected to server");
-
-            Message request{};
-            request.set_allocated_show_files(
-                get_show_files({"query option 1"})
-            );
-            spdlog::debug("Sending:\n{}", request.DebugString());
-            server << msg_to_base64(request) << "\n";
-
-            Message response{msg_from_base64(server)};
-            spdlog::debug("Received:\n{}", response.DebugString());
-
-            server.close();
-            return 0;
+            int exit_code{handle_server(server)};
+            spdlog::info("Disconnected from server");
+            return exit_code;
         }
         else {
             spdlog::error(
@@ -55,4 +49,73 @@ int run_client(Config& config) {
     else {
         return 0;
     }
+}
+
+int handle_server(tcp::iostream& server) {
+    bool finished{false};
+    unsigned short i{1};
+    while (server && !finished) {
+        Message request{};
+        if (i < 4) {
+            request.set_allocated_show_files(
+                get_show_files({"query option 1", to_string(i)})
+            );
+            i++;
+        }
+        else {
+            request.set_finish(true);
+        }
+        spdlog::debug("Sending:\n{}", request.DebugString());
+        server << msg_to_base64(request) << "\n";
+
+        if (server) {
+            Message response{msg_from_base64(server)};
+            spdlog::debug("Received:\n{}", response.DebugString());
+            
+            finished = handle_response(response);
+            if (finished) {
+                server.close();
+            }
+        }  
+    }
+
+    if (server.error()) {
+        spdlog::error(
+            "Following connection error occurred: {}",
+            server.error().message()
+        );
+        return 3;
+    }
+    else {
+        return 0;
+    }
+}
+
+bool handle_response(const Message& response) {
+    bool finish{false};
+
+    switch (response.message_case()) {
+        case Message::kShowFiles:
+            break;
+        case Message::kFileList:
+            break;
+        case Message::kSyncRequest:
+            break;
+        case Message::kSyncResponse:
+            break;
+        case Message::kGetRequest:
+            break;
+        case Message::kGetResponse:
+            break;
+        case Message::kReceived:
+            break;
+        case Message::kFinish:
+            finish = true;
+            break;
+        case Message::MESSAGE_NOT_SET:
+            spdlog::warn("Received an undefined message");
+            break;
+    }
+
+    return finish;
 }

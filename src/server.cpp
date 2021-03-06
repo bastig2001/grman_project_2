@@ -12,13 +12,14 @@
 #include <streambuf>
 #include <string_view>
 #include <thread>
+#include <tuple>
 
 using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
 void handle_client(tcp::iostream&&);
-Message get_response(const Message&);
+tuple<Message, bool> get_response(const Message&);
 
 
 int run_server(Config& config) {
@@ -65,28 +66,39 @@ int run_server(Config& config) {
 }
 
 void handle_client(tcp::iostream&& client) {
-    if (client) {
-        spdlog::debug("Client connected");
+    spdlog::info("Client connected");
 
+    bool finished{false};
+    while (client && !finished) {
         Message request{msg_from_base64(client)};
         spdlog::debug("Received:\n{}", request.DebugString());
 
-        Message response{get_response(request)};
-        spdlog::debug("Sending:\n{}", response.DebugString());
-        client << msg_to_base64(response) << "\n";
+        if (client) {
+            auto [response, finish]{get_response(request)};
+            spdlog::debug("Sending:\n{}", response.DebugString());
+            client << msg_to_base64(response) << "\n";
 
-        client.close();
+            if (finish) {
+                client.close();
+                finished = true;
+            }
+        }
     }
-    else {
+
+    if (client.error()) {
         spdlog::error(
             "Following connection error occurred: {}",
             client.error().message()
         );
     }
+    if (finished) {
+        spdlog::info("Client disconnected");
+    }
 }
 
-Message get_response(const Message& request) {
+tuple<Message, bool> get_response(const Message& request) {
     Message response{};
+    bool finish{false};
 
     switch (request.message_case()) {
         case Message::kShowFiles:
@@ -118,11 +130,12 @@ Message get_response(const Message& request) {
             break;
         case Message::kFinish:
             response.set_finish(true);
+            finish = true;
             break;
         case Message::MESSAGE_NOT_SET:
             spdlog::warn("Received an undefined message");
             break;
     }
 
-    return response;
+    return {response, finish};
 }
