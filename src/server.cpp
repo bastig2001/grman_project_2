@@ -1,7 +1,7 @@
 #include "server.h"
-#include "messages/all.pb.h"
-#include "spdlog/fmt/bundled/format.h"
+#include "file_operations.h"
 #include "utils.h"
+#include "messages/all.pb.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
@@ -18,6 +18,7 @@ using namespace asio::ip;
 using namespace asio;
 
 void handle_client(tcp::iostream&&);
+Message get_response(const Message&);
 
 
 int run_server(Config& config) {
@@ -67,8 +68,12 @@ void handle_client(tcp::iostream&& client) {
     if (client) {
         spdlog::debug("Client connected");
 
-        Message msg{decode_base64_msg_stream(client)};
-        spdlog::debug("Received:\n{}", msg.DebugString());
+        Message request{decode_base64_msg_stream(client)};
+        spdlog::debug("Received:\n{}", request.DebugString());
+
+        Message response{get_response(request)};
+        spdlog::debug("Sending:\n{}", response.DebugString());
+        client << encode_msg_base64(response) << "\n";
 
         client.close();
     }
@@ -78,4 +83,46 @@ void handle_client(tcp::iostream&& client) {
             client.error().message()
         );
     }
+}
+
+Message get_response(const Message& request) {
+    Message response{};
+
+    switch (request.message_case()) {
+        case Message::kShowFiles:
+            response.set_allocated_file_list(
+                show_files(request.show_files())
+            );
+            break;
+        case Message::kFileList:
+            response.set_received(true);
+            break;
+        case Message::kSyncRequest:
+            response.set_allocated_sync_response(
+                get_sync_response(request.sync_request())
+            );
+            break;
+        case Message::kSyncResponse:
+            response.set_received(true);
+            break;
+        case Message::kGetRequest:
+            response.set_allocated_get_response(
+                get_get_response(request.get_request())
+            );
+            break;
+        case Message::kGetResponse:
+            response.set_received(true);
+            break;
+        case Message::kReceived:
+            response.set_received(true);
+            break;
+        case Message::kFinish:
+            response.set_finish(true);
+            break;
+        case Message::MESSAGE_NOT_SET:
+            spdlog::warn("Received an undefined message");
+            break;
+    }
+
+    return response;
 }

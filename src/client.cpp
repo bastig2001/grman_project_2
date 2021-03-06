@@ -1,7 +1,8 @@
 #include "client.h"
+#include "file_operations.h"
+#include "utils.h"
 #include "messages/all.pb.h"
 #include "messages/info.pb.h"
-#include "utils.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
@@ -29,12 +30,15 @@ int run_client(Config& config) {
         if (server) {
             spdlog::info("Connected to server");
 
-            Message msg{};
-            auto show = new ShowFiles;
-            show->add_options()->assign("query_option 1");
-            msg.set_allocated_show_files(show);
-            spdlog::debug("Sending:\n{}", msg.DebugString());
-            server << encode_msg_base64(msg) << "\n";
+            Message request{};
+            request.set_allocated_show_files(
+                get_show_files({"query option 1"})
+            );
+            spdlog::debug("Sending:\n{}", request.DebugString());
+            server << encode_msg_base64(request) << "\n";
+
+            Message response{decode_base64_msg_stream(server)};
+            spdlog::debug("Received:\n{}", response.DebugString());
 
             server.close();
             return 0;

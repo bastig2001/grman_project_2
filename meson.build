@@ -50,7 +50,8 @@ src = [
     'src/config.cpp',
     'src/client.cpp',
     'src/server.cpp',
-    'src/utils.cpp'
+    'src/utils.cpp',
+    'src/file_operations.cpp'
 ]
 
 unit_tests_src = [
