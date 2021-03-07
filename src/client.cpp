@@ -23,24 +23,34 @@ int run_client(Config& config) {
     if (config.server.has_value()) {
         auto server_conf = config.server.value();
 
-        tcp::iostream server{
-            server_conf.address, 
-            to_string(server_conf.port)
-        };
-        socket_base::keep_alive keep_alive;
-        server.socket().set_option(keep_alive);
-        server.expires_after(std::chrono::seconds{10});
+        try {
+            tcp::iostream server{
+                server_conf.address, 
+                to_string(server_conf.port)
+            };
+            socket_base::keep_alive keep_alive;
+            server.socket().set_option(keep_alive);
+            server.expires_after(std::chrono::seconds{10});
 
-        if (server) {
-            logger->info("Connected to server");
-            int exit_code{handle_server(server)};
-            logger->info("Disconnected from server");
-            return exit_code;
+            if (server) {
+                logger->info("Connected to server");
+                int exit_code{handle_server(server)};
+                logger->info("Disconnected from server");
+                return exit_code;
+            }
+            else {
+                logger->error(
+                    "Couldn't connect to server: " 
+                    + server.error().message()
+                );
+
+                return 3;
+            }
         }
-        else {
-            logger->error(
-                "Couldn't connect to server: " 
-                + server.error().message()
+        catch (exception& err) {
+            logger->critical(
+                "Following exception occurred during client execution: " 
+                + string{err.what()}
             );
 
             return 2;
@@ -84,7 +94,7 @@ int handle_server(tcp::iostream& server) {
             "Following connection error occurred: "
             + server.error().message()
         );
-        return 3;
+        return 4;
     }
     else {
         return 0;
