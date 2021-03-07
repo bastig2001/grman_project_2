@@ -1,12 +1,12 @@
 #include "server.h"
 #include "file_operations.h"
 #include "utils.h"
+#include "presentation/logger.h"
 #include "messages/all.pb.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
 #include <asio/socket_base.hpp>
-#include <spdlog/spdlog.h>
 #include <chrono>
 #include <sstream>
 #include <streambuf>
@@ -51,9 +51,9 @@ int run_server(Config& config) {
             return 0;
         }
         catch (exception& err) {
-            spdlog::critical(
-                "Following exception occurred during server execution: {}", 
-                err.what()
+            logger->critical(
+                "Following exception occurred during server execution: " 
+                + string{err.what()}
             );
 
             return 1;
@@ -66,16 +66,16 @@ int run_server(Config& config) {
 }
 
 void handle_client(tcp::iostream&& client) {
-    spdlog::info("Client connected");
+    logger->info("Client connected");
 
     bool finished{false};
     while (client && !finished) {
         Message request{msg_from_base64(client)};
-        spdlog::debug("Received:\n{}", request.DebugString());
+        logger->debug("Received:\n" + request.DebugString());
 
         if (client) {
             auto [response, finish]{get_response(request)};
-            spdlog::debug("Sending:\n{}", response.DebugString());
+            logger->debug("Sending:\n" + response.DebugString());
             client << msg_to_base64(response) << "\n";
 
             if (finish) {
@@ -86,13 +86,13 @@ void handle_client(tcp::iostream&& client) {
     }
 
     if (client.error()) {
-        spdlog::error(
-            "Following connection error occurred: {}",
-            client.error().message()
+        logger->error(
+            "Following connection error occurred: "
+            + client.error().message()
         );
     }
     if (finished) {
-        spdlog::info("Client disconnected");
+        logger->info("Client disconnected");
     }
 }
 
@@ -133,7 +133,7 @@ tuple<Message, bool> get_response(const Message& request) {
             finish = true;
             break;
         case Message::MESSAGE_NOT_SET:
-            spdlog::warn("Received an undefined message");
+            logger->warn("Received an undefined message");
             break;
     }
 

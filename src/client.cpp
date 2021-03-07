@@ -1,13 +1,13 @@
 #include "client.h"
 #include "file_operations.h"
 #include "utils.h"
+#include "presentation/logger.h"
 #include "messages/all.pb.h"
 #include "messages/info.pb.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
 #include <asio/socket_base.hpp>
-#include <spdlog/spdlog.h>
 #include <chrono>
 #include <tuple>
 
@@ -32,15 +32,15 @@ int run_client(Config& config) {
         server.expires_after(std::chrono::seconds{10});
 
         if (server) {
-            spdlog::info("Connected to server");
+            logger->info("Connected to server");
             int exit_code{handle_server(server)};
-            spdlog::info("Disconnected from server");
+            logger->info("Disconnected from server");
             return exit_code;
         }
         else {
-            spdlog::error(
-                "Couldn't connect to server: {}", 
-                server.error().message()
+            logger->error(
+                "Couldn't connect to server: " 
+                + server.error().message()
             );
 
             return 2;
@@ -65,12 +65,12 @@ int handle_server(tcp::iostream& server) {
         else {
             request.set_finish(true);
         }
-        spdlog::debug("Sending:\n{}", request.DebugString());
+        logger->debug("Sending:\n" + request.DebugString());
         server << msg_to_base64(request) << "\n";
 
         if (server) {
             Message response{msg_from_base64(server)};
-            spdlog::debug("Received:\n{}", response.DebugString());
+            logger->debug("Received:\n" + response.DebugString());
             
             finished = handle_response(response);
             if (finished) {
@@ -80,9 +80,9 @@ int handle_server(tcp::iostream& server) {
     }
 
     if (server.error()) {
-        spdlog::error(
-            "Following connection error occurred: {}",
-            server.error().message()
+        logger->error(
+            "Following connection error occurred: "
+            + server.error().message()
         );
         return 3;
     }
@@ -113,7 +113,7 @@ bool handle_response(const Message& response) {
             finish = true;
             break;
         case Message::MESSAGE_NOT_SET:
-            spdlog::warn("Received an undefined message");
+            logger->warn("Received an undefined message");
             break;
     }
 

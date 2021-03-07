@@ -1,9 +1,10 @@
 #include "config.h"
 #include "server.h"
 #include "client.h"
+#include "presentation/logger.h"
 #include "messages/all.pb.h"
 
-#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <functional>
 #include <future>
 
@@ -16,12 +17,13 @@ int main(int argc, char* argv[]) {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     auto config_result = configure(argc, argv);
-    spdlog::set_level(spdlog::level::debug);
+    logger = new BasicLogger(spdlog::stdout_color_mt("console"), false);
+    logger->set_level(spdlog::level::debug);
     
     if (auto config{get_if<Config>(&config_result)}) {
-        spdlog::debug(
+        logger->debug(
             "This program was called correctly.\n"
-            "The config is:\n{}", (string)*config
+            "The config is:\n" + (string)*config
         );
 
         return run(*config);
