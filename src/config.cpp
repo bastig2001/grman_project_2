@@ -63,7 +63,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
     string log_file{""};
     auto log_file_option = 
         app.add_option(
-            "--log-file",
+            "-f, --log-file",
             log_file,
             "Enables logging to specified file\n"
                 "  Default logging level is INFO"
@@ -71,7 +71,7 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
     auto log_level_option = 
         app.add_option(
             "--log-level, --log-level-console",
-            log.log_level_console,
+            log.level_console,
             "Sets the visible logging level\n"
                 "  0 ... TRACE\n"
                 "  1 ... DEBUG\n"
@@ -83,10 +83,22 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
     auto log_level_file_option =
         app.add_option(
             "--log-level-file",
-            log.log_level_file,
+            log.level_file,
             "Sets the visible logging level for the log file\n"
-            "  By default it takes the logging level specified with --log-level"
+                "  By default it takes the logging level specified with --log-level"
         )->envname("SYNC_LOG_LEVEL_FILE");
+    app.add_option(
+        "--log-size",
+        log.max_file_size,
+        "Maximum size of a log file in KB\n"
+            "  Default is 5 MB"
+    )->envname("SYNC_LOG_SIZE");
+    app.add_option(
+        "--log-file-number",
+        log.number_of_files,
+        "Number of log files between which the logger rotates\n"
+            " Default is 2"
+    )->envname("SYNC_LOG_FILE_NUMBER");
     app.add_flag(
         "--log-date",
         log.log_date,
@@ -103,11 +115,12 @@ variant<ExitCode, Config> configure(int argc, char* argv[]) {
     // if any of these three have been set, the program shall act as server
     serve = serve || *bind_address_option || *bind_port_option;
 
-    log.log_file = *log_file_option ? optional{log_file} : nullopt;
+    log.max_file_size *= 1024; // convert from KB to B
+    log.file = *log_file_option ? optional{log_file} : nullopt;
     if (!*log_level_file_option && *log_level_option) {
-        // set log_level_file to log_level_console, 
+        // set log.level_file to log.level_console, 
         //   when the latter was specified but not the first 
-        log.log_level_file = log.log_level_console;
+        log.level_file = log.level_console;
     }
 
     return Config{
@@ -131,12 +144,12 @@ LogConfig::operator std::string() {
     output 
         << std::boolalpha
         << " {\n"
-        << "  \"log to console\":       " << log_to_console                          << ";\n"
-        << "  \"log file\":           \"" << optional_to_string(log_file)          << "\";\n"
-        << "  \"log level on console\": " << log_level_console                       << ";\n"
-        << "  \"log level in file\":    " << log_level_file                          << ";\n"
-        << "  \"log date\":             " << log_date                                << ";\n"
-        << "  \"log config\":           " << log_config                               << "\n"
+        << "  \"log to console\":   " << log_to_console               << ";\n"
+        << "  \"file\":             \"" << optional_to_string(file) << "\";\n"
+        << "  \"level on console\": " << level_console                << ";\n"
+        << "  \"level in file\":    " << level_file                   << ";\n"
+        << "  \"log date\":         " << log_date                     << ";\n"
+        << "  \"log config\":       " << log_config                    << "\n"
         << " }";
 
     return output.str();

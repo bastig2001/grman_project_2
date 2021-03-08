@@ -10,37 +10,43 @@ using namespace std;
 Logger* logger{new NoLogger};
 
 BasicLogger* get_basic_console_logger(spdlog::level::level_enum, bool); 
-BasicLogger* get_basic_file_logger(spdlog::level::level_enum, bool, const string&); 
+BasicLogger* get_basic_file_logger(
+    spdlog::level::level_enum, bool, const string&, size_t, size_t
+); 
 void write_log_start(Logger*);
 string get_pattern(bool);
 
 
 Logger* get_logger(const LogConfig& config) {
-    if (config.log_to_console || config.log_file.has_value()) {
-        if (config.log_to_console && config.log_file.has_value()) {
+    if (config.log_to_console || config.file.has_value()) {
+        if (config.log_to_console && config.file.has_value()) {
             return new ChainLogger(
                 get_basic_console_logger(
-                    config.log_level_console, 
+                    config.level_console, 
                     config.log_date
                 ),
                 get_basic_file_logger(
-                    config.log_level_console, 
+                    config.level_console, 
                     config.log_date, 
-                    config.log_file.value()
+                    config.file.value(),
+                    config.max_file_size,
+                    config.number_of_files
                 )
             );
         }
         else if (config.log_to_console) {
             return get_basic_console_logger(
-                config.log_level_console, 
+                config.level_console, 
                 config.log_date
             );
         }
         else {
             return get_basic_file_logger(
-                config.log_level_console, 
+                config.level_console, 
                 config.log_date, 
-                config.log_file.value()
+                config.file.value(),
+                config.max_file_size,
+                config.number_of_files
             );
         }
     }
@@ -66,11 +72,15 @@ BasicLogger* get_basic_console_logger(
 BasicLogger* get_basic_file_logger(
     spdlog::level::level_enum level, 
     bool log_date, 
-    const string& file
+    const string& file,
+    size_t max_file_size,
+    size_t number_of_files
 ) {
     try {
         auto logger{new BasicLogger(
-            spdlog::rotating_logger_mt("file", file, 1048576, 3),
+            spdlog::rotating_logger_mt(
+                "file", file, max_file_size, number_of_files
+            ),
             true
         )};
 

@@ -3,7 +3,7 @@
 ** [Unreleased]
 *** Added
 - Configurable logging
-- Configurable file logging
+- Configurable rotating file logging
 
 *** Changed
 - CLI
