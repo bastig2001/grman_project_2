@@ -148,6 +148,8 @@ LogConfig::operator std::string() {
         << "  \"file\":             \"" << optional_to_string(file) << "\";\n"
         << "  \"level on console\": " << level_console                << ";\n"
         << "  \"level in file\":    " << level_file                   << ";\n"
+        << "  \"max file size\":    " << max_file_size / 1024         << ";\n"
+        << "  \"number of files\":  " << number_of_files              << ";\n"
         << "  \"log date\":         " << log_date                     << ";\n"
         << "  \"log config\":       " << log_config                    << "\n"
         << " }";
