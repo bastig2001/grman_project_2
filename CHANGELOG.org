@@ -4,6 +4,7 @@
 *** Added
 
 *** Changed
+- Message for connection establishment error on client
 
 *** Removed
 

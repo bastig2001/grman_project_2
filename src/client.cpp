@@ -41,7 +41,7 @@ int run_client(Config& config) {
             }
             else {
                 logger->error(
-                    "Couldn't connect to server: " 
+                    "Couldn't establish connection to server: " 
                     + server.error().message()
                 );
 
