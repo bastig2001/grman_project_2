@@ -2,8 +2,11 @@
 
 ** [Unreleased]
 *** Added
+- Configurable logging
+- Configurable file logging
 
 *** Changed
+- CLI
 
 *** Removed
 

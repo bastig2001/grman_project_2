@@ -4,7 +4,6 @@
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
 
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <functional>
 #include <future>
 
@@ -17,14 +16,16 @@ int main(int argc, char* argv[]) {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     auto config_result = configure(argc, argv);
-    logger = new BasicLogger(spdlog::stdout_color_mt("console"), false);
-    logger->set_level(spdlog::level::debug);
     
     if (auto config{get_if<Config>(&config_result)}) {
-        logger->debug(
-            "This program was called correctly.\n"
-            "The config is:\n" + (string)*config
-        );
+        logger = get_logger(config->log);
+
+        if (config->log.log_config) {
+            logger->debug(
+                "This program was called correctly.\n"
+                "The config is:\n" + (string)*config
+            );
+        }
 
         return run(*config);
     }

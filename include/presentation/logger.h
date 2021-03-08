@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <memory>
@@ -13,6 +15,8 @@ class Logger {
 
     virtual void set_level(spdlog::level::level_enum) = 0;
     virtual spdlog::level::level_enum get_level() = 0;
+
+    virtual void set_pattern(const std::string&) = 0;
 
     virtual void log(spdlog::level::level_enum, const std::string&) = 0;
     virtual void trace(const std::string&) = 0;
@@ -36,6 +40,8 @@ class NoLogger: public Logger {
 
     void set_level(spdlog::level::level_enum) override {}
     spdlog::level::level_enum get_level() override { return spdlog::level::off; }
+
+    void set_pattern(const std::string&) override {}
 
     void log(spdlog::level::level_enum, const std::string&) override {}
     void trace(const std::string&) override {}
@@ -70,6 +76,10 @@ class BasicLogger: public Logger {
     }
     spdlog::level::level_enum get_level() override { 
         return logger->level(); 
+    }
+
+    void set_pattern(const std::string& pattern) override {
+        logger->set_pattern(pattern);
     }
 
     void log(spdlog::level::level_enum level, const std::string& msg) override { 
@@ -122,6 +132,11 @@ class ChainLogger: public Logger {
         return std::min(logger1->get_level(), logger2->get_level());
     }
 
+    void set_pattern(const std::string& pattern) override {
+        logger1->set_pattern(pattern);
+        logger2->set_pattern(pattern);
+    }
+
     void log(spdlog::level::level_enum level, const std::string& msg) override { 
         logger1->log(level, msg);
         logger2->log(level, msg);
@@ -156,3 +171,6 @@ class ChainLogger: public Logger {
         delete logger2;
     }
 };
+
+
+Logger* get_logger(const LogConfig&);
