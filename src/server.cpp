@@ -1,6 +1,7 @@
 #include "server.h"
 #include "file_operations.h"
 #include "utils.h"
+#include "exit_code.h"
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
 
@@ -48,7 +49,7 @@ int run_server(Config& config) {
                 thread{handle_client, move(client)}.detach();
             }
 
-            return 0;
+            return Success;
         }
         catch (exception& err) {
             logger->critical(
@@ -56,12 +57,12 @@ int run_server(Config& config) {
                 + string{err.what()}
             );
 
-            return 1;
+            return ServerException;
         }
         
     }
     else {
-        return 0;
+        return Success;
     }
 }
 

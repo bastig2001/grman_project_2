@@ -1,3 +1,4 @@
+#include "exit_code.h"
 #include "presentation/logger.h"
 #include "spdlog/common.h"
 
@@ -93,7 +94,7 @@ BasicLogger* get_basic_file_logger(
     }
     catch (const spdlog::spdlog_ex& err) {
         cerr << ("Writing to the log file failed:\n") << err.what() << endl;
-        exit(65);
+        exit(LogFileError);
     }
 }
 

@@ -44,7 +44,4 @@ struct Config {
     }
 };
 
-using ExitCode = int;
-
-
-std::variant<ExitCode, Config> configure(int argc, char* argv[]);
+std::variant<int, Config> configure(int argc, char* argv[]);
