@@ -1,7 +1,7 @@
 #include "exit_code.h"
 #include "presentation/logger.h"
-#include "spdlog/common.h"
 
+#include <spdlog/common.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <iostream>
@@ -19,40 +19,28 @@ string get_pattern(bool);
 
 
 Logger* get_logger(const LogConfig& config) {
-    if (config.log_to_console || config.file.has_value()) {
-        if (config.log_to_console && config.file.has_value()) {
-            return new ChainLogger(
-                get_basic_console_logger(
-                    config.level_console, 
-                    config.log_date
-                ),
-                get_basic_file_logger(
-                    config.level_console, 
-                    config.log_date, 
-                    config.file.value(),
-                    config.max_file_size,
-                    config.number_of_files
-                )
-            );
-        }
-        else if (config.log_to_console) {
-            return get_basic_console_logger(
-                config.level_console, 
-                config.log_date
-            );
-        }
-        else {
-            return get_basic_file_logger(
+    auto console_logger{
+        get_basic_console_logger(
+            config.log_to_console 
+                ? config.level_console 
+                : spdlog::level::err, 
+            config.log_date
+        )};
+
+    if (config.file.has_value()) {
+        return new ChainLogger(
+            console_logger,
+            get_basic_file_logger(
                 config.level_console, 
                 config.log_date, 
                 config.file.value(),
                 config.max_file_size,
                 config.number_of_files
-            );
-        }
+            )
+        );
     }
     else {
-        return new NoLogger;
+        return console_logger;
     }
 }
 
@@ -112,8 +100,8 @@ void write_log_start(Logger* logger) {
 string get_pattern(bool log_date) {
     string date_pattern{
         log_date
-        ? "%Y-%m-%d "
-        : ""
+            ? "%Y-%m-%d "
+            : ""
     };
     return "[" + date_pattern + "%T.%e] [%^%l%$] %v";
 }
