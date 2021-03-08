@@ -12,7 +12,7 @@ using namespace std;
 TEST_SUITE("utils") {
     TEST_CASE("optional to string") {
         SUBCASE("optional string to string") {
-            vector<string> values = {
+            vector<string> values{
                 "ABC", 
                 "Test123", 
                 "Polyfon zwitschernd aßen Mäxchens Vögel Rüben, Joghurt und Quark"
@@ -42,7 +42,7 @@ TEST_SUITE("utils") {
         }
 
         SUBCASE("optional int to string") {
-            vector<int> values = {0, -3, 1, 42, 999};
+            vector<int> values{0, -3, 1, 42, 999};
             int value;
             optional<int> opt_val;
         
@@ -68,7 +68,7 @@ TEST_SUITE("utils") {
         }
 
         SUBCASE("optional ServerData object to string") {
-            vector<ServerData> values = {
+            vector<ServerData> values{
                 ServerData{},
                 ServerData{"localhost", 9999},
                 ServerData{"1.2.3.4", 1234}
@@ -99,7 +99,7 @@ TEST_SUITE("utils") {
     }
 
     TEST_CASE("base 64 en- and decoding") {
-        vector<tuple<string, string>> de_encoded_pairs = {
+        vector<tuple<string, string>> de_encoded_pairs{
             {"ABC", "QUJD"}, 
             {"Test123", "VGVzdDEyMw=="}, 
             {"Alles gut bei dir?", "QWxsZXMgZ3V0IGJlaSBkaXI/"},

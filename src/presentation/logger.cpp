@@ -53,10 +53,10 @@ BasicLogger* get_basic_console_logger(
     spdlog::level::level_enum level, 
     bool log_date
 ) {
-    auto logger = new BasicLogger(
+    auto logger{new BasicLogger(
         spdlog::stdout_color_mt("console"), 
         false
-    );
+    )};
     logger->set_level(level);
     logger->set_pattern(get_pattern(log_date));
 
@@ -69,10 +69,10 @@ BasicLogger* get_basic_file_logger(
     const string& file
 ) {
     try {
-        auto logger = new BasicLogger(
+        auto logger{new BasicLogger(
             spdlog::rotating_logger_mt("file", file, 1048576, 3),
             true
-        );
+        )};
 
         write_log_start(logger);
 

@@ -24,7 +24,7 @@ tuple<Message, bool> get_response(const Message&);
 
 int run_server(Config& config) {
     if (config.act_as_server.has_value()) {
-        auto serve_conf = config.act_as_server.value();
+        auto serve_conf{config.act_as_server.value()};
 
         try {
             io_context io_ctx;
