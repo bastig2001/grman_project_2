@@ -52,7 +52,8 @@ src = [
     'src/client.cpp',
     'src/server.cpp',
     'src/utils.cpp',
-    'src/file_operations.cpp'
+    'src/file_operations.cpp',
+    'src/presentation/logger.cpp'
 ]
 
 unit_tests_src = [

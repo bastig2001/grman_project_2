@@ -2,8 +2,12 @@
 
 ** [Unreleased]
 *** Added
+- Configurable logging
+- Configurable rotating file logging
 
 *** Changed
+- CLI
+- Client exit codes
 
 *** Removed
 
