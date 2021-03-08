@@ -44,7 +44,7 @@ int run_client(Config& config) {
                     + server.error().message()
                 );
 
-                return 3;
+                return 34;
             }
         }
         catch (exception& err) {
@@ -53,7 +53,7 @@ int run_client(Config& config) {
                 + string{err.what()}
             );
 
-            return 2;
+            return 33;
         }
     }
     else {
@@ -94,7 +94,7 @@ int handle_server(tcp::iostream& server) {
             "Following connection error occurred: "
             + server.error().message()
         );
-        return 4;
+        return 35;
     }
     else {
         return 0;
