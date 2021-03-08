@@ -2,6 +2,13 @@
 
 ** [Unreleased]
 *** Added
+
+*** Changed
+
+*** Removed
+
+** [0.1.1] - 2020-03-08
+*** Added
 - Configurable logging
 - Configurable rotating file logging
 
