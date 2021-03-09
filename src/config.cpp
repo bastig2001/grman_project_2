@@ -9,7 +9,7 @@ using namespace std;
 string is_ip_address(const std::string& address);
 
 
-variant<ExitCode, Config> configure(int argc, char* argv[]) {
+variant<int, Config> configure(int argc, char* argv[]) {
     CLI::App app("File Synchronisation Client");
 
     ServerData server{};

@@ -1,6 +1,7 @@
 #include "client.h"
 #include "file_operations.h"
 #include "utils.h"
+#include "exit_code.h"
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
 #include "messages/info.pb.h"
@@ -40,11 +41,11 @@ int run_client(Config& config) {
             }
             else {
                 logger->error(
-                    "Couldn't connect to server: " 
+                    "Couldn't establish connection to server: " 
                     + server.error().message()
                 );
 
-                return 34;
+                return ConnectionEstablishmentError;
             }
         }
         catch (exception& err) {
@@ -53,11 +54,11 @@ int run_client(Config& config) {
                 + string{err.what()}
             );
 
-            return 33;
+            return ClientException;
         }
     }
     else {
-        return 0;
+        return Success;
     }
 }
 
@@ -94,10 +95,10 @@ int handle_server(tcp::iostream& server) {
             "Following connection error occurred: "
             + server.error().message()
         );
-        return 35;
+        return ConnectionError;
     }
     else {
-        return 0;
+        return Success;
     }
 }
 
