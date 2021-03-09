@@ -6,6 +6,7 @@
 using namespace std;
 
 const char base64_chars[]{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+const char pad_char{'='};
 const unordered_map<char, unsigned short> base64_vals{
     {'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}, {'E', 4}, {'F', 5}, {'G', 6}, {'H', 7}, 
     {'I', 8}, {'J', 9}, {'K', 10}, {'L', 11}, {'M', 12}, {'N', 13}, {'O', 14}, 
@@ -16,9 +17,8 @@ const unordered_map<char, unsigned short> base64_vals{
     {'r', 43}, {'s', 44}, {'t', 45}, {'u', 46}, {'v', 47}, {'w', 48}, {'x', 49}, 
     {'y', 50}, {'z', 51}, {'0', 52}, {'1', 53}, {'2', 54}, {'3', 55}, {'4', 56}, 
     {'5', 57}, {'6', 58}, {'7', 59}, {'8', 60}, {'9', 61}, {'+', 62}, {'/', 63},
-    {'=', 0}
+    {pad_char, 0}
 };
-const char pad_char{'='};
 
 
 std::string msg_to_base64(const Message& msg) {
