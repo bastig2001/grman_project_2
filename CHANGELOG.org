@@ -1,12 +1,5 @@
 * Changelog
 
-** [Unreleased]
-*** Added
-
-*** Changed
-
-*** Removed
-
 ** [0.1.2] - 2020-03-09
 *** Changed
 - Message for connection establishment error on client
