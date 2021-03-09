@@ -8,8 +8,6 @@
 *** Removed
 
 ** [0.1.2] - 2020-03-09
-*** Added
-
 *** Changed
 - Message for connection establishment error on client
 - Errors and exceptions by default will always be logged to the console
