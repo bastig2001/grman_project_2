@@ -4,6 +4,7 @@ project('grman_project_2', 'cpp',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
+crypto = dependency('libcrypto')
 
 # begin asio: https://think-async.com/Asio/
 # add_global_arguments('-I' + get_option('asio_include_dir'), language : 'cpp')
@@ -60,7 +61,7 @@ unit_tests_src = [
     'src/unit_tests/utils.cpp'
 ]
 
-dependencies = [thread, fmt, protobuf]
+dependencies = [thread, fmt, protobuf, crypto]
 
 executable('sync', 
            messages,
