@@ -9,21 +9,40 @@ message SyncRequest {
 }
 
 message SyncResponse {
+    Block requested_block = 1;
+    oneof response {
+        bool full_match = 2;
+        bool requesting_strong_signature = 3;
+        bool requesting_correction = 4;
+        string correction_data = 5;
+    }
+}
+
+message Correction {
     Block block = 1;
-    bool match = 2;
-    oneof optional_correction {
-        string correction = 3;
+    string correction_data = 2;
+}
+
+message CheckFileRequest {
+    File file = 1;
+}
+
+message CheckFileResponse {
+    File requested_file = 1;
+    oneof response {
+        bool full_match = 2;
+        bool requesting_signature = 3;
+        string new_file_name = 4;
+        bool request_syncing = 5;
+        SyncRequest sync_request = 6;
     }
 }
 
-message GetRequest {
-    oneof requested {
-        Block block = 1;
-        File file = 2;
-    }
+message FileRequest {
+    File file = 1;
 }
 
-message GetResponse {
-    GetRequest request = 1;
+message FileResponse {
+    File requested_file = 1;
     string data = 2;
 }
