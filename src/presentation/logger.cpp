@@ -1,5 +1,8 @@
 #include "exit_code.h"
 #include "presentation/logger.h"
+#include "presentation/logger/no_logger.h"
+#include "presentation/logger/basic_logger.h"
+#include "presentation/logger/chain_logger.h"
 
 #include <spdlog/common.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
