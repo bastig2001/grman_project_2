@@ -4,8 +4,8 @@ message File {
     string file_name = 1;
     uint64 timestamp = 2;
     uint64 size = 3;
-    oneof optional_signature {
-        string signature = 4;
+    oneof optional_checksum {
+        string checksum = 4;
     }
 }
 

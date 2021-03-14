@@ -4,8 +4,10 @@ import "messages/basic.proto";
 
 message SyncRequest {
     Block block = 1;
-    string weak_signature = 2;
-    string strong_signature = 3;
+    oneof checksum {
+        string weak = 2;
+        string strong = 3;
+    }
 }
 
 message SyncResponse {
