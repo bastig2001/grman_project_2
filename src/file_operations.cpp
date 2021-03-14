@@ -24,8 +24,7 @@ SyncRequest* get_sync_request(Block* block) {
     auto request{new SyncRequest};
 
     request->set_allocated_block(block);
-    request->set_strong_signature("");
-    request->set_weak_signature("");
+    request->set_weak_checksum("");
 
     return request;
 }
@@ -33,32 +32,33 @@ SyncRequest* get_sync_request(Block* block) {
 SyncResponse* get_sync_response(const SyncRequest& request) {
     auto response{new SyncResponse};
 
-    response->set_allocated_block(new Block(request.block()));
-    response->set_match(false);
+    response->set_allocated_requested_block(new Block(request.block()));
+    response->set_full_match(true);
 
     return response;
 }
 
-GetRequest* get_get_request(Block* block) {
-    auto request{new GetRequest};
+CheckFileResponse* get_check_file_response(const CheckFileRequest& request) {
+    auto response{new CheckFileResponse};
 
-    request->set_allocated_block(block);
+    response->set_allocated_requested_file(new File(request.file()));
+    response->set_full_match(true);
 
-    return request;
+    return response;
 }
 
-GetRequest* get_get_request(File* file) {
-    auto request{new GetRequest};
+FileRequest* get_file_request(File* file) {
+    auto request{new FileRequest};
 
     request->set_allocated_file(file);
 
     return request;
 }
 
-GetResponse* get_get_response(const GetRequest& request) {
-    auto response{new GetResponse};
+FileResponse* get_file_response(const FileRequest& request) {
+    auto response{new FileResponse};
 
-    response->set_allocated_request(new GetRequest(request));
+    response->set_allocated_requested_file(new File(request.file()));
     response->set_data("");
 
     return response;

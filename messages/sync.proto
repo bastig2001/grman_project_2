@@ -5,8 +5,8 @@ import "messages/basic.proto";
 message SyncRequest {
     Block block = 1;
     oneof checksum {
-        string weak = 2;
-        string strong = 3;
+        string weak_checksum = 2;
+        string strong_checksum = 3;
     }
 }
 

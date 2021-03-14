@@ -118,12 +118,20 @@ tuple<Message, bool> get_response(const Message& request) {
         case Message::kSyncResponse:
             response.set_received(true);
             break;
-        case Message::kGetRequest:
-            response.set_allocated_get_response(
-                get_get_response(request.get_request())
+        case Message::kCorrection:
+            response.set_received(true);
+            break;
+        case Message::kCheckFileRequest:
+            break;
+        case Message::kCheckFileResponse:
+            response.set_received(true);
+            break;
+        case Message::kFileRequest:
+            response.set_allocated_file_response(
+                get_file_response(request.file_request())
             );
             break;
-        case Message::kGetResponse:
+        case Message::kFileResponse:
             response.set_received(true);
             break;
         case Message::kReceived:

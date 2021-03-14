@@ -114,9 +114,15 @@ bool handle_response(const Message& response) {
             break;
         case Message::kSyncResponse:
             break;
-        case Message::kGetRequest:
+        case Message::kCorrection:
             break;
-        case Message::kGetResponse:
+        case Message::kCheckFileRequest:
+            break;
+        case Message::kCheckFileResponse:
+            break;
+        case Message::kFileRequest:
+            break;
+        case Message::kFileResponse:
             break;
         case Message::kReceived:
             break;

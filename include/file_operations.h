@@ -16,8 +16,8 @@ SyncRequest* get_sync_request(Block*);
 
 SyncResponse* get_sync_response(const SyncRequest&);
 
-GetRequest* get_get_request(Block*);
+CheckFileResponse* get_check_file_response(const CheckFileRequest&);
 
-GetRequest* get_get_request(File*);
+FileRequest* get_file_request(File*);
 
-GetResponse* get_get_response(const GetRequest&);
+FileResponse* get_file_response(const FileRequest&);
