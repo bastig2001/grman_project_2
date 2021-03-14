@@ -18,9 +18,9 @@ int main(int argc, char* argv[]) {
     auto config_result = configure(argc, argv);
     
     if (auto config{get_if<Config>(&config_result)}) {
-        logger = get_logger(config->log);
+        logger = get_logger(config->logger);
 
-        if (config->log.log_config) {
+        if (config->logger.log_config) {
             logger->debug(
                 "This program was called correctly.\n"
                 "The config is:\n" + (string)*config

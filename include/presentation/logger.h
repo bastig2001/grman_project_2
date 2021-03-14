@@ -1,7 +1,5 @@
 #pragma once
 
-#include "config.h"
-
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <memory>
@@ -31,6 +29,3 @@ class Logger {
 
 // Global Logger object for all of the logging
 extern Logger* logger;
-
-
-Logger* get_logger(const LogConfig&);
