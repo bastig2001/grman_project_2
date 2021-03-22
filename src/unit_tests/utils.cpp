@@ -120,16 +120,16 @@ TEST_SUITE("utils") {
         }
     }
 
-    TEST_CASE("get MD4 hash") {
+    TEST_CASE("get MD5 hash") {
         vector<tuple<string, string>> msg_digest_pairs{
-            {"ABC", "6a86685756167ca49fa5ac194f812c61"}, 
-            {"Test123", "a713518eb92c69a77644698080a109f0"}, 
-            {"Alles gut bei dir?", "102b6d42d81018c12de9322d9236e18a"},
-            {"Polyfon zwitschernd aßen Mäxchens Vögel Rüben, Joghurt und Quark", "09763bccf0943e43295773e43549fdb2"}
+            {"ABC", "902fbdd2b1df0c4f70b4a5d23525e932"}, 
+            {"Test123", "68eacb97d86f0c4621fa2b0e17cabd8c"}, 
+            {"Alles gut bei dir?", "2ed21e45fac7d66719df2e58080b0508"},
+            {"Polyfon zwitschernd aßen Mäxchens Vögel Rüben, Joghurt und Quark", "823b476aeb6e7fc02afec186079ac107"}
         };
         tuple<string, string> msg_digest_pair;
         DOCTEST_VALUE_PARAMETERIZED_DATA(msg_digest_pair, msg_digest_pairs);
 
-        CHECK(get_md4_hash(get<0>(msg_digest_pair)) == get<1>(msg_digest_pair));
+        CHECK(get_md5_hash(get<0>(msg_digest_pair)) == get<1>(msg_digest_pair));
     }
 } 

@@ -1,7 +1,7 @@
 #include "utils.h"
 
 #include <fmt/core.h>
-#include <openssl/md4.h>
+#include <openssl/md5.h>
 #include <iterator>
 #include <unordered_map>
 
@@ -109,10 +109,10 @@ string from_base64(const string& to_decode) {
     return decoded;
 }
 
-string get_md4_hash(const string& bytes) {
-    unsigned char digest[MD4_DIGEST_LENGTH];
-    MD4((unsigned char*)bytes.c_str(), bytes.length(), digest);
-    return unsigned_char_to_hexadecimal_string(digest, MD4_DIGEST_LENGTH);
+string get_md5_hash(const string& bytes) {
+    unsigned char digest[MD5_DIGEST_LENGTH];
+    MD5((unsigned char*)bytes.c_str(), bytes.length(), digest);
+    return unsigned_char_to_hexadecimal_string(digest, MD5_DIGEST_LENGTH);
 }
 
 string unsigned_char_to_hexadecimal_string(
