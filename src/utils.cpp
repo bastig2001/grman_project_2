@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include <fmt/core.h>
+#include <openssl/md4.h>
 #include <iterator>
 #include <unordered_map>
 
@@ -19,6 +21,8 @@ const unordered_map<char, unsigned short> base64_vals{
     {'5', 57}, {'6', 58}, {'7', 59}, {'8', 60}, {'9', 61}, {'+', 62}, {'/', 63},
     {pad_char, 0}
 };
+
+string unsigned_char_to_string(unsigned char*, unsigned int);
 
 
 std::string msg_to_base64(const Message& msg) {
@@ -103,4 +107,18 @@ string from_base64(const string& to_decode) {
     }
 
     return decoded;
+}
+
+string get_md4_digest(const string& bytes) {
+    unsigned char digest[MD4_DIGEST_LENGTH];
+    MD4((unsigned char*)bytes.c_str(), bytes.length(), digest);
+    return unsigned_char_to_string(digest, MD4_DIGEST_LENGTH);
+}
+
+string unsigned_char_to_string(unsigned char* arr, unsigned int n) {
+    string result{};
+    for (unsigned int i{0}; i < n; i++) {
+        result += fmt::format("{:02x}", (unsigned int)arr[i]);
+    }
+    return result;
 }

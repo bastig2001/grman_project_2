@@ -36,3 +36,5 @@ Message msg_from_base64(std::istream&);
 std::string to_base64(const std::string&);
 
 std::string from_base64(const std::string&);
+
+std::string get_md4_digest(const std::string&);
