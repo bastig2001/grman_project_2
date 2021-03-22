@@ -120,7 +120,7 @@ TEST_SUITE("utils") {
         }
     }
 
-    TEST_CASE("get MD4 digest") {
+    TEST_CASE("get MD4 hash") {
         vector<tuple<string, string>> msg_digest_pairs{
             {"ABC", "6a86685756167ca49fa5ac194f812c61"}, 
             {"Test123", "a713518eb92c69a77644698080a109f0"}, 
@@ -130,6 +130,6 @@ TEST_SUITE("utils") {
         tuple<string, string> msg_digest_pair;
         DOCTEST_VALUE_PARAMETERIZED_DATA(msg_digest_pair, msg_digest_pairs);
 
-        CHECK(get_md4_digest(get<0>(msg_digest_pair)) == get<1>(msg_digest_pair));
+        CHECK(get_md4_hash(get<0>(msg_digest_pair)) == get<1>(msg_digest_pair));
     }
 } 
