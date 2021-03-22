@@ -3,26 +3,22 @@ syntax = "proto3";
 import "messages/basic.proto";
 
 message SyncRequest {
-    Block block = 1;
-    oneof checksum {
-        string weak_checksum = 2;
-        string strong_checksum = 3;
-    }
+    Block starting_block = 1;
+    repeated uint32 weak_checksums = 2;
 }
 
 message SyncResponse {
     Block requested_block = 1;
     oneof response {
         bool full_match = 2;
-        bool requesting_strong_signature = 3;
-        bool requesting_correction = 4;
-        string correction_data = 5;
+        bool requesting_strong_checksum = 3;
+        string correction_data = 4;
     }
 }
 
-message Correction {
+message ChecksumAddendum {
     Block block = 1;
-    string correction_data = 2;
+    string strong_checksum = 2;
 }
 
 message CheckFileRequest {
@@ -32,11 +28,10 @@ message CheckFileRequest {
 message CheckFileResponse {
     File requested_file = 1;
     oneof response {
-        bool full_match = 2;
-        bool requesting_signature = 3;
-        string new_file_name = 4;
-        bool request_syncing = 5;
-        SyncRequest sync_request = 6;
+        bool match = 2;
+        string new_file_name = 3;
+        bool request_syncing = 4;
+        SyncRequest sync_request = 5;
     }
 }
 

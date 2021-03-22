@@ -5,9 +5,6 @@ message File {
     uint64 timestamp = 2;
     uint64 size = 3;
     bool checksum_enabled = 4;
-    oneof optional_checksum {
-        string checksum = 5;
-    }
 }
 
 message Block {

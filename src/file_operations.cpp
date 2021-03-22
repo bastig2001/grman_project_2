@@ -23,8 +23,7 @@ FileList* show_files(const ShowFiles&) {
 SyncRequest* get_sync_request(Block* block) {
     auto request{new SyncRequest};
 
-    request->set_allocated_block(block);
-    request->set_weak_checksum("");
+    request->set_allocated_starting_block(block);
 
     return request;
 }
@@ -32,7 +31,7 @@ SyncRequest* get_sync_request(Block* block) {
 SyncResponse* get_sync_response(const SyncRequest& request) {
     auto response{new SyncResponse};
 
-    response->set_allocated_requested_block(new Block(request.block()));
+    response->set_allocated_requested_block(new Block(request.starting_block()));
     response->set_full_match(true);
 
     return response;
@@ -42,7 +41,7 @@ CheckFileResponse* get_check_file_response(const CheckFileRequest& request) {
     auto response{new CheckFileResponse};
 
     response->set_allocated_requested_file(new File(request.file()));
-    response->set_full_match(true);
+    response->set_match(true);
 
     return response;
 }

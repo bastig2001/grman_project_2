@@ -9,7 +9,7 @@ message Message {
         FileList          file_list           =  2;
         SyncRequest       sync_request        =  3;
         SyncResponse      sync_response       =  4;
-        Correction        correction          =  5;
+        ChecksumAddendum  checksum_addendum   =  5;
         CheckFileRequest  check_file_request  =  6;
         CheckFileResponse check_file_response =  7;
         FileRequest       file_request        =  8;
