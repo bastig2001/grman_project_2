@@ -48,16 +48,18 @@ messages = protoc.process('messages/all.proto',
 inc_dir = include_directories('include')
 
 src = [
-    'src/config.cpp',
     'src/client.cpp',
-    'src/server.cpp',
-    'src/utils.cpp',
+    'src/config.cpp',
     'src/file_operations.cpp',
+    'src/server.cpp',
+    'src/sync_utils.cpp',
+    'src/utils.cpp',
     'src/presentation/logger_config.cpp'
 ]
 
 unit_tests_src = [
     'src/unit_tests/main.cpp',
+    'src/unit_tests/sync_utils.cpp',
     'src/unit_tests/utils.cpp'
 ]
 
