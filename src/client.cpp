@@ -114,7 +114,7 @@ bool handle_response(const Message& response) {
             break;
         case Message::kSyncResponse:
             break;
-        case Message::kChecksumAddendum:
+        case Message::kSignatureAddendum:
             break;
         case Message::kCheckFileRequest:
             break;

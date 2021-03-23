@@ -118,7 +118,7 @@ tuple<Message, bool> get_response(const Message& request) {
         case Message::kSyncResponse:
             response.set_received(true);
             break;
-        case Message::kChecksumAddendum:
+        case Message::kSignatureAddendum:
             response.set_received(true);
             break;
         case Message::kCheckFileRequest:

@@ -2,23 +2,28 @@ syntax = "proto3";
 
 import "messages/basic.proto";
 
+message BlockWithSignature {
+    Block block = 1;
+    string strong_signature = 2;
+}
+
+
 message SyncRequest {
     Block starting_block = 1;
-    repeated uint32 weak_checksums = 2;
+    repeated uint32 weak_signatures = 2;
 }
 
 message SyncResponse {
     repeated Block requested_blocks = 1;
     oneof response {
         bool full_match = 2;
-        bool requesting_strong_checksum = 3;
+        bool requesting_strong_signatures = 3;
         string correction_data = 4;
     }
 }
 
-message ChecksumAddendum {
-    Block block = 1;
-    string strong_checksum = 2;
+message SignatureAddendum {
+    repeated BlockWithSignature blocks_with_signature = 1;
 }
 
 message CheckFileRequest {
