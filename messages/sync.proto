@@ -8,7 +8,7 @@ message SyncRequest {
 }
 
 message SyncResponse {
-    Block requested_block = 1;
+    repeated Block requested_blocks = 1;
     oneof response {
         bool full_match = 2;
         bool requesting_strong_checksum = 3;
@@ -32,6 +32,7 @@ message CheckFileResponse {
         string new_file_name = 3;
         bool request_syncing = 4;
         SyncRequest sync_request = 5;
+        bool requesting_file = 6;
     }
 }
 

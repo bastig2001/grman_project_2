@@ -28,10 +28,9 @@ SyncRequest* get_sync_request(Block* block) {
     return request;
 }
 
-SyncResponse* get_sync_response(const SyncRequest& request) {
+SyncResponse* get_sync_response(const SyncRequest&) {
     auto response{new SyncResponse};
 
-    response->set_allocated_requested_block(new Block(request.starting_block()));
     response->set_full_match(true);
 
     return response;

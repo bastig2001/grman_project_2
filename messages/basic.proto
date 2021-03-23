@@ -4,7 +4,6 @@ message File {
     string file_name = 1;
     uint64 timestamp = 2;
     uint64 size = 3;
-    bool checksum_enabled = 4;
 }
 
 message Block {
