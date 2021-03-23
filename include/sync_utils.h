@@ -24,4 +24,10 @@ std::vector<unsigned int> get_weak_signatures(
     unsigned long initial_offset, 
     unsigned long block_size
 );
+std::vector<unsigned int> get_weak_signatures(
+    std::istream& data, 
+    size_t data_size,
+    unsigned long initial_offset, 
+    unsigned long block_size
+);
 

@@ -76,13 +76,30 @@ TEST_SUITE("sync_utils") {
         }
         
         SUBCASE("rolling incremented checksum") {
-            DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
-            string msg{get<0>(msg_signature_pair)};
+            SUBCASE("string") {
+                DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
+                string msg{get<0>(msg_signature_pair)};
 
-            auto signatures{get_weak_signatures(msg, 0, 3)};
-            for (unsigned int i{0}; i < signatures.size(); i++) {
-                CHECK(signatures[i] == get_weak_signature(msg, i, 3));
+                auto signatures{get_weak_signatures(msg, 0, 3)};
+                for (unsigned int i{0}; i < signatures.size(); i++) {
+                    CHECK(signatures[i] == get_weak_signature(msg, i, 3));
+                }
             }
+            SUBCASE("istream and string") {
+                DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
+                string msg{get<0>(msg_signature_pair)};
+                istringstream msg_stream{msg};
+
+                auto signatures{get_weak_signatures(msg_stream, msg.length(), 0, 3)};
+                CHECK(signatures.size() == msg.length() - 2);
+
+                for (unsigned int i{0}; i < signatures.size(); i++) {
+                    CHECK(signatures[i] == get_weak_signature(msg, i, 3));
+                    CHECK(signatures[i] == get_weak_signature(msg_stream, i, 3));
+                }
+            }
+            
+            
         }
     }
 }

@@ -84,7 +84,6 @@ unsigned int get_weak_signature(
     return get<2>(calc_weak_signature(data, offset, block_size));
 }
 
-
 vector<unsigned int> get_weak_signatures(
     const string& data, 
     unsigned long initial_offset, 
@@ -114,6 +113,56 @@ vector<unsigned int> get_weak_signatures(
         signatures.push_back(signature);
         r1 = new_r1;
         r2 = new_r2;
+    }
+
+    return signatures;
+}
+
+vector<unsigned int> get_weak_signatures(
+    istream& data, 
+    size_t data_size,
+    unsigned long initial_offset, 
+    unsigned long block_size
+) {
+    unsigned long number_of_signatures{data_size - block_size + 1};
+    vector<unsigned int> signatures{};
+    signatures.reserve(number_of_signatures);
+
+    vector<char> block(block_size + 1);
+    data.seekg(initial_offset, ios::beg);
+    data.read(block.data(), block_size);
+
+    auto [r1, r2, signature]{
+        calc_weak_signature(
+            string{block.begin(), block.end()}, 
+            0, 
+            block_size
+    )};
+    signatures.push_back(signature);
+    
+    for (unsigned int i{0}; i < number_of_signatures - 1; i++) {
+        data.seekg(initial_offset + i, ios::beg);
+        data.read(block.data(), block_size + 1);
+
+        if (!(data.gcount() < 0) 
+            && 
+            ((unsigned long)data.gcount() == block_size + 1)
+        ) {
+            auto [new_r1, new_r2, signature]{
+                increment_weak_signature(
+                    string{block.begin(), block.end()}, 
+                    0, 
+                    block_size,
+                    r1,
+                    r2
+            )};
+            signatures.push_back(signature);
+            r1 = new_r1;
+            r2 = new_r2;
+        }
+        else {
+            break;
+        }
     }
 
     return signatures;
