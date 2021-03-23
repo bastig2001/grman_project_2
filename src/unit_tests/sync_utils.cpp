@@ -2,6 +2,7 @@
 #include "unit_tests/doctest_utils.h"
 
 #include <doctest.h>
+#include <sstream>
 #include <tuple>
 
 using namespace std;
@@ -22,6 +23,11 @@ TEST_SUITE("sync_utils") {
             get_strong_signature(get<0>(msg_signature_pair)) 
             == 
             get<1>(msg_signature_pair)
+        );
+
+        istringstream msg_stream{get<0>(msg_signature_pair)};
+        CHECK(
+            get_strong_signature(msg_stream) == get<1>(msg_signature_pair)
         );
     }
 

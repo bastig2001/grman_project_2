@@ -1,10 +1,12 @@
 #pragma once
 
+#include <istream>
 #include <vector>
 #include <string>
 
 
 std::string get_strong_signature(const std::string&);
+std::string get_strong_signature(std::istream&);
 
 unsigned int get_weak_signature(
     const std::string& data, 

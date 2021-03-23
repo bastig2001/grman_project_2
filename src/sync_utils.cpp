@@ -23,12 +23,31 @@ tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
     unsigned int
 );
 
-const unsigned int signature_modulus = pow(2, 16);
+const unsigned int buffer_size{10000};
+const unsigned int signature_modulus{(unsigned int)(pow(2, 16))};
 
 
 string get_strong_signature(const string& bytes) {
     unsigned char digest[MD5_DIGEST_LENGTH];
     MD5((unsigned char*)bytes.c_str(), bytes.length(), digest);
+    return unsigned_char_to_hexadecimal_string(digest, MD5_DIGEST_LENGTH);
+}
+
+string get_strong_signature(istream& bytes) {
+    MD5_CTX ctx{};
+    MD5_Init(&ctx);
+
+    char buffer[buffer_size]{};
+    streamsize read{};
+    do {
+        bytes.read(buffer, buffer_size);
+        read = bytes.gcount();
+        MD5_Update(&ctx, buffer, read);
+    } while (read == buffer_size);
+
+    unsigned char digest[MD5_DIGEST_LENGTH];
+    MD5_Final(digest, &ctx);
+    
     return unsigned_char_to_hexadecimal_string(digest, MD5_DIGEST_LENGTH);
 }
 
