@@ -17,18 +17,23 @@ TEST_SUITE("sync_utils") {
             {"Polyfon zwitschernd aßen Mäxchens Vögel Rüben, Joghurt und Quark", "823b476aeb6e7fc02afec186079ac107"}
         };
         tuple<string, string> msg_signature_pair;
-        DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
 
-        CHECK(
-            get_strong_signature(get<0>(msg_signature_pair)) 
-            == 
-            get<1>(msg_signature_pair)
-        );
+        SUBCASE("string") {
+            DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
 
-        istringstream msg_stream{get<0>(msg_signature_pair)};
-        CHECK(
-            get_strong_signature(msg_stream) == get<1>(msg_signature_pair)
-        );
+            CHECK(
+                get_strong_signature(get<0>(msg_signature_pair)) 
+                == 
+                get<1>(msg_signature_pair)
+            );
+        }
+        SUBCASE("istream") {
+            DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
+            istringstream msg_stream{get<0>(msg_signature_pair)};
+            CHECK(
+                get_strong_signature(msg_stream) == get<1>(msg_signature_pair)
+            );
+        }        
     }
 
     TEST_CASE("weak signature") {
@@ -41,17 +46,33 @@ TEST_SUITE("sync_utils") {
         tuple<string, unsigned int> msg_signature_pair;
 
         SUBCASE("checksum of whole value") {
-            DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
+            SUBCASE("string") {
+                DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
 
-            CHECK(
-                get_weak_signature(
-                    get<0>(msg_signature_pair), 
-                    0, 
-                    get<0>(msg_signature_pair).length()
-                ) 
-                == 
-                get<1>(msg_signature_pair)
-            );
+                CHECK(
+                    get_weak_signature(
+                        get<0>(msg_signature_pair), 
+                        0, 
+                        get<0>(msg_signature_pair).length()
+                    ) 
+                    == 
+                    get<1>(msg_signature_pair)
+                );
+            }
+            SUBCASE("istream") {
+                DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
+                istringstream msg_stream{get<0>(msg_signature_pair)};
+
+                CHECK(
+                    get_weak_signature(
+                        msg_stream, 
+                        0, 
+                        get<0>(msg_signature_pair).length()
+                    ) 
+                    == 
+                    get<1>(msg_signature_pair)
+                );
+            }
         }
         
         SUBCASE("rolling incremented checksum") {

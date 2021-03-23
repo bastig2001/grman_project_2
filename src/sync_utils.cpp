@@ -47,7 +47,7 @@ string get_strong_signature(istream& bytes) {
 
     unsigned char digest[MD5_DIGEST_LENGTH];
     MD5_Final(digest, &ctx);
-    
+
     return unsigned_char_to_hexadecimal_string(digest, MD5_DIGEST_LENGTH);
 }
 
@@ -62,13 +62,28 @@ string unsigned_char_to_hexadecimal_string(
     return result;
 }
 
+
 unsigned int get_weak_signature(
-    const std::string& data, 
+    istream& data, 
+    unsigned long offset, 
+    unsigned long block_size
+) {
+    vector<char> block(block_size);
+
+    data.seekg(offset, ios::beg);
+    data.read(block.data(), block_size);
+
+    return get_weak_signature(string{block.begin(), block.end()}, 0, block_size);
+}
+
+unsigned int get_weak_signature(
+    const string& data, 
     unsigned long offset, 
     unsigned long block_size
 ) {
     return get<2>(calc_weak_signature(data, offset, block_size));
 }
+
 
 vector<unsigned int> get_weak_signatures(
     const string& data, 

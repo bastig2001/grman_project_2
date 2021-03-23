@@ -13,6 +13,11 @@ unsigned int get_weak_signature(
     unsigned long offset, 
     unsigned long block_size
 );
+unsigned int get_weak_signature(
+    std::istream& data, 
+    unsigned long offset, 
+    unsigned long block_size
+);
 
 std::vector<unsigned int> get_weak_signatures(
     const std::string& data, 
