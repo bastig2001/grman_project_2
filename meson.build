@@ -18,6 +18,9 @@ add_global_arguments('-I' + get_option('cli11_include_dir'), language : 'cpp')
 # fmt: https://github.com/fmtlib/fmt
 fmt = dependency('fmt')
 
+# glob: https://github.com/p-ranav/glob
+add_global_arguments('-I' + get_option('glob_include_dir'), language : 'cpp')
+
 # spdlog: https://github.com/gabime/spdlog
 # add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
 # add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
