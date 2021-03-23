@@ -3,7 +3,6 @@ option('doctest_include_dir', type : 'string', value : '/opt/cpp_include', descr
 option('cli11_include_dir',   type : 'string', value : '/opt/cpp_include', description : 'the dir containing CLI11.hpp')
 option('peglib_include_dir',  type : 'string', value : '/opt/cpp_include', description : 'the dir containing peglib.h')
 option('fmt_include_dir',     type : 'string', value : '/opt/cpp_include', description : 'the include dir of fmt')
-option('glob_include_dir',    type : 'string', value : '/opt/cpp_include', description : 'the dir containing glob.hpp')
 option('json_include_dir',    type : 'string', value : '/opt/cpp_include', description : 'the include dir of json')
 option('spdlog_include_dir',  type : 'string', value : '/opt/cpp_include', description : 'the include dir of spdlog')
 option('toml_include_dir',    type : 'string', value : '/opt/cpp_include', description : 'the include dir of toml++')

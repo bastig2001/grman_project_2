@@ -5,7 +5,7 @@
 using namespace std;
 
 
-ShowFiles* get_show_files(const std::vector<std::string>& options) {
+ShowFiles* get_show_files(const vector<string>& options) {
     auto show_files{new ShowFiles};
 
     for (auto option : options) {
