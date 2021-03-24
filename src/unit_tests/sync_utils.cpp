@@ -51,8 +51,7 @@ TEST_SUITE("sync_utils") {
 
                 CHECK(
                     get_weak_signature(
-                        get<0>(msg_signature_pair), 
-                        0, 
+                        get<0>(msg_signature_pair),
                         get<0>(msg_signature_pair).length()
                     ) 
                     == 
@@ -66,7 +65,6 @@ TEST_SUITE("sync_utils") {
                 CHECK(
                     get_weak_signature(
                         msg_stream, 
-                        0, 
                         get<0>(msg_signature_pair).length()
                     ) 
                     == 
@@ -76,26 +74,53 @@ TEST_SUITE("sync_utils") {
         }
         
         SUBCASE("rolling incremented checksum") {
-            SUBCASE("string") {
+            SUBCASE("string without offset") {
                 DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
                 string msg{get<0>(msg_signature_pair)};
 
-                auto signatures{get_weak_signatures(msg, 0, 3)};
+                auto signatures{get_weak_signatures(msg, 3)};
                 for (unsigned int i{0}; i < signatures.size(); i++) {
-                    CHECK(signatures[i] == get_weak_signature(msg, i, 3));
+                    CHECK(signatures[i] == get_weak_signature(msg, 3, i));
                 }
             }
-            SUBCASE("istream and string") {
+            SUBCASE("string with offset") {                
+                vector<unsigned int> offsets{0, 1, 2, 3, 4};
+                unsigned int offset{};
+                DOCTEST_VALUE_PARAMETERIZED_DATA(offset, offsets);
+                string msg{get<0>(msg_signature_pairs[3])};
+
+                auto signatures{get_weak_signatures(msg, 4, offset)};
+                for (unsigned int i{0}; i < signatures.size(); i++) {
+                    CHECK(signatures[i] == get_weak_signature(msg, 4, i + offset));
+                }
+            }
+
+            SUBCASE("istream without offset") {
                 DOCTEST_VALUE_PARAMETERIZED_DATA(msg_signature_pair, msg_signature_pairs);
                 string msg{get<0>(msg_signature_pair)};
                 istringstream msg_stream{msg};
 
-                auto signatures{get_weak_signatures(msg_stream, msg.length(), 0, 3)};
+                auto signatures{get_weak_signatures(msg_stream, msg.length(), 3)};
                 CHECK(signatures.size() == msg.length() - 2);
 
                 for (unsigned int i{0}; i < signatures.size(); i++) {
-                    CHECK(signatures[i] == get_weak_signature(msg, i, 3));
-                    CHECK(signatures[i] == get_weak_signature(msg_stream, i, 3));
+                    CHECK(signatures[i] == get_weak_signature(msg, 3, i));
+                    CHECK(signatures[i] == get_weak_signature(msg_stream, 3, i));
+                }
+            }
+            SUBCASE("istream with offset") {
+                vector<unsigned int> offsets{0, 1, 2, 3, 4};
+                unsigned int offset{};
+                DOCTEST_VALUE_PARAMETERIZED_DATA(offset, offsets);
+                string msg{get<0>(msg_signature_pairs[3])};
+                istringstream msg_stream{msg};
+
+                auto signatures{get_weak_signatures(msg_stream, msg.length(), 4, offset)};
+                CHECK(signatures.size() == msg.length() - 3 - offset);
+
+                for (unsigned int i{0}; i < signatures.size(); i++) {
+                    CHECK(signatures[i] == get_weak_signature(msg, 4, i + offset));
+                    CHECK(signatures[i] == get_weak_signature(msg_stream, 4, i + offset));
                 }
             }
             

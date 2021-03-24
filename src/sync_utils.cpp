@@ -65,39 +65,41 @@ string unsigned_char_to_hexadecimal_string(
 
 unsigned int get_weak_signature(
     istream& data, 
-    unsigned long offset, 
-    unsigned long block_size
+    unsigned long block_size, 
+    unsigned long offset
 ) {
     vector<char> block(block_size);
 
     data.seekg(offset, ios::beg);
     data.read(block.data(), block_size);
 
-    return get_weak_signature(string{block.begin(), block.end()}, 0, block_size);
+    return get_weak_signature(string{block.begin(), block.end()}, block_size);
 }
 
 unsigned int get_weak_signature(
     const string& data, 
-    unsigned long offset, 
-    unsigned long block_size
+    unsigned long block_size, 
+    unsigned long offset
 ) {
-    return get<2>(calc_weak_signature(data, offset, block_size));
+    return get<2>(calc_weak_signature(data, block_size, offset));
 }
 
 vector<unsigned int> get_weak_signatures(
     const string& data, 
-    unsigned long initial_offset, 
-    unsigned long block_size
+    unsigned long block_size, 
+    unsigned long initial_offset
 ) {
-    unsigned long number_of_signatures{data.length() - block_size + 1};
+    unsigned long number_of_signatures{
+        data.length() - block_size + 1 - initial_offset
+    };
     vector<unsigned int> signatures{};
     signatures.reserve(number_of_signatures);
 
     auto [r1, r2, signature]{
         calc_weak_signature(
             data, 
-            initial_offset, 
-            block_size
+            block_size, 
+            initial_offset
     )};
     signatures.push_back(signature);
     
@@ -105,8 +107,8 @@ vector<unsigned int> get_weak_signatures(
         auto [new_r1, new_r2, signature]{
             increment_weak_signature(
                 data, 
-                initial_offset + i, 
                 block_size,
+                initial_offset + i, 
                 r1,
                 r2
         )};
@@ -121,10 +123,12 @@ vector<unsigned int> get_weak_signatures(
 vector<unsigned int> get_weak_signatures(
     istream& data, 
     size_t data_size,
-    unsigned long initial_offset, 
-    unsigned long block_size
+    unsigned long block_size, 
+    unsigned long initial_offset
 ) {
-    unsigned long number_of_signatures{data_size - block_size + 1};
+    unsigned long number_of_signatures{
+        data_size - block_size + 1 - initial_offset
+    };
     vector<unsigned int> signatures{};
     signatures.reserve(number_of_signatures);
 
@@ -134,9 +138,9 @@ vector<unsigned int> get_weak_signatures(
 
     auto [r1, r2, signature]{
         calc_weak_signature(
-            string{block.begin(), block.end()}, 
-            0, 
-            block_size
+            string{block.begin(), block.end()},
+            block_size,
+            0
     )};
     signatures.push_back(signature);
     
@@ -150,9 +154,9 @@ vector<unsigned int> get_weak_signatures(
         ) {
             auto [new_r1, new_r2, signature]{
                 increment_weak_signature(
-                    string{block.begin(), block.end()}, 
-                    0, 
+                    string{block.begin(), block.end()},
                     block_size,
+                    0,
                     r1,
                     r2
             )};
@@ -170,8 +174,8 @@ vector<unsigned int> get_weak_signatures(
 
 tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
     const string& data, 
-    unsigned long offset, 
-    unsigned long block_size
+    unsigned long block_size, 
+    unsigned long offset
 ) {
     unsigned int r1{0};
     for_each(data.begin() + offset, data.begin() + offset + block_size, 
@@ -194,8 +198,8 @@ tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
 
 tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
     const string& data, 
-    unsigned long preceding_offset, 
     unsigned long block_size, 
+    unsigned long preceding_offset, 
     unsigned int preceding_r1,
     unsigned int preceding_r2
 ) {
