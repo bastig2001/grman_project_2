@@ -17,14 +17,16 @@ vector<path> get_files(bool include_hidden) {
     vector<path> paths{};
 
     recursive_directory_iterator file_iterator{current_path()};
-    for (auto path: file_iterator) {
-        if (path.is_regular_file() 
+    for (auto file: file_iterator) {
+        auto path{relative(file)};
+
+        if (file.is_regular_file() 
             && 
             (include_hidden || is_not_hidden(path))
         ) {
-            paths.push_back(relative(path));
+            paths.push_back(path);
         }
-        else if (path.is_directory() 
+        else if (file.is_directory() 
                 && 
                 !include_hidden && is_hidden(path)
         ) {

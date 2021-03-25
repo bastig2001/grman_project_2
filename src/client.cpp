@@ -23,7 +23,7 @@ bool handle_response(const Message&);
 int run_client(Config& config) {
     if (config.server.has_value()) {
         logger->debug("Files to sync:");
-        for (auto& file: get_files(false)) {
+        for (auto& file: get_files(config.sync_hidden_files)) {
             logger->debug(file);
         }
 

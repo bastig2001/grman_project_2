@@ -21,6 +21,7 @@ struct ServerData {
 struct Config {
     std::optional<ServerData> server;
     std::optional<ServerData> act_as_server;
+    bool sync_hidden_files;
     LoggerConfig logger;
 
     operator std::string() {

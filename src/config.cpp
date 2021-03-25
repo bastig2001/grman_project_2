@@ -54,6 +54,13 @@ variant<int, Config> configure(int argc, char* argv[]) {
                 "  Enables the flag --serve"
         )->envname("SYNC_BIND_PORT");
 
+    bool sync_hidden_files{false};
+    app.add_flag(
+        "--hidden",
+        sync_hidden_files,
+        "Sync also hidden files"
+    )->envname("SYNC_HIDDEN");
+
     LoggerConfig logger{};
     app.add_flag(
         "-l, --log-to-console",
@@ -127,6 +134,7 @@ variant<int, Config> configure(int argc, char* argv[]) {
     return Config{
         *server_address_option ? optional{server} : nullopt,
         serve ? optional{act_as_server} : nullopt,
+        sync_hidden_files,
         logger
     };
 }
