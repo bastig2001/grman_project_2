@@ -2,8 +2,46 @@
 #include "messages/info.pb.h"
 #include "messages/sync.pb.h"
 
-using namespace std;
+#include <filesystem>
+#include <iterator>
+#include <regex>
 
+using namespace std;
+using namespace filesystem;
+
+bool is_hidden(const path&);
+bool is_not_hidden(const path&);
+
+
+vector<path> get_files(bool include_hidden) {
+    vector<path> paths{};
+
+    recursive_directory_iterator file_iterator{current_path()};
+    for (auto path: file_iterator) {
+        if (path.is_regular_file() 
+            && 
+            (include_hidden || is_not_hidden(path))
+        ) {
+            paths.push_back(relative(path));
+        }
+        else if (path.is_directory() 
+                && 
+                !include_hidden && is_hidden(path)
+        ) {
+            file_iterator.disable_recursion_pending();
+        }
+    }
+
+    return paths;
+}
+
+bool is_hidden(const path& path) {
+    return regex_match(path.c_str(), regex{"^(.*\\/\\.|\\.).+$"});
+}
+
+bool is_not_hidden(const path& path) {
+    return !is_hidden(path);
+}
 
 ShowFiles* get_show_files(const vector<string>& options) {
     auto show_files{new ShowFiles};
@@ -61,3 +99,31 @@ FileResponse* get_file_response(const FileRequest& request) {
 
     return response;
 }
+
+
+#ifdef UNIT_TESTS
+#include "unit_tests/doctest_utils.h"
+#include <doctest.h>
+
+TEST_SUITE("file operations utils") {
+    TEST_CASE("hidden path") {
+        vector<path> hidden_paths
+            {".gitignore", ".git/", "/.ignore.txt", "build/.gitkeep", ".hidden/.hidden"};
+        path hidden_path{};
+        DOCTEST_VALUE_PARAMETERIZED_DATA(hidden_path, hidden_paths);
+
+        CHECK(is_hidden(hidden_path));
+        CHECK(!is_not_hidden(hidden_path));
+    }
+    TEST_CASE("not hidden path") {
+        vector<path> not_hidden_paths
+            {"LICENSE", "build", "/log.txt", "src/main.cpp", "include/unit_tests"};
+        path not_hidden_path{};
+        DOCTEST_VALUE_PARAMETERIZED_DATA(not_hidden_path, not_hidden_paths);
+
+        CHECK(is_not_hidden(not_hidden_path));
+        CHECK(!is_hidden(not_hidden_path));
+    }
+}
+
+#endif

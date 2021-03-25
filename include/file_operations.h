@@ -4,9 +4,12 @@
 #include "messages/info.pb.h"
 #include "messages/sync.pb.h"
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
+
+std::vector<std::filesystem::path> get_files(bool include_hidden);
 
 ShowFiles* get_show_files(const std::vector<std::string>& = {});
 
