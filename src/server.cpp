@@ -122,6 +122,9 @@ tuple<Message, bool> get_response(const Message& request) {
             response.set_received(true);
             break;
         case Message::kCheckFileRequest:
+            response.set_allocated_check_file_response(
+                get_check_file_response(request.check_file_request())
+            );
             break;
         case Message::kCheckFileResponse:
             response.set_received(true);

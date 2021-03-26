@@ -15,6 +15,7 @@ using namespace filesystem;
 
 bool is_hidden(const path&);
 bool is_not_hidden(const path&);
+Block* get_block(const string&);
 
 
 vector<path> get_files(bool include_hidden) {
@@ -68,6 +69,18 @@ SyncRequest* get_sync_request(Block* block) {
     auto request{new SyncRequest};
 
     request->set_allocated_starting_block(block);
+    
+    ifstream file_stream{block->file_name(), ios::binary};
+    auto signatures{
+        get_weak_signatures(
+            file_stream, 
+            file_size(block->file_name()), 
+            block->size(), 
+            block->offset()
+        )};
+    for (auto signature: signatures) {
+        request->add_weak_signatures(signature);
+    }
 
     return request;
 }
@@ -90,9 +103,35 @@ CheckFileRequest* get_check_file_request(File* file) {
 
 CheckFileResponse* get_check_file_response(const CheckFileRequest& request) {
     auto response{new CheckFileResponse};
+    auto file{new File(request.file())};
 
-    response->set_allocated_requested_file(new File(request.file()));
-    response->set_match(true);
+    response->set_allocated_requested_file(file);
+
+    if (exists(file->file_name())) {
+        auto local_file{get_file(file->file_name())};
+
+        if (local_file->timestamp() == file->timestamp() 
+            && 
+            local_file->size() == file->size()
+            &&
+            local_file->signature() == file->signature()
+        ) {
+            response->set_match(true);
+        }
+        else if (local_file->timestamp() > file->timestamp()) {
+            response->set_request_syncing(true);
+        }
+        else {
+            response->set_allocated_sync_request(
+                get_sync_request(get_block(file->file_name()))
+            );
+        }
+
+        delete local_file;
+    }
+    else {
+        response->set_requesting_file(true);
+    }
 
     return response;
 }
@@ -129,6 +168,16 @@ File* get_file(const path& path) {
     file->set_signature(get_strong_signature(file_stream));
 
     return file;
+}
+
+Block* get_block(const string& file_name) {
+    auto block{new Block};
+
+    block->set_file_name(file_name);
+    block->set_offset(0);
+    block->set_size(6000);
+
+    return block;
 }
 
 
