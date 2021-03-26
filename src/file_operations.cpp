@@ -1,8 +1,12 @@
 #include "file_operations.h"
+#include "sync_utils.h"
 #include "messages/info.pb.h"
 #include "messages/sync.pb.h"
 
+#include <chrono>
 #include <filesystem>
+#include <fstream>
+#include <ios>
 #include <iterator>
 #include <regex>
 
@@ -76,6 +80,14 @@ SyncResponse* get_sync_response(const SyncRequest&) {
     return response;
 }
 
+CheckFileRequest* get_check_file_request(File* file) {
+    auto request{new CheckFileRequest};
+
+    request->set_allocated_file(file);
+
+    return request;
+}
+
 CheckFileResponse* get_check_file_response(const CheckFileRequest& request) {
     auto response{new CheckFileResponse};
 
@@ -100,6 +112,23 @@ FileResponse* get_file_response(const FileRequest& request) {
     response->set_data("");
 
     return response;
+}
+
+File* get_file(const path& path) {
+    auto file{new File};
+
+    file->set_file_name(path);
+    file->set_timestamp(
+        chrono::duration_cast<chrono::milliseconds>(
+            last_write_time(path).time_since_epoch()
+        ).count()
+    );
+    file->set_size(file_size(path));
+
+    ifstream file_stream{path, ios::binary};
+    file->set_signature(get_strong_signature(file_stream));
+
+    return file;
 }
 
 

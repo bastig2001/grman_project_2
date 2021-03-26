@@ -23,7 +23,7 @@ void handle_client(tcp::iostream&&);
 tuple<Message, bool> get_response(const Message&);
 
 
-int run_server(Config& config) {
+int run_server(const Config& config) {
     if (config.act_as_server.has_value()) {
         auto serve_conf{config.act_as_server.value()};
 

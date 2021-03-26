@@ -3,4 +3,4 @@
 #include "config.h"
 
 
-int run_client(Config&);
+int run_client(const Config&);
