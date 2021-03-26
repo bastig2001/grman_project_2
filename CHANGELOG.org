@@ -2,12 +2,17 @@
 
 ** [Unreleased]
 *** Added
+
+*** Changed
+
+*** Removed
+
+** [0.1.3] - 2020-03-26
+*** Added
 - Flag to specify if hidden files should be synced via CLI or environment variable
 - Debug log of all files selected for syncing  
 - Client requests file checking
 - Server responds to file checking
-
-*** Changed
 
 *** Removed
 - Test communication between client and server
