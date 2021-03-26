@@ -1,10 +1,16 @@
 #include "exit_code.h"
+#include "utils.h"
+#include "presentation/logger_config.h"
 #include "presentation/logger.h"
+#include "presentation/logger/no_logger.h"
+#include "presentation/logger/basic_logger.h"
+#include "presentation/logger/chain_logger.h"
 
 #include <spdlog/common.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -18,7 +24,7 @@ void write_log_start(Logger*);
 string get_pattern(bool);
 
 
-Logger* get_logger(const LogConfig& config) {
+Logger* get_logger(const LoggerConfig& config) {
     auto console_logger{
         get_basic_console_logger(
             config.log_to_console 
@@ -104,4 +110,24 @@ string get_pattern(bool log_date) {
             : ""
     };
     return "[" + date_pattern + "%T.%e] [%^%l%$] %v";
+}
+
+
+LoggerConfig::operator string() {
+    ostringstream output{};
+
+    output 
+        << boolalpha
+        << " {\n"
+        << "  \"log to console\":   " << log_to_console               << ";\n"
+        << "  \"file\":             \"" << optional_to_string(file) << "\";\n"
+        << "  \"level on console\": " << level_console                << ";\n"
+        << "  \"level in file\":    " << level_file                   << ";\n"
+        << "  \"max file size\":    " << max_file_size / 1024         << ";\n"
+        << "  \"number of files\":  " << number_of_files              << ";\n"
+        << "  \"log date\":         " << log_date                     << ";\n"
+        << "  \"log config\":       " << log_config                    << "\n"
+        << " }";
+
+    return output.str();
 }

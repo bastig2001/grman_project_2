@@ -5,13 +5,16 @@ import "messages/info.proto";
 
 message Message {
     oneof message {
-        ShowFiles    show_files    = 1;
-        FileList     file_list     = 2;
-        SyncRequest  sync_request  = 3;
-        SyncResponse sync_response = 4;
-        GetRequest   get_request   = 5;
-        GetResponse  get_response  = 6;
-        bool         received      = 7; // when there is no other response
-        bool         finish        = 8;
+        ShowFiles         show_files          =  1;
+        FileList          file_list           =  2;
+        SyncRequest       sync_request        =  3;
+        SyncResponse      sync_response       =  4;
+        SignatureAddendum signature_addendum  =  5;
+        CheckFileRequest  check_file_request  =  6;
+        CheckFileResponse check_file_response =  7;
+        FileRequest       file_request        =  8;
+        FileResponse      file_response       =  9;
+        bool              received            = 10; // when there is no other response
+        bool              finish              = 11;
     } 
 }

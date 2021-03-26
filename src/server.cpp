@@ -23,7 +23,7 @@ void handle_client(tcp::iostream&&);
 tuple<Message, bool> get_response(const Message&);
 
 
-int run_server(Config& config) {
+int run_server(const Config& config) {
     if (config.act_as_server.has_value()) {
         auto serve_conf{config.act_as_server.value()};
 
@@ -118,12 +118,23 @@ tuple<Message, bool> get_response(const Message& request) {
         case Message::kSyncResponse:
             response.set_received(true);
             break;
-        case Message::kGetRequest:
-            response.set_allocated_get_response(
-                get_get_response(request.get_request())
+        case Message::kSignatureAddendum:
+            response.set_received(true);
+            break;
+        case Message::kCheckFileRequest:
+            response.set_allocated_check_file_response(
+                get_check_file_response(request.check_file_request())
             );
             break;
-        case Message::kGetResponse:
+        case Message::kCheckFileResponse:
+            response.set_received(true);
+            break;
+        case Message::kFileRequest:
+            response.set_allocated_file_response(
+                get_file_response(request.file_request())
+            );
+            break;
+        case Message::kFileResponse:
             response.set_received(true);
             break;
         case Message::kReceived:

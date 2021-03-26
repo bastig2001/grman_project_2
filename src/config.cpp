@@ -1,4 +1,5 @@
 #include "config.h"
+#include "presentation/logger_config.h"
 
 #include <CLI11.hpp>
 #include <asio/error_code.hpp>
@@ -53,10 +54,17 @@ variant<int, Config> configure(int argc, char* argv[]) {
                 "  Enables the flag --serve"
         )->envname("SYNC_BIND_PORT");
 
-    LogConfig log{};
+    bool sync_hidden_files{false};
+    app.add_flag(
+        "--hidden",
+        sync_hidden_files,
+        "Sync also hidden files"
+    )->envname("SYNC_HIDDEN");
+
+    LoggerConfig logger{};
     app.add_flag(
         "-l, --log-to-console",
-        log.log_to_console,
+        logger.log_to_console,
         "Enables logging to console\n"
             "  Default logging level is INFO"
     )->envname("SYNC_LOG_CONSOLE");
@@ -71,7 +79,7 @@ variant<int, Config> configure(int argc, char* argv[]) {
     auto log_level_option = 
         app.add_option(
             "--log-level, --log-level-console",
-            log.level_console,
+            logger.level_console,
             "Sets the visible logging level\n"
                 "  0 ... TRACE\n"
                 "  1 ... DEBUG\n"
@@ -83,30 +91,30 @@ variant<int, Config> configure(int argc, char* argv[]) {
     auto log_level_file_option =
         app.add_option(
             "--log-level-file",
-            log.level_file,
+            logger.level_file,
             "Sets the visible logging level for the log file\n"
                 "  By default it takes the logging level specified with --log-level"
         )->envname("SYNC_LOG_LEVEL_FILE");
     app.add_option(
         "--log-size",
-        log.max_file_size,
+        logger.max_file_size,
         "Maximum size of a log file in KB\n"
             "  Default is 5 MB"
     )->envname("SYNC_LOG_SIZE");
     app.add_option(
         "--log-file-number",
-        log.number_of_files,
+        logger.number_of_files,
         "Number of log files between which the logger rotates\n"
             " Default is 2"
     )->envname("SYNC_LOG_FILE_NUMBER");
     app.add_flag(
         "--log-date",
-        log.log_date,
+        logger.log_date,
         "Logs the date additionally to the time, when logging to a file"
     )->envname("SYNC_LOG_DATE");
     app.add_flag(
         "--log-config",
-        log.log_config,
+        logger.log_config,
         "Log the used config as a DEBUG message"
     )->envname("SYNC_LOG_CONFIG");
 
@@ -115,18 +123,19 @@ variant<int, Config> configure(int argc, char* argv[]) {
     // if any of these three have been set, the program shall act as server
     serve = serve || *bind_address_option || *bind_port_option;
 
-    log.max_file_size *= 1024; // convert from KB to B
-    log.file = *log_file_option ? optional{log_file} : nullopt;
+    logger.max_file_size *= 1024; // convert from KB to B
+    logger.file = *log_file_option ? optional{log_file} : nullopt;
     if (!*log_level_file_option && *log_level_option) {
         // set log.level_file to log.level_console, 
         //   when the latter was specified but not the first 
-        log.level_file = log.level_console;
+        logger.level_file = logger.level_console;
     }
 
     return Config{
         *server_address_option ? optional{server} : nullopt,
         serve ? optional{act_as_server} : nullopt,
-        log
+        sync_hidden_files,
+        logger
     };
 }
 
@@ -135,24 +144,4 @@ string is_ip_address(const std::string& address) {
     asio::ip::make_address(address, err);
 
     return err ? err.message() : "";
-}
-
-
-LogConfig::operator std::string() {
-    std::ostringstream output{};
-
-    output 
-        << std::boolalpha
-        << " {\n"
-        << "  \"log to console\":   " << log_to_console               << ";\n"
-        << "  \"file\":             \"" << optional_to_string(file) << "\";\n"
-        << "  \"level on console\": " << level_console                << ";\n"
-        << "  \"level in file\":    " << level_file                   << ";\n"
-        << "  \"max file size\":    " << max_file_size / 1024         << ";\n"
-        << "  \"number of files\":  " << number_of_files              << ";\n"
-        << "  \"log date\":         " << log_date                     << ";\n"
-        << "  \"log config\":       " << log_config                    << "\n"
-        << " }";
-
-    return output.str();
 }

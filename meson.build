@@ -1,9 +1,10 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '0.1.2',
+        version : '0.1.3',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
+crypto = dependency('libcrypto')
 
 # begin asio: https://think-async.com/Asio/
 add_global_arguments('-I' + get_option('asio_include_dir'), language : 'cpp')
@@ -48,20 +49,22 @@ messages = protoc.process('messages/all.proto',
 inc_dir = include_directories('include')
 
 src = [
-    'src/config.cpp',
     'src/client.cpp',
-    'src/server.cpp',
-    'src/utils.cpp',
+    'src/config.cpp',
     'src/file_operations.cpp',
-    'src/presentation/logger.cpp'
+    'src/server.cpp',
+    'src/sync_utils.cpp',
+    'src/utils.cpp',
+    'src/presentation/logger_config.cpp'
 ]
 
 unit_tests_src = [
     'src/unit_tests/main.cpp',
+    'src/unit_tests/sync_utils.cpp',
     'src/unit_tests/utils.cpp'
 ]
 
-dependencies = [thread, protobuf]
+dependencies = [thread, protobuf, crypto]
 
 executable('sync', 
            messages,

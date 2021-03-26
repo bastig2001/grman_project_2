@@ -2,28 +2,50 @@ syntax = "proto3";
 
 import "messages/basic.proto";
 
-message SyncRequest {
+message BlockWithSignature {
     Block block = 1;
-    string weak_signature = 2;
-    string strong_signature = 3;
+    string strong_signature = 2;
+}
+
+
+message SyncRequest {
+    Block starting_block = 1;
+    repeated uint32 weak_signatures = 2;
 }
 
 message SyncResponse {
-    Block block = 1;
-    bool match = 2;
-    oneof optional_correction {
-        string correction = 3;
+    repeated Block requested_blocks = 1;
+    oneof response {
+        bool full_match = 2;
+        bool requesting_strong_signatures = 3;
+        string correction_data = 4;
     }
 }
 
-message GetRequest {
-    oneof requested {
-        Block block = 1;
-        File file = 2;
+message SignatureAddendum {
+    repeated BlockWithSignature blocks_with_signature = 1;
+}
+
+message CheckFileRequest {
+    File file = 1;
+}
+
+message CheckFileResponse {
+    File requested_file = 1;
+    oneof response {
+        bool match = 2;
+        string new_file_name = 3;
+        bool request_syncing = 4;
+        SyncRequest sync_request = 5;
+        bool requesting_file = 6;
     }
 }
 
-message GetResponse {
-    GetRequest request = 1;
+message FileRequest {
+    File file = 1;
+}
+
+message FileResponse {
+    File requested_file = 1;
     string data = 2;
 }

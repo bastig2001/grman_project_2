@@ -1,4 +1,5 @@
 #include "client.h"
+#include "config.h"
 #include "file_operations.h"
 #include "utils.h"
 #include "exit_code.h"
@@ -16,11 +17,11 @@ using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
-int handle_server(tcp::iostream&);
+int handle_server(tcp::iostream&, const Config&);
 bool handle_response(const Message&);
 
 
-int run_client(Config& config) {
+int run_client(const Config& config) {
     if (config.server.has_value()) {
         auto server_conf = config.server.value();
 
@@ -35,7 +36,7 @@ int run_client(Config& config) {
 
             if (server) {
                 logger->info("Connected to server");
-                int exit_code{handle_server(server)};
+                int exit_code{handle_server(server, config)};
                 logger->info("Disconnected from server");
                 return exit_code;
             }
@@ -62,16 +63,19 @@ int run_client(Config& config) {
     }
 }
 
-int handle_server(tcp::iostream& server) {
+int handle_server(tcp::iostream& server, const Config& config) {
+    auto files{get_files(config.sync_hidden_files)};
+    unsigned int file_index{0};
+    logger->debug("Files to sync:\n" + vector_to_string(files, "\n"));
+
     bool finished{false};
-    unsigned short i{1};
     while (server && !finished) {
         Message request{};
-        if (i < 4) {
-            request.set_allocated_show_files(
-                get_show_files({"query option 1", to_string(i)})
+        if (file_index < files.size()) {
+            request.set_allocated_check_file_request(
+                get_check_file_request(get_file(files[file_index]))
             );
-            i++;
+            file_index++;
         }
         else {
             request.set_finish(true);
@@ -114,9 +118,15 @@ bool handle_response(const Message& response) {
             break;
         case Message::kSyncResponse:
             break;
-        case Message::kGetRequest:
+        case Message::kSignatureAddendum:
             break;
-        case Message::kGetResponse:
+        case Message::kCheckFileRequest:
+            break;
+        case Message::kCheckFileResponse:
+            break;
+        case Message::kFileRequest:
+            break;
+        case Message::kFileResponse:
             break;
         case Message::kReceived:
             break;

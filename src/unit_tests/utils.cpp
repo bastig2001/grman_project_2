@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include <doctest.h>
+#include <filesystem>
 #include <optional>
 #include <tuple>
 
@@ -98,6 +99,40 @@ TEST_SUITE("utils") {
         }
     }
 
+    TEST_CASE("vector to string") {
+        SUBCASE("string vector to string") {
+            vector<tuple<vector<string>, string, string, string>> value_tuples{
+                {{"A", "B", "C"}, "A, B, C", "\n", "A\nB\nC"}, 
+                {{"Test", "123"}, "Test, 123", "", "Test123"}, 
+                {{"ABC"}, "ABC", "; ", "ABC"},
+                {{}, "", ".", ""}
+            };
+            tuple<vector<string>, string, string, string> value_tuple;
+
+            DOCTEST_VALUE_PARAMETERIZED_DATA(value_tuple, value_tuples);
+            auto [elements, default_result, separator, separator_result]{value_tuple};
+
+            CHECK(vector_to_string(elements) == default_result);
+            CHECK(vector_to_string(elements, separator) == separator_result);
+        }
+
+        SUBCASE("path vector to string") {
+            vector<tuple<vector<filesystem::path>, string, string, string>> value_tuples{
+                {{"A", "B", "C"}, "A, B, C", "\n", "A\nB\nC"}, 
+                {{"Test", "123"}, "Test, 123", "", "Test123"}, 
+                {{"ABC"}, "ABC", "; ", "ABC"},
+                {{}, "", ".", ""}
+            };
+            tuple<vector<filesystem::path>, string, string, string> value_tuple;
+
+            DOCTEST_VALUE_PARAMETERIZED_DATA(value_tuple, value_tuples);
+            auto [elements, default_result, separator, separator_result]{value_tuple};
+
+            CHECK(vector_to_string(elements) == default_result);
+            CHECK(vector_to_string(elements, separator) == separator_result);
+        }
+    }
+
     TEST_CASE("base 64 en- and decoding") {
         vector<tuple<string, string>> de_encoded_pairs{
             {"ABC", "QUJD"}, 
@@ -118,5 +153,5 @@ TEST_SUITE("utils") {
 
             CHECK(from_base64(get<1>(de_encoded_pair)) == get<0>(de_encoded_pair));
         }
-    }
-}
+    }    
+} 
