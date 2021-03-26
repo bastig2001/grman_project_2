@@ -22,10 +22,10 @@ bool handle_response(const Message&);
 
 int run_client(Config& config) {
     if (config.server.has_value()) {
-        logger->debug("Files to sync:");
-        for (auto& file: get_files(config.sync_hidden_files)) {
-            logger->debug(file);
-        }
+        logger->debug(
+            "Files to sync:\n" 
+            + vector_to_string(get_files(config.sync_hidden_files), "\n")
+        );
 
         auto server_conf = config.server.value();
 

@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include <iterator>
+#include <sstream>
 #include <unordered_map>
 
 using namespace std;
@@ -102,4 +104,34 @@ string from_base64(const string& to_decode) {
     }
 
     return decoded;
+}
+
+string vector_to_string(
+    const vector<filesystem::path>& elements, 
+    const string& separator
+) {
+    return 
+        vector_to_string(
+            vector<string>{elements.begin(), elements.end()}, 
+            separator
+        );
+}
+
+string vector_to_string(
+    const vector<string>& elements, 
+    const string& separator
+) {
+    ostringstream result{};
+
+    if (!elements.empty()) {
+        copy(
+            elements.begin(), 
+            elements.end() - 1, 
+            ostream_iterator<string>(result, separator.c_str())
+        );
+
+        result << elements.back();
+    }
+
+    return result.str();
 }
