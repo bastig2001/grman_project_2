@@ -51,6 +51,7 @@ src = [
     'src/client.cpp',
     'src/config.cpp',
     'src/file_operations.cpp',
+    'src/file_operator.cpp',
     'src/server.cpp',
     'src/sync_utils.cpp',
     'src/utils.cpp',
