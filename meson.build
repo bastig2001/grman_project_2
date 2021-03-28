@@ -61,6 +61,7 @@ src = [
 
 unit_tests_src = [
     'src/unit_tests/main.cpp',
+    'src/unit_tests/pipe.cpp',
     'src/unit_tests/sync_utils.cpp',
     'src/unit_tests/utils.cpp'
 ]
