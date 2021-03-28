@@ -1,3 +1,4 @@
+#include "pipe.h"
 #include "pipe/basic_pipe.h"
 #include "sync.p/messages/all.pb.h"
 #include "unit_tests/doctest_utils.h"
@@ -19,7 +20,7 @@ TEST_SUITE("pipe") {
         REQUIRE(pipe.is_open());
         REQUIRE(pipe.is_empty());
 
-        SUBCASE("is_empty holds true when the buffer has no message assigned") {
+        SUBCASE("is_empty holds true when the pipe has no message assigned") {
             REQUIRE(pipe.is_empty());
             REQUIRE_FALSE(pipe.is_not_empty());
 
@@ -139,5 +140,42 @@ TEST_SUITE("pipe") {
 
             t.join();
         }
+    }
+
+    TEST_CASE("basic pipe as receiving and sending end") {
+        BasicPipe pipe;
+
+        REQUIRE(pipe.is_open());
+        REQUIRE(pipe.is_empty());
+
+        ReceivingPipe* receiving{&pipe};
+        SendingPipe* sending{&pipe};
+
+        REQUIRE(receiving->is_open());
+        REQUIRE(receiving->is_empty());
+
+        REQUIRE(sending->is_open());
+        REQUIRE(sending->is_empty());
+
+        bool sent{*sending << Message{}};
+        REQUIRE(sent);
+
+        CHECK(pipe.is_not_empty());
+        CHECK(receiving->is_not_empty());
+        CHECK(sending->is_not_empty());
+
+        Message msg{};
+        bool received{*receiving >> msg};
+        REQUIRE(received);
+
+        CHECK(pipe.is_empty());
+        CHECK(receiving->is_empty());
+        CHECK(sending->is_empty());
+
+        receiving->close();
+
+        CHECK(pipe.is_closed());
+        CHECK(receiving->is_closed());
+        CHECK(sending->is_closed()); 
     }
 }
