@@ -55,7 +55,7 @@ src = [
     'src/server.cpp',
     'src/sync_utils.cpp',
     'src/utils.cpp',
-    'src/channel/pipe.cpp',
+    'src/pipe/basic_pipe.cpp',
     'src/presentation/logger_config.cpp'
 ]
 
