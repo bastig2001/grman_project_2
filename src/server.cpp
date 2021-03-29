@@ -23,46 +23,48 @@ void handle_client(tcp::iostream&&);
 tuple<Message, bool> get_response(const Message&);
 
 
-int run_server(const Config& config) {
-    if (config.act_as_server.has_value()) {
-        auto serve_conf{config.act_as_server.value()};
+int run_server(
+    const Config& config,
+    ReceivingPipe* inbox, 
+    SendingPipe* file_operator
+) {
+    // config.act_as_server.has_value() is checked by the caller
+    auto serve_conf{config.act_as_server.value()};
 
-        try {
-            io_context io_ctx;
-            tcp::endpoint tcp_ep{
-                make_address(serve_conf.address), 
-                serve_conf.port
-            };
-            tcp::acceptor acceptor{io_ctx, tcp_ep};
+    try {
+        io_context io_ctx;
+        tcp::endpoint tcp_ep{
+            make_address(serve_conf.address), 
+            serve_conf.port
+        };
+        tcp::acceptor acceptor{io_ctx, tcp_ep};
 
-            acceptor.listen();
+        acceptor.listen();
 
-            socket_base::keep_alive keep_alive;
+        socket_base::keep_alive keep_alive;
 
-            while (true) {
-                tcp::socket socket{io_ctx};
-                acceptor.accept(socket);
-                socket.set_option(keep_alive);
-                tcp::iostream client{move(socket)};
-                client.expires_after(std::chrono::seconds{5});
+        while (true) {
+            tcp::socket socket{io_ctx};
+            acceptor.accept(socket);
+            socket.set_option(keep_alive);
+            tcp::iostream client{move(socket)};
+            client.expires_after(std::chrono::seconds{5});
 
-                thread{handle_client, move(client)}.detach();
-            }
-
-            return Success;
+            thread{handle_client, move(client)}.detach();
         }
-        catch (exception& err) {
-            logger->critical(
-                "Following exception occurred during server execution: " 
-                + string{err.what()}
-            );
 
-            return ServerException;
-        }
-        
-    }
-    else {
         return Success;
+    }
+    catch (exception& err) {
+        logger->critical(
+            "Following exception occurred during server execution: " 
+            + string{err.what()}
+        );
+
+        inbox->close();
+        file_operator->close();
+
+        return ServerException;
     }
 }
 

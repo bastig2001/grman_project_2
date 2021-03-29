@@ -21,45 +21,51 @@ int handle_server(tcp::iostream&, const Config&);
 bool handle_response(const Message&);
 
 
-int run_client(const Config& config) {
-    if (config.server.has_value()) {
-        auto server_conf = config.server.value();
+int run_client(
+    const Config& config,
+    ReceivingPipe* inbox, 
+    SendingPipe* file_operator
+) {
+    // config.server.has_value()) is checked by the caller
+    auto server_conf = config.server.value();
 
-        try {
-            tcp::iostream server{
-                server_conf.address, 
-                to_string(server_conf.port)
-            };
-            socket_base::keep_alive keep_alive;
-            server.socket().set_option(keep_alive);
-            server.expires_after(std::chrono::seconds{10});
+    try {
+        tcp::iostream server{
+            server_conf.address, 
+            to_string(server_conf.port)
+        };
+        socket_base::keep_alive keep_alive;
+        server.socket().set_option(keep_alive);
+        server.expires_after(std::chrono::seconds{10});
 
-            if (server) {
-                logger->info("Connected to server");
-                int exit_code{handle_server(server, config)};
-                logger->info("Disconnected from server");
-                return exit_code;
-            }
-            else {
-                logger->error(
-                    "Couldn't establish connection to server: " 
-                    + server.error().message()
-                );
-
-                return ConnectionEstablishmentError;
-            }
+        if (server) {
+            logger->info("Connected to server");
+            int exit_code{handle_server(server, config)};
+            logger->info("Disconnected from server");
+            return exit_code;
         }
-        catch (exception& err) {
-            logger->critical(
-                "Following exception occurred during client execution: " 
-                + string{err.what()}
+        else {
+            logger->error(
+                "Couldn't establish connection to server: " 
+                + server.error().message()
             );
 
-            return ClientException;
+            inbox->close();
+            file_operator->close();
+
+            return ConnectionEstablishmentError;
         }
     }
-    else {
-        return Success;
+    catch (exception& err) {
+        logger->critical(
+            "Following exception occurred during client execution: " 
+            + string{err.what()}
+        );
+
+        inbox->close();
+        file_operator->close();
+
+        return ClientException;
     }
 }
 
