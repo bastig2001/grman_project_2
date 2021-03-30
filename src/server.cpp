@@ -1,5 +1,6 @@
 #include "server.h"
 #include "file_operations.h"
+#include "internal_msg.h"
 #include "utils.h"
 #include "exit_code.h"
 #include "presentation/logger.h"
@@ -25,8 +26,7 @@ tuple<Message, bool> get_response(const Message&);
 
 int run_server(
     const Config& config,
-    ReceivingPipe* inbox, 
-    SendingPipe* file_operator
+    SendingPipe<InternalMsg>* file_operator
 ) {
     // config.act_as_server.has_value() is checked by the caller
     auto serve_conf{config.act_as_server.value()};
@@ -53,6 +53,8 @@ int run_server(
             thread{handle_client, move(client)}.detach();
         }
 
+        file_operator->close();
+
         return Success;
     }
     catch (exception& err) {
@@ -61,7 +63,6 @@ int run_server(
             + string{err.what()}
         );
 
-        inbox->close();
         file_operator->close();
 
         return ServerException;

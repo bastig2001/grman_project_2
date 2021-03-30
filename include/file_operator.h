@@ -1,12 +1,8 @@
 #pragma once
 
 #include "config.h"
+#include "internal_msg.h"
 #include "pipe.h"
 
 
-int run_file_operator(
-    const Config& config,
-    ReceivingPipe* inbox,
-    SendingPipe* server,
-    SendingPipe* client
-);
+int run_file_operator(const Config&, ReceivingPipe<InternalMsg>*);

@@ -1,6 +1,7 @@
 #include "client.h"
 #include "config.h"
 #include "file_operations.h"
+#include "internal_msg.h"
 #include "utils.h"
 #include "exit_code.h"
 #include "presentation/logger.h"
@@ -23,8 +24,7 @@ bool handle_response(const Message&);
 
 int run_client(
     const Config& config,
-    ReceivingPipe* inbox, 
-    SendingPipe* file_operator
+    SendingPipe<InternalMsg>* file_operator
 ) {
     // config.server.has_value()) is checked by the caller
     auto server_conf = config.server.value();
@@ -50,7 +50,6 @@ int run_client(
                 + server.error().message()
             );
 
-            inbox->close();
             file_operator->close();
 
             return ConnectionEstablishmentError;
@@ -61,8 +60,7 @@ int run_client(
             "Following exception occurred during client execution: " 
             + string{err.what()}
         );
-
-        inbox->close();
+        
         file_operator->close();
 
         return ClientException;

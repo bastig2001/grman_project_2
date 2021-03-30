@@ -1,5 +1,6 @@
 #include "file_operator.h"
 #include "exit_code.h"
+#include "internal_msg.h"
 #include "unit_tests.p/messages/all.pb.h"
 
 using namespace std;
@@ -7,18 +8,14 @@ using namespace std;
 
 int run_file_operator(
     const Config&,
-    ReceivingPipe* inbox,
-    SendingPipe* server,
-    SendingPipe* client
+    ReceivingPipe<InternalMsg>* inbox
 ) {
-    Message msg;
+    InternalMsg msg;
     while (*inbox >> msg) {
 
     }
 
     inbox->close();
-    server->close();
-    client->close();
 
     return Success;
 }

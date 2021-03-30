@@ -1,5 +1,4 @@
 #include "pipe.h"
-#include "pipe/basic_pipe.h"
 #include "sync.p/messages/all.pb.h"
 #include "unit_tests/doctest_utils.h"
 
@@ -15,7 +14,7 @@ using namespace std;
 
 TEST_SUITE("pipe") {
     TEST_CASE("basic pipe") {
-        BasicPipe pipe;
+        Pipe<Message> pipe;
 
         REQUIRE(pipe.is_open());
         REQUIRE(pipe.is_empty());
@@ -143,13 +142,13 @@ TEST_SUITE("pipe") {
     }
 
     TEST_CASE("basic pipe as receiving and sending end") {
-        BasicPipe pipe;
+        Pipe<Message> pipe;
 
         REQUIRE(pipe.is_open());
         REQUIRE(pipe.is_empty());
 
-        ReceivingPipe* receiving{&pipe};
-        SendingPipe* sending{&pipe};
+        ReceivingPipe<Message>* receiving{&pipe};
+        SendingPipe<Message>* sending{&pipe};
 
         REQUIRE(receiving->is_open());
         REQUIRE(receiving->is_empty());
