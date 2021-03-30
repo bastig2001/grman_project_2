@@ -38,39 +38,33 @@ int main(int argc, char* argv[]) {
 
 int run(const Config& config) {
     Pipe<InternalMsg> file_operator_inbox;
-    future<int> server;
-    future<int> client;
 
-    if (config.act_as_server.has_value()) {
-        // server is used
-        server = 
-            async(
-                launch::async, 
-                bind(run_server, config, &file_operator_inbox)
-            );
-    }
-    else {
-        // server is not used
-        server = async(launch::deferred, [](){ return 0; });
-    }
+    auto server{
+        config.act_as_server.has_value()
+        ? async(
+            launch::async, 
+            bind(run_server, 
+                config.act_as_server.value(), 
+                &file_operator_inbox
+          ))
+        : async(launch::deferred, [](){ return 0; })
+    };
 
-    if (config.server.has_value()) {
-        // client is used
-        client = 
-            async(
-                launch::async, 
-                bind(run_client, config, &file_operator_inbox)
-            );
-    }
-    else {
-        // client is not used
-        client = async(launch::deferred, [](){ return 0; });
-    }
+    auto client{
+        config.server.has_value()
+        ? async(
+            launch::async, 
+            bind(run_client, 
+                config.server.value(), 
+                &file_operator_inbox
+          ))
+        : async(launch::deferred, [](){ return 0; })
+    };
 
     auto file_operator = 
         async(
             launch::async, 
-            bind(run_file_operator, config, &file_operator_inbox)
+            bind(run_file_operator, config.sync, &file_operator_inbox)
         );
 
     int server_return = server.get();

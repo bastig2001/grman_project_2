@@ -18,21 +18,20 @@ using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
-int handle_server(tcp::iostream&, const Config&);
+ExitCode handle_server(tcp::iostream&);
 bool handle_response(const Message&);
 
 
 int run_client(
-    const Config& config,
+    const ServerData& config,
     SendingPipe<InternalMsg>* file_operator
 ) {
-    // config.server.has_value()) is checked by the caller
-    auto server_conf = config.server.value();
+    ExitCode exit_code;
 
     try {
         tcp::iostream server{
-            server_conf.address, 
-            to_string(server_conf.port)
+            config.address, 
+            to_string(config.port)
         };
         socket_base::keep_alive keep_alive;
         server.socket().set_option(keep_alive);
@@ -40,9 +39,8 @@ int run_client(
 
         if (server) {
             logger->info("Connected to server");
-            int exit_code{handle_server(server, config)};
+            exit_code = handle_server(server);
             logger->info("Disconnected from server");
-            return exit_code;
         }
         else {
             logger->error(
@@ -50,9 +48,7 @@ int run_client(
                 + server.error().message()
             );
 
-            file_operator->close();
-
-            return ConnectionEstablishmentError;
+            exit_code = ConnectionEstablishmentError;
         }
     }
     catch (exception& err) {
@@ -60,15 +56,16 @@ int run_client(
             "Following exception occurred during client execution: " 
             + string{err.what()}
         );
-        
-        file_operator->close();
 
-        return ClientException;
+        exit_code = ClientException;
     }
+
+    file_operator->close();
+    return exit_code;
 }
 
-int handle_server(tcp::iostream& server, const Config& config) {
-    auto files{get_files(config.sync_hidden_files)};
+ExitCode handle_server(tcp::iostream& server) {
+    auto files{get_files(false)};
     unsigned int file_index{0};
     logger->debug("Files to sync:\n" + vector_to_string(files, "\n"));
 

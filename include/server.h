@@ -5,4 +5,4 @@
 #include "pipe.h"
 
 
-int run_server(const Config&, SendingPipe<InternalMsg>*);
+int run_server(const ServerData&, SendingPipe<InternalMsg>*);

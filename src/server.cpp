@@ -1,4 +1,5 @@
 #include "server.h"
+#include "config.h"
 #include "file_operations.h"
 #include "internal_msg.h"
 #include "utils.h"
@@ -25,17 +26,16 @@ tuple<Message, bool> get_response(const Message&);
 
 
 int run_server(
-    const Config& config,
+    const ServerData& config,
     SendingPipe<InternalMsg>* file_operator
 ) {
-    // config.act_as_server.has_value() is checked by the caller
-    auto serve_conf{config.act_as_server.value()};
+    ExitCode exit_code;
 
     try {
         io_context io_ctx;
         tcp::endpoint tcp_ep{
-            make_address(serve_conf.address), 
-            serve_conf.port
+            make_address(config.address), 
+            config.port
         };
         tcp::acceptor acceptor{io_ctx, tcp_ep};
 
@@ -53,9 +53,7 @@ int run_server(
             thread{handle_client, move(client)}.detach();
         }
 
-        file_operator->close();
-
-        return Success;
+        exit_code = Success;
     }
     catch (exception& err) {
         logger->critical(
@@ -63,10 +61,11 @@ int run_server(
             + string{err.what()}
         );
 
-        file_operator->close();
-
-        return ServerException;
+        exit_code = ServerException;
     }
+
+    file_operator->close();
+    return exit_code;
 }
 
 void handle_client(tcp::iostream&& client) {
