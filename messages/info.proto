@@ -2,10 +2,18 @@ syntax = "proto3";
 
 import "messages/basic.proto";
 
+message QueryOptions {
+    bool include_hidden = 1;
+    oneof optional_changed_after {
+        uint64 timestamp = 2;
+    }
+}
+
 message ShowFiles {
-    repeated string options = 1;
+    QueryOptions options = 1;
 }
 
 message FileList {
     repeated File files = 1;
+    QueryOptions options = 2;
 }

@@ -13,9 +13,17 @@
 using namespace std;
 using namespace filesystem;
 
-bool is_hidden(const path&);
-bool is_not_hidden(const path&);
 Block* get_block(const string&);
+
+template<typename T>
+unsigned long get_timestamp(
+    chrono::time_point<T> time_point
+) {
+    return 
+        chrono::duration_cast<chrono::milliseconds>(
+            time_point.time_since_epoch()
+        ).count();
+}
 
 
 vector<path> get_files(bool include_hidden) {
@@ -50,20 +58,31 @@ bool is_not_hidden(const path& path) {
     return !is_hidden(path);
 }
 
-ShowFiles* get_show_files(const vector<string>& options) {
+
+ShowFiles* get_show_files(QueryOptions* options) {
     auto show_files{new ShowFiles};
 
-    for (auto option : options) {
-        show_files->add_options(option);
-    }
+    show_files->set_allocated_options(options);
 
     return show_files;
 }
 
-FileList* show_files(const ShowFiles&) {
-    auto file_list{new FileList};
-    return file_list;
+
+QueryOptions* get_query_options(
+    bool include_hidden, 
+    optional<chrono::time_point<chrono::system_clock>> changed_after
+) {
+    auto query_options{new QueryOptions};
+
+    query_options->set_include_hidden(include_hidden);
+
+    if (changed_after.has_value()) {
+        query_options->set_timestamp(get_timestamp(changed_after.value()));
+    }
+
+    return query_options;
 }
+
 
 SyncRequest* get_sync_request(Block* block) {
     auto request{new SyncRequest};
@@ -85,13 +104,6 @@ SyncRequest* get_sync_request(Block* block) {
     return request;
 }
 
-SyncResponse* get_sync_response(const SyncRequest&) {
-    auto response{new SyncResponse};
-
-    response->set_full_match(true);
-
-    return response;
-}
 
 CheckFileRequest* get_check_file_request(File* file) {
     auto request{new CheckFileRequest};
@@ -136,6 +148,7 @@ CheckFileResponse* get_check_file_response(const CheckFileRequest& request) {
     return response;
 }
 
+
 FileRequest* get_file_request(File* file) {
     auto request{new FileRequest};
 
@@ -153,15 +166,12 @@ FileResponse* get_file_response(const FileRequest& request) {
     return response;
 }
 
+
 File* get_file(const path& path) {
     auto file{new File};
 
     file->set_file_name(path);
-    file->set_timestamp(
-        chrono::duration_cast<chrono::milliseconds>(
-            last_write_time(path).time_since_epoch()
-        ).count()
-    );
+    file->set_timestamp(get_timestamp(last_write_time(path)));
     file->set_size(file_size(path));
 
     ifstream file_stream{path, ios::binary};

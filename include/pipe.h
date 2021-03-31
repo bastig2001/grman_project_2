@@ -101,4 +101,8 @@ class Pipe: public SendingPipe<T>, public ReceivingPipe<T> {
             return false;
         }
     }
+
+    ~Pipe() {
+        close();
+    }
 };

@@ -64,7 +64,7 @@ int run(const Config& config) {
     auto file_operator = 
         async(
             launch::async, 
-            bind(run_file_operator, config.sync, &file_operator_inbox)
+            bind(run_file_operator, config.sync, ref(file_operator_inbox))
         );
 
     int server_return = server.get();

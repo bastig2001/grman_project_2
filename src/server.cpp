@@ -21,8 +21,10 @@ using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
-void handle_client(tcp::iostream&&);
-tuple<Message, bool> get_response(const Message&);
+bool wait_for(SendingPipe<InternalMsg>*);
+void handle_client(tcp::iostream&&, SendingPipe<InternalMsg>*);
+tuple<Message, bool> get_response(const Message&, SendingPipe<InternalMsg>*);
+tuple<Message, bool> get_response_from(SendingPipe<InternalMsg>*, const Message&);
 
 
 int run_server(
@@ -43,17 +45,24 @@ int run_server(
 
         socket_base::keep_alive keep_alive;
 
-        while (true) {
-            tcp::socket socket{io_ctx};
-            acceptor.accept(socket);
-            socket.set_option(keep_alive);
-            tcp::iostream client{move(socket)};
-            client.expires_after(std::chrono::seconds{5});
+        if (wait_for(file_operator)) {
+            while (file_operator->is_open()) {
+                tcp::socket socket{io_ctx};
+                acceptor.accept(socket);
+                socket.set_option(keep_alive);
+                tcp::iostream client{move(socket)};
+                client.expires_after(std::chrono::seconds{5});
 
-            thread{handle_client, move(client)}.detach();
+                thread{handle_client, move(client), file_operator}.detach();
+            }
+
+            exit_code = Success;
         }
+        else {
+            logger->critical("File operator hasn't started");
 
-        exit_code = Success;
+            exit_code = FileOperatorNotStarted;
+        }        
     }
     catch (exception& err) {
         logger->critical(
@@ -68,7 +77,23 @@ int run_server(
     return exit_code;
 }
 
-void handle_client(tcp::iostream&& client) {
+bool wait_for(SendingPipe<InternalMsg>* file_operator) {
+    Pipe<InternalMsg> responder;
+    *file_operator << InternalMsg(InternalMsgType::ServerWaits, &responder);
+
+    InternalMsg response;
+    if (responder >> response) {
+        return response.type == InternalMsgType::FileOperatorStarted;
+    }
+    else {
+        return false;
+    }
+}
+
+void handle_client(
+    tcp::iostream&& client, 
+    SendingPipe<InternalMsg>* file_operator
+) {
     logger->info("Client connected");
 
     bool finished{false};
@@ -77,7 +102,7 @@ void handle_client(tcp::iostream&& client) {
         logger->debug("Received:\n" + request.DebugString());
 
         if (client) {
-            auto [response, finish]{get_response(request)};
+            auto [response, finish]{get_response(request, file_operator)};
             logger->debug("Sending:\n" + response.DebugString());
             client << msg_to_base64(response) << "\n";
 
@@ -99,49 +124,14 @@ void handle_client(tcp::iostream&& client) {
     }
 }
 
-tuple<Message, bool> get_response(const Message& request) {
+tuple<Message, bool> get_response(
+    const Message& request, 
+    SendingPipe<InternalMsg>* file_operator
+) {
     Message response{};
     bool finish{false};
 
     switch (request.message_case()) {
-        case Message::kShowFiles:
-            response.set_allocated_file_list(
-                show_files(request.show_files())
-            );
-            break;
-        case Message::kFileList:
-            response.set_received(true);
-            break;
-        case Message::kSyncRequest:
-            response.set_allocated_sync_response(
-                get_sync_response(request.sync_request())
-            );
-            break;
-        case Message::kSyncResponse:
-            response.set_received(true);
-            break;
-        case Message::kSignatureAddendum:
-            response.set_received(true);
-            break;
-        case Message::kCheckFileRequest:
-            response.set_allocated_check_file_response(
-                get_check_file_response(request.check_file_request())
-            );
-            break;
-        case Message::kCheckFileResponse:
-            response.set_received(true);
-            break;
-        case Message::kFileRequest:
-            response.set_allocated_file_response(
-                get_file_response(request.file_request())
-            );
-            break;
-        case Message::kFileResponse:
-            response.set_received(true);
-            break;
-        case Message::kReceived:
-            response.set_received(true);
-            break;
         case Message::kFinish:
             response.set_finish(true);
             finish = true;
@@ -149,7 +139,37 @@ tuple<Message, bool> get_response(const Message& request) {
         case Message::MESSAGE_NOT_SET:
             logger->warn("Received an undefined message");
             break;
+        default:
+            auto [file_operator_response, file_operator_success] = 
+                get_response_from(file_operator, request);
+
+            if (file_operator_success) {
+                response = file_operator_response;
+            }
+            else {
+                response.set_finish(true);
+                finish = true;
+            }
+
+            break;
     }
 
     return {response, finish};
+}
+
+tuple<Message, bool> get_response_from(
+    SendingPipe<InternalMsg>* file_operator, 
+    const Message& request
+) {
+    Pipe<InternalMsg> responder;
+
+    *file_operator << InternalMsg::to_file_operator(&responder, request);
+
+    InternalMsg msg;
+    if (responder >> msg) {
+        return {msg.msg, msg.type == InternalMsgType::SendMessage};
+    }
+    else {
+        return {Message{}, false};
+    }
 }

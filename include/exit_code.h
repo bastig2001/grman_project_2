@@ -7,12 +7,16 @@ enum ExitCode {
     ServerException = 1,
 
     // Client
-    ClientException = 33,
-    ConnectionEstablishmentError,
-    ConnectionError,
+    ClientException = 2,
+    ConnectionEstablishmentError = 4,
+    ConnectionError = 6,
 
-    // Other
-    LogFileError = 65,
+    // File Operator
+    FileOperatorException = 8,
+
+    // Other/All
+    LogFileError = 16,
+    FileOperatorNotStarted = 32,
 
     // beginning with 100: CLI ExitCodes
 };
