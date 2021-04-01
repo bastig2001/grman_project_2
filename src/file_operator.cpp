@@ -113,10 +113,40 @@ InternalMsg get_response(
 }
 
 Message handle_message(
-    const Message&, 
+    const Message& request, 
     const SyncConfig&, 
-    FileData&
+    FileData& data
 ) {
-    return Message{};
+    Message response{};
+
+    switch (request.message_case()) {
+        case Message::kShowFiles:
+            response.set_allocated_file_list(
+                get_file_list(
+                    request.show_files(), 
+                    to_vector(data.files_by_names)
+            ));
+            break;
+        case Message::kFileList:
+            break;
+        case Message::kSyncRequest:
+            break;
+        case Message::kSyncResponse:
+            break;
+        case Message::kSignatureAddendum:
+            break;
+        case Message::kCheckFileRequest:
+            break;
+        case Message::kCheckFileResponse:
+            break;
+        case Message::kFileRequest:
+            break;
+        case Message::kFileResponse:
+            break;
+        default: 
+            break;
+    }
+
+    return response;
 }
 

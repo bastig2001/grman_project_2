@@ -3,6 +3,7 @@
 #include "messages/info.pb.h"
 #include "messages/sync.pb.h"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -65,6 +66,32 @@ ShowFiles* get_show_files(QueryOptions* options) {
     show_files->set_allocated_options(options);
 
     return show_files;
+}
+
+FileList* get_file_list(const ShowFiles& request, const vector<File*>& files) {
+    auto file_list{new FileList};
+    auto options{new QueryOptions(request.options())};
+
+    for (auto file: files) {
+        if ((options->include_hidden() 
+                || 
+             is_not_hidden(file->file_name())
+            ) && (
+             !options->has_timestamp() 
+                || 
+             file->timestamp() > options->timestamp()
+        )) {
+            auto new_file{file_list->add_files()};
+            new_file->set_file_name(file->file_name());
+            new_file->set_timestamp(file->timestamp());
+            new_file->set_size(file->size());
+            new_file->set_signature(file->signature());
+        }
+    }
+
+    file_list->set_allocated_options(options);
+
+    return file_list;
 }
 
 
@@ -188,6 +215,18 @@ Block* get_block(const string& file_name) {
     block->set_size(6000);
 
     return block;
+}
+
+vector<File*> to_vector(const unordered_map<string, File*>& file_map) {
+    vector<File*> files(file_map.size());
+    transform(
+        file_map.begin(), 
+        file_map.end(), 
+        files.begin(), 
+        [](auto pair){ return pair.second; }
+    );
+
+    return files;
 }
 
 
