@@ -68,9 +68,8 @@ ShowFiles* get_show_files(QueryOptions* options) {
     return show_files;
 }
 
-FileList* get_file_list(const ShowFiles& request, const vector<File*>& files) {
+FileList* get_file_list(QueryOptions* options, const vector<File*>& files) {
     auto file_list{new FileList};
-    auto options{new QueryOptions(request.options())};
 
     for (auto file: files) {
         if ((options->include_hidden() 
@@ -99,12 +98,25 @@ QueryOptions* get_query_options(
     bool include_hidden, 
     optional<chrono::time_point<chrono::system_clock>> changed_after
 ) {
+    return 
+        get_query_options(
+            include_hidden, 
+            changed_after.has_value()
+            ? optional{get_timestamp(changed_after.value())}
+            : nullopt
+        );
+}
+
+QueryOptions* get_query_options(
+    bool include_hidden, 
+    std::optional<unsigned long> changed_after
+) {
     auto query_options{new QueryOptions};
 
     query_options->set_include_hidden(include_hidden);
 
     if (changed_after.has_value()) {
-        query_options->set_timestamp(get_timestamp(changed_after.value()));
+        query_options->set_timestamp(changed_after.value());
     }
 
     return query_options;

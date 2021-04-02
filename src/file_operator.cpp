@@ -114,7 +114,7 @@ InternalMsg get_response(
 
 Message handle_message(
     const Message& request, 
-    const SyncConfig&, 
+    const SyncConfig& config, 
     FileData& data
 ) {
     Message response{};
@@ -123,7 +123,13 @@ Message handle_message(
         case Message::kShowFiles:
             response.set_allocated_file_list(
                 get_file_list(
-                    request.show_files(), 
+                    get_query_options(
+                        config.sync_hidden_files 
+                            && 
+                        request.show_files().options().include_hidden(), 
+                        request.show_files().options().has_timestamp()
+                        ? optional{request.show_files().options().timestamp()}
+                        : nullopt), 
                     to_vector(data.files_by_names)
             ));
             break;
