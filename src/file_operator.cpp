@@ -122,7 +122,8 @@ vector<InternalMsg> get_to_originator_msgs(
     SendingPipe<InternalMsg>* inbox, 
     const vector<Message>& msgs
 ) {
-    vector<InternalMsg> internal_msgs(msgs.size());
+    vector<InternalMsg> internal_msgs{};
+    internal_msgs.reserve(msgs.size());
 
     for (auto msg: msgs) {
         internal_msgs.push_back(InternalMsg::to_originator(inbox, msg));

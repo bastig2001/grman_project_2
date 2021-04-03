@@ -20,14 +20,6 @@ struct InternalMsg {
 
     InternalMsg() {}
 
-    InternalMsg(const InternalMsg& other): 
-        InternalMsg(other.type, other.originator, other.msg)
-    {}
-
-    InternalMsg(InternalMsg&& other): 
-        InternalMsg(other.type, other.originator, std::move(other.msg))
-    {}
-
     InternalMsg(
         InternalMsgType type, 
         SendingPipe<InternalMsg>* originator, 
@@ -49,17 +41,5 @@ struct InternalMsg {
         Message msg
     ) {
         return InternalMsg(InternalMsgType::SendMessage, originator, msg);
-    }
-
-    void operator=(const InternalMsg& other) {
-        type = other.type;
-        originator = other.originator;
-        msg = other.msg;
-    }
-
-    void operator=(InternalMsg&& other) {
-        type = other.type;
-        originator = other.originator;
-        msg = std::move(other.msg);
     }
 };
