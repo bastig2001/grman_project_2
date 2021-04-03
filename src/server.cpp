@@ -79,10 +79,10 @@ int run_server(
 
 bool wait_for(SendingPipe<InternalMsg>* file_operator) {
     Pipe<InternalMsg> responder;
-    *file_operator << InternalMsg(InternalMsgType::ServerWaits, &responder);
+    file_operator->send(InternalMsg(InternalMsgType::ServerWaits, &responder));
 
-    InternalMsg response;
-    if (responder >> response) {
+    if (auto optional_response{responder.receive()}) {
+        auto response{optional_response.value()};
         return response.type == InternalMsgType::FileOperatorStarted;
     }
     else {
@@ -162,11 +162,10 @@ tuple<Message, bool> get_response_from(
     const Message& request
 ) {
     Pipe<InternalMsg> responder;
+    file_operator->send(InternalMsg::to_file_operator(&responder, request));
 
-    *file_operator << InternalMsg::to_file_operator(&responder, request);
-
-    InternalMsg msg;
-    if (responder >> msg) {
+    if (auto optional_msg{responder.receive()}) {
+        auto msg{optional_msg.value()};
         return {msg.msg, msg.type == InternalMsgType::SendMessage};
     }
     else {

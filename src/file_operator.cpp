@@ -22,13 +22,18 @@ struct FileData {
 };
 
 void create_file_index(const SyncConfig&, FileData&);
-InternalMsg get_response(
+vector<InternalMsg> get_response(
     const InternalMsg&, 
     const SyncConfig&, 
     FileData&, 
     SendingPipe<InternalMsg>*
 );
-Message handle_message(const Message&, const SyncConfig&, FileData&);
+vector<InternalMsg> get_to_originator_msgs(
+    SendingPipe<InternalMsg>*, 
+    const vector<Message>&
+);
+vector<Message> handle_msg(const Message&, const SyncConfig&, FileData&);
+Message get_file_list_msg(const Message&, const SyncConfig&, FileData&);
 
 
 int run_file_operator(
@@ -41,9 +46,9 @@ int run_file_operator(
     try {
         create_file_index(config, data);
 
-        InternalMsg msg;
-        while (inbox >> msg) {
-            *msg.originator << get_response(msg, config, data, &inbox);
+        while (auto optional_msg{inbox.receive()}) {
+            auto msg{optional_msg.value()};
+            msg.originator->send(get_response(msg, config, data, &inbox));
         }
 
         exit_code = Success;
@@ -73,7 +78,7 @@ void create_file_index(const SyncConfig& config, FileData& data) {
     }
 }
 
-InternalMsg get_response(
+vector<InternalMsg> get_response(
     const InternalMsg& request, 
     const SyncConfig& config, 
     FileData& data,
@@ -83,10 +88,8 @@ InternalMsg get_response(
 
     switch (request.type) {
         case InternalMsgType::ServerWaits:
-            return InternalMsg(InternalMsgType::FileOperatorStarted, inbox);
+            return {InternalMsg(InternalMsgType::FileOperatorStarted, inbox)};
         case InternalMsgType::ClientWaits:
-            *request.originator 
-                << InternalMsg(InternalMsgType::FileOperatorStarted, inbox);
             msg.set_allocated_show_files(
                 get_show_files(
                     get_query_options(
@@ -96,12 +99,15 @@ InternalMsg get_response(
 
             data.last_checked = chrono::system_clock::now();
 
-            return InternalMsg::to_originator(inbox, msg);
+            return {
+                InternalMsg(InternalMsgType::FileOperatorStarted, inbox),
+                InternalMsg::to_originator(inbox, msg)
+            };
         case InternalMsgType::HandleMessage:
             return 
-                InternalMsg::to_originator(
+                get_to_originator_msgs(
                     inbox, 
-                    handle_message(request.msg, config, data)
+                    handle_msg(request.msg, config, data)
                 );
         default:
             // There shouldn't be anything else
@@ -112,46 +118,66 @@ InternalMsg get_response(
     }
 }
 
-Message handle_message(
+vector<InternalMsg> get_to_originator_msgs(
+    SendingPipe<InternalMsg>* inbox, 
+    const vector<Message>& msgs
+) {
+    vector<InternalMsg> internal_msgs(msgs.size());
+
+    for (auto msg: msgs) {
+        internal_msgs.push_back(InternalMsg::to_originator(inbox, msg));
+    }
+
+    return internal_msgs;
+}
+
+vector<Message> handle_msg(
+    const Message& request, 
+    const SyncConfig& config, 
+    FileData& data
+) {
+    switch (request.message_case()) {
+        case Message::kShowFiles:
+            return {get_file_list_msg(request, config, data)};
+        case Message::kFileList:
+            return {};
+        case Message::kSyncRequest:
+            return {};
+        case Message::kSyncResponse:
+            return {};
+        case Message::kSignatureAddendum:
+            return {};
+        case Message::kCheckFileRequest:
+            return {};
+        case Message::kCheckFileResponse:
+            return {};
+        case Message::kFileRequest:
+            return {};
+        case Message::kFileResponse:
+            return {};
+        default: 
+            return {};
+    }
+}
+
+Message get_file_list_msg(
     const Message& request, 
     const SyncConfig& config, 
     FileData& data
 ) {
     Message response{};
 
-    switch (request.message_case()) {
-        case Message::kShowFiles:
-            response.set_allocated_file_list(
-                get_file_list(
-                    get_query_options(
-                        config.sync_hidden_files 
-                            && 
-                        request.show_files().options().include_hidden(), 
-                        request.show_files().options().has_timestamp()
-                        ? optional{request.show_files().options().timestamp()}
-                        : nullopt), 
-                    to_vector(data.files_by_names)
-            ));
-            break;
-        case Message::kFileList:
-            break;
-        case Message::kSyncRequest:
-            break;
-        case Message::kSyncResponse:
-            break;
-        case Message::kSignatureAddendum:
-            break;
-        case Message::kCheckFileRequest:
-            break;
-        case Message::kCheckFileResponse:
-            break;
-        case Message::kFileRequest:
-            break;
-        case Message::kFileResponse:
-            break;
-        default: 
-            break;
-    }
+    response.set_allocated_file_list(
+        get_file_list(
+            get_query_options(
+                config.sync_hidden_files 
+                    && 
+                request.show_files().options().include_hidden(), 
+                request.show_files().options().has_timestamp()
+                ? optional{request.show_files().options().timestamp()}
+                : nullopt), 
+            to_vector(data.files_by_names)
+    ));
 
     return response;
 }

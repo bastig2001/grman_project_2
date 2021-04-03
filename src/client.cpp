@@ -84,11 +84,10 @@ bool wait_for(
     SendingPipe<InternalMsg>* file_operator, 
     Pipe<InternalMsg>& inbox
 ) {
-    *file_operator << InternalMsg(InternalMsgType::ClientWaits, &inbox);
+    file_operator->send(InternalMsg(InternalMsgType::ClientWaits, &inbox));
 
-    InternalMsg response;
-    if (inbox >> response) {
-        return response.type == InternalMsgType::FileOperatorStarted;
+    if (auto response{inbox.receive()}) {
+        return response.value().type == InternalMsgType::FileOperatorStarted;
     }
     else {
         return false;
@@ -101,20 +100,26 @@ ExitCode handle_server(
     Pipe<InternalMsg>& inbox
 ) {
     bool finished{false};
-    InternalMsg msg;
-    while (server && !finished && inbox >> msg) {
-        logger->debug("Sending:\n" + msg.msg.DebugString());
-        server << msg_to_base64(msg.msg) << "\n";
+    while (server && !finished) {
+        if (auto optional_msg{inbox.receive()}) {
+            auto msg{optional_msg.value()};
 
-        if (server) {
-            Message response{msg_from_base64(server)};
-            logger->debug("Received:\n" + response.DebugString());
-            
-            finished = handle_response(response, file_operator, &inbox);
-            if (finished || file_operator->is_closed()) {
-                server.close();
-            }
-        }  
+            logger->debug("Sending:\n" + msg.msg.DebugString());
+            server << msg_to_base64(msg.msg) << "\n";
+
+            if (server) {
+                Message response{msg_from_base64(server)};
+                logger->debug("Received:\n" + response.DebugString());
+                
+                finished = handle_response(response, file_operator, &inbox);
+                if (finished || file_operator->is_closed()) {
+                    server.close();
+                }
+            }  
+        }
+        else {
+            break;
+        }
     }
 
     if (server.error()) {
@@ -144,7 +149,7 @@ bool handle_response(
             logger->warn("Received an undefined message");
             break;
         default:
-            *file_operator << InternalMsg::to_file_operator(inbox, response);
+            file_operator->send(InternalMsg::to_file_operator(inbox, response));
             break;
     }
 

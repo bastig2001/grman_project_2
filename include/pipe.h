@@ -2,6 +2,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 #include <queue>
 
 
@@ -26,7 +27,8 @@ class SendingPipe: public ClosablePipe {
   public:
     // returns true, when the Message was sent,
     //        false, when the Pipe is closed
-    virtual bool operator<<(T) = 0;
+    virtual bool send(const std::vector<T>&) = 0;
+    virtual bool send(T) = 0;
 
     virtual ~SendingPipe() = default;
 };
@@ -36,9 +38,9 @@ class SendingPipe: public ClosablePipe {
 template<typename T>
 class ReceivingPipe: public ClosablePipe {
   public:
-    // returns true, when the Message was received,
-    //        false, when the Pipe is closed
-    virtual bool operator>>(T&) = 0;
+    // returns the Message, when the Message was received,
+    //             nullopt, when the Pipe is closed
+    virtual std::optional<T> receive() = 0;
 
     virtual ~ReceivingPipe() = default;
 };
@@ -66,9 +68,24 @@ class Pipe: public SendingPipe<T>, public ReceivingPipe<T> {
     bool is_empty() const override { return msgs.empty(); }
     bool is_not_empty() const override { return !is_empty(); }
 
-    bool operator<<(T msg) override {
+    bool send(const std::vector<T>& new_msgs) override {
+        std::lock_guard pipe_lck{pipe_mtx};
         if (is_open()) {
-            std::lock_guard pipe_lck{pipe_mtx};
+            for (auto msg: new_msgs) {
+                msgs.push(std::move(msg));
+            }
+            receiving_finishable.notify_all();
+
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    bool send(T msg) override {
+        std::lock_guard pipe_lck{pipe_mtx};
+        if (is_open()) {
             msgs.push(std::move(msg));
             receiving_finishable.notify_one();
 
@@ -79,26 +96,26 @@ class Pipe: public SendingPipe<T>, public ReceivingPipe<T> {
         }  
     }
 
-    bool operator>>(T& msg) override {
+    std::optional<T> receive() override {
+        std::unique_lock pipe_lck{pipe_mtx};
         if (is_open()) {
-            std::unique_lock pipe_lck{pipe_mtx};
             receiving_finishable.wait(
                 pipe_lck, 
                 [this](){ return is_not_empty() || is_closed(); }
             );
 
             if (is_open()) {
-                msg = std::move(msgs.front());
+                T msg{std::move(msgs.front())};
                 msgs.pop();
 
-                return true;
+                return msg;
             }
             else {
-                return false;
+                return std::nullopt;
             }
         }
         else {
-            return false;
+            return std::nullopt;
         }
     }
 

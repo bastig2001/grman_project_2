@@ -2,6 +2,7 @@
 #include "sync.p/messages/all.pb.h"
 #include "unit_tests/doctest_utils.h"
 
+#include <algorithm>
 #include <doctest.h>
 #include <thread>
 #include <vector>
@@ -13,7 +14,7 @@ using namespace std;
 
 
 TEST_SUITE("pipe") {
-    TEST_CASE("basic pipe") {
+    TEST_CASE("pipe") {
         Pipe<Message> pipe;
 
         REQUIRE(pipe.is_open());
@@ -23,14 +24,13 @@ TEST_SUITE("pipe") {
             REQUIRE(pipe.is_empty());
             REQUIRE_FALSE(pipe.is_not_empty());
 
-            bool sent{pipe << Message{}};
+            bool sent{pipe.send(Message{})};
             REQUIRE(sent);
 
             CHECK(pipe.is_not_empty());
             CHECK_FALSE(pipe.is_empty());
 
-            Message msg{};
-            bool received{pipe >> msg};
+            bool received{pipe.receive()};
             REQUIRE(received);
 
             CHECK(pipe.is_empty());
@@ -43,11 +43,10 @@ TEST_SUITE("pipe") {
             thread t{[&](){
                 sleep();
                 msg_assigned = true;
-                pipe << Message{};
+                pipe.send(Message{});
             }};
 
-            Message msg{};
-            bool received{pipe >> msg};
+            bool received{pipe.receive()};
             REQUIRE(received);
 
             CHECK(msg_assigned);
@@ -70,14 +69,15 @@ TEST_SUITE("pipe") {
             Message msg{};
             msg.set_allocated_file_request(file_request);
 
-            bool sent{pipe << move(msg)};
+            bool sent{pipe.send(move(msg))};
             REQUIRE(sent);
 
-            Message received_msg{};
-            bool received{pipe >> received_msg};
-            REQUIRE(received);
+            auto received_msg{pipe.receive()};
+            REQUIRE(received_msg);
 
-            CHECK(received_msg.file_request().file().file_name() == file_name);
+            CHECK(received_msg.value().file_request().file().file_name() 
+                    == 
+                  file_name);
         }
 
         SUBCASE("multiple sent messages are received in the sent order") {
@@ -98,16 +98,54 @@ TEST_SUITE("pipe") {
                 Message msg{};
                 msg.set_allocated_file_request(file_request);
 
-                bool sent{pipe << move(msg)};
+                bool sent{pipe.send(move(msg))};
                 REQUIRE(sent);
             }
             
             for (auto file_name: file_names) {
-                Message msg{};
-                bool received{pipe >> msg};
-                REQUIRE(received);
+                auto msg{pipe.receive()};
+                REQUIRE(msg);
 
-                CHECK(msg.file_request().file().file_name() == file_name);
+                CHECK(msg.value().file_request().file().file_name() 
+                        == 
+                      file_name);
+            }
+        }
+
+        SUBCASE("messages sent as a vector are received in the initial order") {
+            vector<vector<string>> file_name_vectors{
+                {"A", "test_file", "test.log", "src/unit_tests/pipe.cpp", "z"},
+                {"b", "file_test", "log.test", "src/pipe/basic_pipe.cpp"},
+                {"1", "2", "3", "4", "XYZ", "ABC"}
+            };
+            vector<string> file_names;
+
+            DOCTEST_VALUE_PARAMETERIZED_DATA(file_names, file_name_vectors);
+
+            vector<Message> msgs{};
+            msgs.reserve(file_names.size());
+
+            for (auto file_name: file_names) {
+                auto file{new File};
+                file->set_file_name(file_name);
+                auto file_request{new FileRequest};
+                file_request->set_allocated_file(file);
+                Message msg{};
+                msg.set_allocated_file_request(file_request);
+
+                msgs.push_back(move(msg));
+            }
+
+            bool sent{pipe.send(msgs)};
+            REQUIRE(sent);
+            
+            for (auto file_name: file_names) {
+                auto msg{pipe.receive()};
+                REQUIRE(msg);
+
+                CHECK(msg.value().file_request().file().file_name() 
+                        == 
+                      file_name);
             }
         }
 
@@ -123,25 +161,24 @@ TEST_SUITE("pipe") {
                 pipe.close();
             }};
 
-            Message msg{};
-            bool received{pipe >> msg};
+            bool received{pipe.receive()};
             REQUIRE_FALSE(received);
 
             CHECK(closed);
             CHECK(pipe.is_closed());
             CHECK_FALSE(pipe.is_open());
 
-            bool sent{pipe << Message{}};
+            bool sent{pipe.send(Message{})};
             CHECK_FALSE(sent);
 
-            received = pipe >> msg;
+            received = pipe.receive().has_value();
             CHECK_FALSE(received);
 
             t.join();
         }
     }
 
-    TEST_CASE("basic pipe as receiving and sending end") {
+    TEST_CASE("pipe as receiving and sending end") {
         Pipe<Message> pipe;
 
         REQUIRE(pipe.is_open());
@@ -156,15 +193,14 @@ TEST_SUITE("pipe") {
         REQUIRE(sending->is_open());
         REQUIRE(sending->is_empty());
 
-        bool sent{*sending << Message{}};
+        bool sent{sending->send(Message{})};
         REQUIRE(sent);
 
         CHECK(pipe.is_not_empty());
         CHECK(receiving->is_not_empty());
         CHECK(sending->is_not_empty());
 
-        Message msg{};
-        bool received{*receiving >> msg};
+        bool received{receiving->receive()};
         REQUIRE(received);
 
         CHECK(pipe.is_empty());
