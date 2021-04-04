@@ -2,12 +2,14 @@ syntax = "proto3";
 
 import "messages/basic.proto";
 
+
 message QueryOptions {
     bool include_hidden = 1;
     oneof optional_changed_after {
         uint64 timestamp = 2;
     }
 }
+
 
 message ShowFiles {
     QueryOptions options = 1;

@@ -124,7 +124,9 @@ variant<int, Config> configure(int argc, char* argv[]) {
     serve = serve || *bind_address_option || *bind_port_option;
 
     logger.max_file_size *= 1024; // convert from KB to B
-    logger.file = *log_file_option ? optional{log_file} : nullopt;
+    
+    logger.file = *log_file_option ? optional{log_file} : nullopt; // set logger file when provided
+
     if (!*log_level_file_option && *log_level_option) {
         // set log.level_file to log.level_console, 
         //   when the latter was specified but not the first 

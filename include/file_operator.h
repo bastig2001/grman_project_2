@@ -5,4 +5,7 @@
 #include "pipe.h"
 
 
-int run_file_operator(const SyncConfig&, Pipe<InternalMsg>&);
+int run_file_operator(
+    const SyncConfig&, 
+    ReceivingPipe<InternalMsgWithOriginator>&
+);

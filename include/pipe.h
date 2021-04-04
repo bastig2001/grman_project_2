@@ -25,7 +25,7 @@ class ClosablePipe {
 template<typename T>
 class SendingPipe: public ClosablePipe {
   public:
-    // returns true, when the Message was sent,
+    // returns true, when the Message(s) was/were sent,
     //        false, when the Pipe is closed
     virtual bool send(const std::vector<T>&) = 0;
     virtual bool send(T) = 0;
@@ -46,7 +46,7 @@ class ReceivingPipe: public ClosablePipe {
 };
 
 
-// The interface for a whole Pipe
+// The implementation for a whole Pipe
 template<typename T>
 class Pipe: public SendingPipe<T>, public ReceivingPipe<T> {
   private:

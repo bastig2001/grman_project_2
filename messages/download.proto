@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "messages/basic.proto";
+
+message FileRequest {
+    File file = 1;
+}
+
+message FileResponse {
+    File requested_file = 1;
+    string data = 2;
+}

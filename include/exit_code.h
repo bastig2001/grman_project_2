@@ -1,5 +1,6 @@
 #pragma once
 
+// Exit Codes for the program which can be used as a Bitmask Type
 enum ExitCode {
     Success = 0,
 

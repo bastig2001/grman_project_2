@@ -2,6 +2,8 @@
 
 #include "presentation/logger.h"
 
+#include <spdlog/spdlog.h>
+
 
 // A basic implementation of Logger which uses spdlog
 class BasicLogger: public Logger {

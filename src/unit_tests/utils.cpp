@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <optional>
 #include <tuple>
+#include <unordered_map>
 
 using namespace std;
 
@@ -153,5 +154,33 @@ TEST_SUITE("utils") {
 
             CHECK(from_base64(get<1>(de_encoded_pair)) == get<0>(de_encoded_pair));
         }
-    }    
+    } 
+
+    TEST_CASE("unordered_map contains") {
+        unordered_map<string, string> map{
+            {"A", ""}, {"B", ""}, {"C", ""}
+        };
+
+        vector<tuple<string, bool>> keys_if_contained{
+            {"A", true}, {"B", true}, {"C", true}, {"D", false}, {"a", false}
+        };
+        tuple<string, bool> key_if_contained;
+
+        DOCTEST_VALUE_PARAMETERIZED_DATA(key_if_contained, keys_if_contained);
+
+        CHECK(contains(map, get<0>(key_if_contained)) == get<1>(key_if_contained));
+    }  
+
+    TEST_CASE("vector contains") {
+        vector<string> values{"A", "B", "C"};
+
+        vector<tuple<string, bool>> values_if_contained{
+            {"A", true}, {"B", true}, {"C", true}, {"D", false}, {"a", false}
+        };
+        tuple<string, bool> value_if_contained;
+
+        DOCTEST_VALUE_PARAMETERIZED_DATA(value_if_contained, values_if_contained);
+
+        CHECK(contains(values, get<0>(value_if_contained)) == get<1>(value_if_contained));
+    }   
 } 

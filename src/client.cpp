@@ -2,11 +2,11 @@
 #include "config.h"
 #include "file_operations.h"
 #include "internal_msg.h"
+#include "pipe.h"
 #include "utils.h"
 #include "exit_code.h"
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
-#include "messages/info.pb.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
@@ -18,22 +18,22 @@ using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
-bool wait_for(SendingPipe<InternalMsg>*, Pipe<InternalMsg>&);
+bool wait_for(SendingPipe<InternalMsgWithOriginator>&, Pipe<InternalMsg>&);
 ExitCode handle_server(
     tcp::iostream&, 
-    SendingPipe<InternalMsg>*, 
+    SendingPipe<InternalMsgWithOriginator>&, 
     Pipe<InternalMsg>&
 );
 bool handle_response(
     const Message&, 
-    SendingPipe<InternalMsg>*, 
-    SendingPipe<InternalMsg>*
+    SendingPipe<InternalMsgWithOriginator>&, 
+    SendingPipe<InternalMsg>&
 );
 
 
 int run_client(
     const ServerData& config,
-    SendingPipe<InternalMsg>* file_operator
+    SendingPipe<InternalMsgWithOriginator>& file_operator
 ) {
     ExitCode exit_code;
     Pipe<InternalMsg> inbox;
@@ -76,15 +76,17 @@ int run_client(
     }
 
     inbox.close();
-    file_operator->close();
+    file_operator.close();
     return exit_code;
 }
 
 bool wait_for(
-    SendingPipe<InternalMsg>* file_operator, 
+    SendingPipe<InternalMsgWithOriginator>& file_operator, 
     Pipe<InternalMsg>& inbox
 ) {
-    file_operator->send(InternalMsg(InternalMsgType::ClientWaits, &inbox));
+    file_operator.send(
+        InternalMsgWithOriginator(InternalMsgType::ClientWaits, inbox)
+    );
 
     if (auto response{inbox.receive()}) {
         return response.value().type == InternalMsgType::FileOperatorStarted;
@@ -96,7 +98,7 @@ bool wait_for(
 
 ExitCode handle_server(
     tcp::iostream& server, 
-    SendingPipe<InternalMsg>* file_operator,
+    SendingPipe<InternalMsgWithOriginator>& file_operator,
     Pipe<InternalMsg>& inbox
 ) {
     bool finished{false};
@@ -111,8 +113,8 @@ ExitCode handle_server(
                 Message response{msg_from_base64(server)};
                 logger->debug("Received:\n" + response.DebugString());
                 
-                finished = handle_response(response, file_operator, &inbox);
-                if (finished || file_operator->is_closed()) {
+                finished = handle_response(response, file_operator, inbox);
+                if (finished || file_operator.is_closed()) {
                     server.close();
                 }
             }  
@@ -136,8 +138,8 @@ ExitCode handle_server(
 
 bool handle_response(
     const Message& response, 
-    SendingPipe<InternalMsg>* file_operator,
-    SendingPipe<InternalMsg>* inbox
+    SendingPipe<InternalMsgWithOriginator>& file_operator,
+    SendingPipe<InternalMsg>& inbox
 ) {
     bool finish{false};
 
@@ -149,7 +151,7 @@ bool handle_response(
             logger->warn("Received an undefined message");
             break;
         default:
-            file_operator->send(InternalMsg::to_file_operator(inbox, response));
+            file_operator.send(get_msg_to_file_operator(inbox, response));
             break;
     }
 

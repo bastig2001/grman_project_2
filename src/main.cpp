@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 }
 
 int run(const Config& config) {
-    Pipe<InternalMsg> file_operator_inbox;
+    Pipe<InternalMsgWithOriginator> file_operator_inbox;
 
     auto server{
         config.act_as_server.has_value()
@@ -45,7 +45,7 @@ int run(const Config& config) {
             launch::async, 
             bind(run_server, 
                 config.act_as_server.value(), 
-                &file_operator_inbox
+                ref(file_operator_inbox)
           ))
         : async(launch::deferred, [](){ return 0; })
     };
@@ -56,7 +56,7 @@ int run(const Config& config) {
             launch::async, 
             bind(run_client, 
                 config.server.value(), 
-                &file_operator_inbox
+                ref(file_operator_inbox)
           ))
         : async(launch::deferred, [](){ return 0; })
     };

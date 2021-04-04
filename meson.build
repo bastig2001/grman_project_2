@@ -40,6 +40,7 @@ protoc = generator(
 messages = protoc.process('messages/all.proto',
                           'messages/sync.proto', 
                           'messages/info.proto', 
+                          'messages/download.proto',
                           'messages/basic.proto',
                           preserve_path_from : meson.current_source_dir()
                          )
@@ -52,6 +53,7 @@ src = [
     'src/config.cpp',
     'src/file_operations.cpp',
     'src/file_operator.cpp',
+    'src/message_utils.cpp',
     'src/server.cpp',
     'src/sync_utils.cpp',
     'src/utils.cpp',

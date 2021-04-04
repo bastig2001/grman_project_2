@@ -12,3 +12,7 @@ message Block {
     uint64 offset = 2;
     uint32 size = 3;
 }
+
+message Blocks {
+    repeated Block blocks = 1;
+}

@@ -2,11 +2,14 @@
 
 #include "messages/all.pb.h"
 
+#include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <istream>
 #include <string>
 #include <optional>
 #include <type_traits>
+#include <unordered_map>
 
 
 std::string msg_to_base64(const Message&);
@@ -44,4 +47,32 @@ std::string optional_to_string(
     else {
         return no_value;
     }
+}
+
+
+template<typename K, typename V>
+bool contains(
+    const std::unordered_map<K, V>& map,
+    const K& key 
+) {
+    return map.find(key) != map.end();
+}
+
+template<typename T>
+bool contains(
+    const std::vector<T>& values,
+    const T& value 
+) {
+    return std::find(values.begin(), values.end(), value) != values.end();
+}
+
+
+template<typename T>
+unsigned long get_timestamp(
+    std::chrono::time_point<T> time_point
+) {
+    return 
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            time_point.time_since_epoch()
+        ).count();
 }

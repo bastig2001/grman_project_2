@@ -21,15 +21,21 @@ using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
-bool wait_for(SendingPipe<InternalMsg>*);
-void handle_client(tcp::iostream&&, SendingPipe<InternalMsg>*);
-tuple<Message, bool> get_response(const Message&, SendingPipe<InternalMsg>*);
-tuple<Message, bool> get_response_from(SendingPipe<InternalMsg>*, const Message&);
+bool wait_for(SendingPipe<InternalMsgWithOriginator>&);
+void handle_client(tcp::iostream&&, SendingPipe<InternalMsgWithOriginator>&);
+tuple<Message, bool> get_response(
+    const Message&, 
+    SendingPipe<InternalMsgWithOriginator>&
+);
+tuple<Message, bool> send_and_receive_response(
+    SendingPipe<InternalMsgWithOriginator>&, 
+    const Message&
+);
 
 
 int run_server(
     const ServerData& config,
-    SendingPipe<InternalMsg>* file_operator
+    SendingPipe<InternalMsgWithOriginator>& file_operator
 ) {
     ExitCode exit_code;
 
@@ -46,14 +52,15 @@ int run_server(
         socket_base::keep_alive keep_alive;
 
         if (wait_for(file_operator)) {
-            while (file_operator->is_open()) {
+            while (file_operator.is_open()) {
                 tcp::socket socket{io_ctx};
                 acceptor.accept(socket);
                 socket.set_option(keep_alive);
                 tcp::iostream client{move(socket)};
                 client.expires_after(std::chrono::seconds{5});
 
-                thread{handle_client, move(client), file_operator}.detach();
+                thread{handle_client, move(client), ref(file_operator)}
+                    .detach();
             }
 
             exit_code = Success;
@@ -73,13 +80,15 @@ int run_server(
         exit_code = ServerException;
     }
 
-    file_operator->close();
+    file_operator.close();
     return exit_code;
 }
 
-bool wait_for(SendingPipe<InternalMsg>* file_operator) {
+bool wait_for(SendingPipe<InternalMsgWithOriginator>& file_operator) {
     Pipe<InternalMsg> responder;
-    file_operator->send(InternalMsg(InternalMsgType::ServerWaits, &responder));
+    file_operator.send(
+        InternalMsgWithOriginator(InternalMsgType::ServerWaits, responder)
+    );
 
     if (auto optional_response{responder.receive()}) {
         auto response{optional_response.value()};
@@ -92,7 +101,7 @@ bool wait_for(SendingPipe<InternalMsg>* file_operator) {
 
 void handle_client(
     tcp::iostream&& client, 
-    SendingPipe<InternalMsg>* file_operator
+    SendingPipe<InternalMsgWithOriginator>& file_operator
 ) {
     logger->info("Client connected");
 
@@ -126,12 +135,15 @@ void handle_client(
 
 tuple<Message, bool> get_response(
     const Message& request, 
-    SendingPipe<InternalMsg>* file_operator
+    SendingPipe<InternalMsgWithOriginator>& file_operator
 ) {
     Message response{};
     bool finish{false};
 
     switch (request.message_case()) {
+        case Message::kReceived:
+            response.set_received(true);
+            break;
         case Message::kFinish:
             response.set_finish(true);
             finish = true;
@@ -141,7 +153,7 @@ tuple<Message, bool> get_response(
             break;
         default:
             auto [file_operator_response, file_operator_success] = 
-                get_response_from(file_operator, request);
+                send_and_receive_response(file_operator, request);
 
             if (file_operator_success) {
                 response = file_operator_response;
@@ -157,12 +169,12 @@ tuple<Message, bool> get_response(
     return {response, finish};
 }
 
-tuple<Message, bool> get_response_from(
-    SendingPipe<InternalMsg>* file_operator, 
+tuple<Message, bool> send_and_receive_response(
+    SendingPipe<InternalMsgWithOriginator>& file_operator, 
     const Message& request
 ) {
     Pipe<InternalMsg> responder;
-    file_operator->send(InternalMsg::to_file_operator(&responder, request));
+    file_operator.send(get_msg_to_file_operator(responder, request));
 
     if (auto optional_msg{responder.receive()}) {
         auto msg{optional_msg.value()};
