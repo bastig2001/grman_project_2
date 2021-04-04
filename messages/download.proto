@@ -8,5 +8,8 @@ message FileRequest {
 
 message FileResponse {
     File requested_file = 1;
-    string data = 2;
+    oneof response {
+        string data = 2;
+        bool unkonw = 3;
+    }
 }

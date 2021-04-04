@@ -24,9 +24,12 @@ struct FileData {
     optional<chrono::time_point<chrono::system_clock>> last_checked{nullopt};
     unordered_map<string, File*> files_by_names{};
     unordered_map<string, File*> files_by_signatures{};
+    unordered_map<string, File*> files_waiting_for_sync{};
+    unordered_map<string, File> server_files_to_check{};
 };
 
 void create_file_index(const SyncConfig&, FileData&);
+void clear_file_index(FileData&);
 vector<InternalMsg> get_response(
     const InternalMsgWithOriginator&, 
     const SyncConfig&, 
@@ -69,6 +72,8 @@ int run_file_operator(
 
     inbox.close();
 
+    clear_file_index(data);
+
     return exit_code;
 }
 
@@ -79,6 +84,12 @@ void create_file_index(const SyncConfig& config, FileData& data) {
     for (auto file: get_files(file_paths)) {
         data.files_by_names.insert({file->file_name(), file});
         data.files_by_signatures.insert({file->signature(), file});
+    }
+}
+
+void clear_file_index(FileData& data) {
+    for (auto [file_name, file]: data.files_by_names) {
+        delete file;
     }
 }
 
@@ -201,6 +212,9 @@ vector<Message> get_sync_requests(
                   local_file->signature() == file.signature()
             )) {
                 logger->info("Starting syncing process for " + colored(file));
+                data.files_waiting_for_sync.insert(
+                    {local_file->file_name(), local_file}
+                );
 
                 msg.set_allocated_sync_request(
                     get_sync_request(new File(*local_file))
@@ -230,6 +244,9 @@ vector<Message> get_sync_requests(
                 logger->info(
                     "Starting syncing process for " + colored(*local_file)
                 );
+                data.files_waiting_for_sync.insert(
+                    {local_file->file_name(), local_file}
+                );
 
                 msg.set_allocated_sync_request(
                     get_sync_request(new File(*local_file))
@@ -238,14 +255,14 @@ vector<Message> get_sync_requests(
             }
         }
         else {
-            msg.set_allocated_file_request(get_file_request(new File(file)));
-            msgs.push_back(move(msg));
+            data.server_files_to_check.insert({file.file_name(), File(file)});
         }
     }
 
     for (auto [file_name, file]: data.files_by_names) {
         if (!contains(checked_file_names, file_name)) {
             logger->info("Starting syncing process for " + colored(*file));
+            data.files_waiting_for_sync.insert({file->file_name(), file});
 
             Message msg{};
             msg.set_allocated_sync_request(
