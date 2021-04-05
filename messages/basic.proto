@@ -13,11 +13,6 @@ message Block {
     uint32 size = 3;
 }
 
-message BlockRange {
-    Block block = 1;
-    uint64 end = 2;
-}
-
 message Blocks {
     repeated Block blocks = 1;
 }

@@ -1,14 +1,14 @@
 #include "file_operator/filesystem.h"
 #include "file_operator/signatures.h"
 #include "utils.h"
-#include "messages/info.pb.h"
-#include "messages/sync.pb.h"
+#include "messages/all.pb.h"
 
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <regex>
+#include <vector>
 
 using namespace std;
 using namespace filesystem;
@@ -77,6 +77,29 @@ File* get_file(const path& path) {
 }
 
 
+vector<unsigned int> get_request_signatures(const path& file) {
+    ifstream file_stream{file, ios::binary};
+    auto size{file_size(file)};
+    vector<unsigned int> signatures{};
+
+    for (unsigned long offset{0}; offset < size; offset += BLOCK_SIZE) {
+        signatures.push_back(
+            get_weak_signature(
+                file_stream,
+                min((unsigned long)BLOCK_SIZE, size - offset),
+                offset
+        ));
+    }
+
+    return signatures;
+}
+
+vector<unsigned int> get_weak_signatures(const path& file) {
+    ifstream file_stream{file, ios::binary};
+    return get_weak_signatures(file_stream, file_size(file));
+}
+
+
 void move_file(const path& old_path, const path& new_path) {
     if (!exists(new_path.parent_path())) {
         create_directories(new_path.parent_path());
@@ -95,19 +118,6 @@ void remove_empty_dir(const path& directory) {
     if (filesystem::is_empty(directory)) {
         remove(directory);
     }
-}
-
-
-vector<File*> to_vector(const unordered_map<string, File*>& file_map) {
-    vector<File*> files(file_map.size());
-    transform(
-        file_map.begin(), 
-        file_map.end(), 
-        files.begin(), 
-        [](auto pair){ return pair.second; }
-    );
-
-    return files;
 }
 
 

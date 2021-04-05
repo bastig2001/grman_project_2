@@ -10,6 +10,6 @@ message FileResponse {
     File requested_file = 1;
     oneof response {
         string data = 2;
-        bool unkonw = 3;
+        bool unknown = 3;
     }
 }

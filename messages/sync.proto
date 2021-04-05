@@ -3,7 +3,7 @@ syntax = "proto3";
 import "messages/basic.proto";
 
 message Correction {
-    BlockRange range = 1;
+    Block block = 1;
     string data = 2;
 }
 
