@@ -62,8 +62,8 @@ Message SyncSystem::get_file_list(const ShowFiles& request) {
                 || 
                 is_not_hidden(file_name)
             ) && (
-                min_timestamp.has_value() 
-                && 
+                !min_timestamp.has_value() 
+                ||
                 min_timestamp.value() <= file->timestamp()
         )) {
             // file can be listed
