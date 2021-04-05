@@ -1,6 +1,5 @@
 #include "client.h"
 #include "config.h"
-#include "file_operations.h"
 #include "internal_msg.h"
 #include "pipe.h"
 #include "utils.h"

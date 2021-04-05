@@ -3,7 +3,7 @@ syntax = "proto3";
 import "messages/basic.proto";
 
 message Correction {
-    Block start_block = 1;
+    BlockRange range = 1;
     string data = 2;
 }
 
@@ -30,17 +30,22 @@ message PartialMatch {
 message SyncRequest {
     File file = 1;
     repeated uint32 weak_signatures = 2;
+    bool removed = 3;
 }
 
 message SyncResponse {
     File requested_file = 1;
-    oneof response {
+    oneof optional_partial_match {
         PartialMatch partial_match = 2;
-        Blocks correction_request = 3;
-        bool requsting_file = 4;
     }
+    oneof optional_correction_request {
+        Blocks correction_request = 3;
+    }
+    bool requsting_file = 4;
+    bool removed = 5;
 }
 
 message SignatureAddendum {
-    repeated BlockWithSignature blocks_with_signature = 1;
+    File matched_file = 1;
+    repeated BlockWithSignature blocks_with_signature = 2;
 }

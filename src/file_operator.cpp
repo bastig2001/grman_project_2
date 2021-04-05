@@ -1,10 +1,10 @@
 #include "file_operator.h"
 #include "config.h"
 #include "exit_code.h"
-#include "file_operations.h"
 #include "internal_msg.h"
-#include "message_utils.h"
 #include "pipe.h"
+#include "file_operator/filesystem.h"
+#include "file_operator/message_utils.h"
 #include "messages/all.pb.h"
 #include "presentation/logger.h"
 
@@ -24,6 +24,7 @@ struct FileData {
     optional<chrono::time_point<chrono::system_clock>> last_checked{nullopt};
     unordered_map<string, File*> files_by_names{};
     unordered_map<string, File*> files_by_signatures{};
+    unordered_map<string, File*> removed{};
     unordered_map<string, File*> files_waiting_for_sync{};
     unordered_map<string, File> server_files_to_check{};
 };
@@ -88,7 +89,13 @@ void create_file_index(const SyncConfig& config, FileData& data) {
 }
 
 void clear_file_index(FileData& data) {
+    // all files which are listed as existing
     for (auto [file_name, file]: data.files_by_names) {
+        delete file;
+    }
+
+    // all removed files
+    for (auto [file_name, file]: data.removed) {
         delete file;
     }
 }
@@ -144,6 +151,7 @@ vector<InternalMsg> wrap_messages(
 
 Message get_file_list_msg(const ShowFiles&, const SyncConfig&, FileData&);
 vector<Message> get_sync_requests(const FileList&, FileData&);
+Message get_sync_response(const SyncRequest&, FileData&); 
 
 
 vector<Message> handle_msg(
@@ -157,7 +165,7 @@ vector<Message> handle_msg(
         case Message::kFileList:
             return get_sync_requests(request.file_list(), data);
         case Message::kSyncRequest:
-            return {};
+            return {get_sync_response(request.sync_request(), data)};
         case Message::kSyncResponse:
             return {};
         case Message::kSignatureAddendum:
@@ -204,7 +212,7 @@ vector<Message> get_sync_requests(
         if (contains(data.files_by_names, file.file_name())) {
             checked_file_names.push_back(file.file_name());
 
-            auto local_file = data.files_by_names[file.file_name()];
+            auto local_file{data.files_by_names[file.file_name()]};
             if (!(local_file->timestamp() == file.timestamp() 
                     && 
                   local_file->size() == file.size()
@@ -225,8 +233,16 @@ vector<Message> get_sync_requests(
                 logger->info(colored(file) + " needs no syncing");
             }
         }
+        else if (contains(data.removed, file.file_name())) {
+            logger->info(colored(file) + " has already been removed");
+
+            msg.set_allocated_sync_request(
+                get_sync_request(new File(file), true)
+            );
+            msgs.push_back(move(msg));
+        }
         else if (contains(data.files_by_signatures, file.signature())) {
-            auto local_file = data.files_by_signatures[file.signature()];
+            auto local_file{data.files_by_signatures[file.signature()]};
             checked_file_names.push_back(local_file->file_name());
 
             if (local_file->timestamp() == file.timestamp() 
@@ -275,3 +291,84 @@ vector<Message> get_sync_requests(
     return msgs;
 }
 
+Message get_sync_response(const SyncRequest& request, FileData& data) {
+    Message msg{};
+    auto file{request.file()};
+
+    if (request.removed()) {
+        if (contains(data.files_by_names, file.file_name())) {
+            logger->info("Removing " + colored(file));
+
+            auto local_file{data.files_by_names[file.file_name()]};
+            
+            data.removed.insert({file.file_name(), local_file});
+            data.files_by_names.erase(file.file_name());
+            data.files_by_signatures.erase(local_file->signature());
+
+            remove_file(file.file_name());
+        }
+
+        msg.set_received(true);
+    }
+    else {
+        auto response{new SyncResponse};
+        response->set_allocated_requested_file(new File(file));
+    
+        if (contains(data.files_by_names, file.file_name())) {
+            logger->info("Syncing " + colored(file) + " with client");
+
+            auto local_file{data.files_by_names[file.file_name()]};
+
+            if (local_file->timestamp() < file.timestamp()) {
+                response->set_allocated_partial_match(
+                    get_partial_match_without_corrections(request, *local_file)
+                );
+                response->set_allocated_correction_request(
+                    get_correction_request(response->partial_match(), *local_file)
+                );
+            }
+            else {
+                response->set_allocated_partial_match(
+                    get_partial_match_with_corrections(request, *local_file)  
+                );
+            }
+
+            response->set_removed(false);
+            response->set_requsting_file(false);
+        }
+        else if (contains(data.removed, file.file_name())) {
+            response->set_removed(true);
+            response->set_requsting_file(false);
+        }
+        else if (contains(data.files_by_signatures, file.signature())) {
+            auto local_file{data.files_by_signatures[file.signature()]};
+            logger->info("Syncing " + colored(*local_file) + " with client");
+
+            if (local_file->timestamp() < file.timestamp()) {
+                response->set_allocated_partial_match(
+                    get_partial_match_without_corrections(request, *local_file)
+                );
+                response->set_allocated_correction_request(
+                    get_correction_request(response->partial_match(), *local_file)
+                );
+            }
+            else {
+                response->set_allocated_partial_match(
+                    get_partial_match_with_corrections(request, *local_file)  
+                );
+            }
+
+            response->set_removed(false);
+            response->set_requsting_file(false);
+        }
+        else {
+            logger->info("Getting " + colored(file) + " from client");
+            response->set_removed(false);
+            response->set_requsting_file(true);
+        }
+
+        msg.set_allocated_sync_response(response);
+    }
+    
+    return msg;
+}

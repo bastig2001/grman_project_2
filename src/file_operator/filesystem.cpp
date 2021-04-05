@@ -1,5 +1,5 @@
-#include "file_operations.h"
-#include "sync_utils.h"
+#include "file_operator/filesystem.h"
+#include "file_operator/signatures.h"
 #include "utils.h"
 #include "messages/info.pb.h"
 #include "messages/sync.pb.h"
@@ -12,6 +12,8 @@
 
 using namespace std;
 using namespace filesystem;
+
+void remove_empty_dir(const path&);
 
 
 vector<path> get_file_paths(bool include_hidden) {
@@ -75,12 +77,24 @@ File* get_file(const path& path) {
 }
 
 
-void move_file(const string&, const string&) {
-
+void move_file(const path& old_path, const path& new_path) {
+    if (!exists(new_path.parent_path())) {
+        create_directories(new_path.parent_path());
+    }
+    
+    rename(old_path, new_path);
+    remove_empty_dir(old_path.parent_path());
 }
 
-void remove_file(const string&) {
+void remove_file(const path& path) {
+    remove(path);
+    remove_empty_dir(path.parent_path());
+}
 
+void remove_empty_dir(const path& directory) {
+    if (filesystem::is_empty(directory)) {
+        remove(directory);
+    }
 }
 
 

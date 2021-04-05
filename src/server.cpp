@@ -1,6 +1,5 @@
 #include "server.h"
 #include "config.h"
-#include "file_operations.h"
 #include "internal_msg.h"
 #include "utils.h"
 #include "exit_code.h"
