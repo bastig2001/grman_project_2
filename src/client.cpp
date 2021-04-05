@@ -45,7 +45,6 @@ int run_client(
             };
             socket_base::keep_alive keep_alive;
             server.socket().set_option(keep_alive);
-            server.expires_after(std::chrono::seconds{10});
 
             if (server) {
                 logger->info("Connected to server");

@@ -56,7 +56,6 @@ int run_server(
                 acceptor.accept(socket);
                 socket.set_option(keep_alive);
                 tcp::iostream client{move(socket)};
-                client.expires_after(std::chrono::seconds{5});
 
                 thread{handle_client, move(client), ref(file_operator)}
                     .detach();
