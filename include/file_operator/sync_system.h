@@ -28,6 +28,10 @@ class SyncSystem {
 
     void remove(File*);
 
+    Message sync(const SyncRequest&);
+    Message respond_already_removed(const File&);
+    Message respond_requesting(const File&);
+
   public:
     SyncSystem(const SyncConfig&);
 

@@ -3,6 +3,7 @@
 #include "file_operator/message_utils.h"
 #include "file_operator/signatures.h"
 #include "config.h"
+#include "messages/sync.pb.h"
 #include "utils.h"
 #include "presentation/logger.h"
 
@@ -174,58 +175,15 @@ Message SyncSystem::get_sync_response(const SyncRequest& request) {
 
         msg.set_received(true);
     }
-    // else if (contains(files, client_file.file_name())) {
-    //     logger->info("Syncing " + colored(file) + " with client");
-
-    //     auto local_file{data.files_by_names[file.file_name()]};
-
-    //     if (local_file->timestamp() < file.timestamp()) {
-    //         response->set_allocated_partial_match(
-    //             get_partial_match_without_corrections(request, *local_file)
-    //         );
-    //         response->set_allocated_correction_request(
-    //             get_correction_request(response->partial_match(), *local_file)
-    //         );
-    //     }
-    //     else {
-    //         response->set_allocated_partial_match(
-    //             get_partial_match_with_corrections(request, *local_file)  
-    //         );
-    //     }
-
-    //     response->set_removed(false);
-    //     response->set_requsting_file(false);
-    // }
-    // else if (contains(data.removed, file.file_name())) {
-    //     response->set_removed(true);
-    //     response->set_requsting_file(false);
-    // }
-    // else if (contains(data.files_by_signatures, file.signature())) {
-    //     auto local_file{data.files_by_signatures[file.signature()]};
-    //     logger->info("Syncing " + colored(*local_file) + " with client");
-
-    //     if (local_file->timestamp() < file.timestamp()) {
-    //         response->set_allocated_partial_match(
-    //             get_partial_match_without_corrections(request, *local_file)
-    //         );
-    //         response->set_allocated_correction_request(
-    //             get_correction_request(response->partial_match(), *local_file)
-    //         );
-    //     }
-    //     else {
-    //         response->set_allocated_partial_match(
-    //             get_partial_match_with_corrections(request, *local_file)  
-    //         );
-    //     }
-
-    //     response->set_removed(false);
-    //     response->set_requsting_file(false);
-    // }
-    // else {
-    //     logger->info("Getting " + colored(file) + " from client");
-    //     response->set_removed(false);
-    //     response->set_requsting_file(true);
-    // }
+    else if (contains(files, client_file.file_name())) {
+        sync(request);
+    }
+    else if (contains(removed, client_file.file_name())) {
+        respond_already_removed(client_file);
+    }
+    else {
+        respond_requesting(client_file);
+    }
     
     return msg;
 }
@@ -237,4 +195,44 @@ void SyncSystem::remove(File* file) {
     files.erase(file->file_name());
 
     remove_file(file->file_name());
+}
+
+Message SyncSystem::sync(const SyncRequest& request) {
+    auto client_file{request.file()};
+    auto local_file{files[client_file.file_name()]};
+
+    logger->info("Syncing " + colored(*local_file) + " with client");
+
+    if (local_file->timestamp() < client_file.timestamp()) {
+    }
+    else {
+    }
+
+    Message msg{};
+
+    return msg;
+}
+
+Message SyncSystem::respond_already_removed(const File& requested_file) {
+    logger->info(
+        "Requested " + colored(requested_file) + " has already been removed"
+    );
+
+    Message msg{};
+    msg.set_allocated_sync_response(
+        sync_response(requested_file, nullopt, nullopt, false, true)
+    );
+
+    return msg;
+}
+
+Message SyncSystem::respond_requesting(const File& requested_file) {
+    logger->info("Getting " + colored(requested_file) + " from client");
+
+    Message msg{};
+    msg.set_allocated_sync_response(
+        sync_response(requested_file, nullopt, nullopt, true)
+    );
+
+    return msg;
 }
