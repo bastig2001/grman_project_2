@@ -7,7 +7,10 @@
 #include "utils.h"
 #include "presentation/logger.h"
 
+#include <algorithm>
 #include <optional>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -200,15 +203,87 @@ void SyncSystem::remove(File* file) {
 Message SyncSystem::sync(const SyncRequest& request) {
     auto client_file{request.file()};
     auto local_file{files[client_file.file_name()]};
+    unsigned int last_block_size{
+        BLOCK_SIZE - (unsigned int)(client_file.size() % BLOCK_SIZE)
+    };
+    bool last_block_smaller{last_block_size < BLOCK_SIZE};
 
     logger->info("Syncing " + colored(*local_file) + " with client");
 
-    if (local_file->timestamp() < client_file.timestamp()) {
-    }
-    else {
+    int full_signatures_count{
+        request.weak_signatures_size() + (
+            last_block_smaller
+            ? -1 // the last signature in the request is not from a full block
+            :  0 
+    )};
+    unordered_map<unsigned int, unsigned long> signature_offsets{};
+    for (int i{0}; i <  full_signatures_count; i++) {
+        signature_offsets.insert(
+            {request.weak_signatures().at(i), i * BLOCK_SIZE}
+        );
     }
 
+    auto signatures{get_weak_signatures(local_file->file_name())};
+    auto& matching_offsets{this->matching_offsets[local_file->file_name()]};
+    for (unsigned long i{0}; i < signatures.size();) {
+        if (contains(signature_offsets, signatures[i])) {
+            matching_offsets.insert({i, signature_offsets[signatures[i]]});
+            i += BLOCK_SIZE;
+        }
+        else {
+            i++;
+        }
+    }
+
+    vector<Block*> matching_client_blocks{};
+    matching_client_blocks.reserve(matching_offsets.size());
+
+    for (auto [local_offset, client_offset]: matching_offsets) {
+        matching_client_blocks.push_back(
+            block(client_file.file_name(), client_offset)
+        );
+    }
+
+    // bool last_blocks_match{false};
+
+    if (last_block_smaller) {
+        auto last_offset{local_file->size() - last_block_size};
+        auto last_signature{
+            get_weak_signature(
+                local_file->file_name(), 
+                last_block_size, 
+                last_offset
+        )};
+
+        if (last_signature 
+            == 
+            request.weak_signatures().at(request.weak_signatures_size() - 1)
+        ) {
+            // last_blocks_match = true;
+
+            auto last_client_offset{client_file.size() - last_block_size};
+
+            matching_offsets.insert({last_offset, last_client_offset});
+            matching_client_blocks.push_back(
+                block(
+                    client_file.file_name(), 
+                    last_client_offset, 
+                    last_block_size
+            ));
+        }
+    }
+
+
     Message msg{};
+
+    if (local_file->timestamp() < client_file.timestamp()) {
+        // server has older file and requests correction
+
+        
+    }
+    else {
+        // server has newer file and sends correction
+    }
 
     return msg;
 }

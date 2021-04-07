@@ -99,6 +99,15 @@ vector<unsigned int> get_weak_signatures(const path& file) {
     return get_weak_signatures(file_stream, file_size(file));
 }
 
+unsigned int get_weak_signature(
+    const std::filesystem::path& file,
+    unsigned long block_size,
+    unsigned long offset
+) {
+    ifstream file_stream{file, ios::binary};
+    return get_weak_signature(file_stream, block_size, offset);
+}
+
 
 void move_file(const path& old_path, const path& new_path) {
     if (!exists(new_path.parent_path())) {

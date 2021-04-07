@@ -20,6 +20,10 @@ class SyncSystem {
     std::unordered_map<FileName, File*> files{}; // existing
     std::unordered_map<FileName, File*> waiting_for_sync{};
     std::unordered_map<FileName, File*> removed{};
+    std::unordered_map<
+        FileName, 
+        std::unordered_map<unsigned long, unsigned long>
+    > matching_offsets{};
     const SyncConfig& config;
 
     Message start_sync(File*);
