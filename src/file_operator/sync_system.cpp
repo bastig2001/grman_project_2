@@ -4,8 +4,8 @@
 #include "file_operator/operator_utils.h"
 #include "file_operator/signatures.h"
 #include "config.h"
-#include "messages/sync.pb.h"
 #include "utils.h"
+#include "messages/sync.pb.h"
 #include "presentation/logger.h"
 
 #include <algorithm>
@@ -18,10 +18,10 @@ using namespace std;
 
 
 SyncSystem::SyncSystem(const SyncConfig& config): config{config} {
-    auto file_paths = get_file_paths(config.sync_hidden_files);
+    auto file_paths = fs::get_file_paths(config.sync_hidden_files);
     logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
 
-    for (auto file: get_files(file_paths)) {
+    for (auto file: fs::get_files(file_paths)) {
         files.insert({file->name(), file});
     }
 }
@@ -65,7 +65,7 @@ Message SyncSystem::get_file_list(const ShowFiles& request) {
     for (auto [name, file]: files) {
         if ((   list_hidden 
                 || 
-                is_not_hidden(name)
+                fs::is_not_hidden(name)
             ) && (
                 !min_timestamp.has_value() 
                 ||
@@ -143,7 +143,7 @@ Message SyncSystem::start_sync(File* file) {
 
     Message msg{};
     msg.set_allocated_sync_request(
-        sync_request(*file, get_request_signatures(file->name()))
+        sync_request(*file, fs::get_request_signatures(file->name()))
     );
     
     return msg;
@@ -169,7 +169,6 @@ Message SyncSystem::request(const File& file) {
 
 
 Message SyncSystem::get_sync_response(const SyncRequest& request) {
-    Message msg{};
     auto client_file{request.file()};
 
     if (request.removed()) {
@@ -177,19 +176,20 @@ Message SyncSystem::get_sync_response(const SyncRequest& request) {
             remove(files[client_file.name()]);
         }
 
+        Message msg{};
         msg.set_received(true);
+
+        return msg;
     }
     else if (contains(files, client_file.name())) {
-        sync(request);
+        return sync(request);
     }
     else if (contains(removed, client_file.name())) {
-        respond_already_removed(client_file);
+        return respond_already_removed(client_file);
     }
     else {
-        respond_requesting(client_file);
+        return respond_requesting(client_file);
     }
-    
-    return msg;
 }
 
 void SyncSystem::remove(File* file) {
@@ -198,15 +198,13 @@ void SyncSystem::remove(File* file) {
     removed.insert({file->name(), file});
     files.erase(file->name());
 
-    remove_file(file->name());
+    fs::remove_file(file->name());
 }
 
 Message SyncSystem::sync(const SyncRequest& request) {
     auto client_file{request.file()};
     auto local_file{files[client_file.name()]};
-    BlockSize last_block_size{
-        BLOCK_SIZE - (unsigned int)(client_file.size() % BLOCK_SIZE)
-    };
+    BlockSize last_block_size{(BlockSize)(client_file.size() % BLOCK_SIZE)};
     bool last_block_smaller{last_block_size < BLOCK_SIZE};
 
     logger->info("Syncing " + colored(*local_file) + " with client");
@@ -224,7 +222,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
         );
     }
 
-    auto signatures{get_weak_signatures(local_file->name())};
+    auto signatures{fs::get_weak_signatures(local_file->name())};
     auto& matching_offsets{this->matching_offsets[local_file->name()]};
     for (unsigned long i{0}; i < signatures.size();) {
         if (contains(signature_offsets, signatures[i])) {
@@ -250,7 +248,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
     if (last_block_smaller) {
         auto last_offset{local_file->size() - last_block_size};
         auto last_signature{
-            get_weak_signature(
+            fs::get_weak_signature(
                 local_file->name(), 
                 last_block_size, 
                 last_offset
@@ -339,7 +337,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
         auto blocks_to_read{
             get_blocks_between(move(local_offsets), local_file->size())
         };
-        auto correction_data{read(local_file->name(), blocks_to_read)};
+        auto correction_data{fs::read(local_file->name(), blocks_to_read)};
 
         vector<Correction*> corrections{};
         corrections.reserve(correction_data.size());

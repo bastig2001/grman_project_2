@@ -17,7 +17,7 @@ using namespace filesystem;
 void remove_empty_dir(const path&);
 
 
-vector<path> get_file_paths(bool include_hidden) {
+vector<path> fs::get_file_paths(bool include_hidden) {
     vector<path> paths{};
 
     recursive_directory_iterator file_iterator{current_path()};
@@ -41,16 +41,16 @@ vector<path> get_file_paths(bool include_hidden) {
     return paths;
 }
 
-bool is_hidden(const path& path) {
+bool fs::is_hidden(const path& path) {
     return regex_match(path.c_str(), regex{"^(.*\\/\\.|\\.).+$"});
 }
 
-bool is_not_hidden(const path& path) {
+bool fs::is_not_hidden(const path& path) {
     return !is_hidden(path);
 }
 
 
-vector<File*> get_files(const vector<path>& paths) {
+vector<File*> fs::get_files(const vector<path>& paths) {
     vector<File*> files(paths.size());
     transform(
         paths.begin(),
@@ -64,7 +64,7 @@ vector<File*> get_files(const vector<path>& paths) {
     return files;
 }
 
-File* get_file(const path& path) {
+File* fs::get_file(const path& path) {
     auto file{new File};
 
     file->set_name(path);
@@ -78,14 +78,14 @@ File* get_file(const path& path) {
 }
 
 
-vector<unsigned int> get_request_signatures(const path& file) {
+vector<unsigned int> fs::get_request_signatures(const path& file) {
     ifstream file_stream{file, ios::binary};
     auto size{file_size(file)};
     vector<unsigned int> signatures{};
 
     for (unsigned long offset{0}; offset < size; offset += BLOCK_SIZE) {
         signatures.push_back(
-            get_weak_signature(
+            ::get_weak_signature(
                 file_stream,
                 min((unsigned long)BLOCK_SIZE, size - offset),
                 offset
@@ -95,22 +95,29 @@ vector<unsigned int> get_request_signatures(const path& file) {
     return signatures;
 }
 
-vector<unsigned int> get_weak_signatures(const path& file) {
+vector<unsigned int> fs::get_weak_signatures(const path& file) {
     ifstream file_stream{file, ios::binary};
-    return get_weak_signatures(file_stream, file_size(file));
+    auto size{file_size(file)};
+
+    return 
+        ::get_weak_signatures(
+            file_stream, 
+            size, 
+            min(size, (unsigned long)BLOCK_SIZE)
+        );
 }
 
-unsigned int get_weak_signature(
+unsigned int fs::get_weak_signature(
     const std::filesystem::path& file,
     BlockSize block_size,
     Offset offset
 ) {
     ifstream file_stream{file, ios::binary};
-    return get_weak_signature(file_stream, block_size, offset);
+    return ::get_weak_signature(file_stream, block_size, offset);
 }
 
 
-vector<string> read(
+vector<string> fs::read(
     const path& file,
     const vector<pair<Offset, BlockSize>>& blocks
 ) {
@@ -131,7 +138,7 @@ vector<string> read(
     return data;
 }
 
-string read(
+string fs::read(
     const path& file,
     Offset offset,
     BlockSize size
@@ -146,7 +153,7 @@ string read(
 }
 
 
-void move_file(const path& old_path, const path& new_path) {
+void fs::move_file(const path& old_path, const path& new_path) {
     if (!exists(new_path.parent_path())) {
         create_directories(new_path.parent_path());
     }
@@ -155,7 +162,7 @@ void move_file(const path& old_path, const path& new_path) {
     remove_empty_dir(old_path.parent_path());
 }
 
-void remove_file(const path& path) {
+void fs::remove_file(const path& path) {
     remove(path);
     remove_empty_dir(path.parent_path());
 }
@@ -170,6 +177,8 @@ void remove_empty_dir(const path& directory) {
 #ifdef UNIT_TESTS
 #include "unit_tests/doctest_utils.h"
 #include <doctest.h>
+
+using namespace fs;
 
 TEST_SUITE("file operations utils") {
     TEST_CASE("hidden path") {
