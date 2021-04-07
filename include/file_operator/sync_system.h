@@ -25,6 +25,7 @@ class SyncSystem {
         FileName, 
         std::unordered_map<Offset /* local */, Offset /* client */>
     > matching_offsets{};
+    std::unordered_map<FileName, Corrections*> postponed_corrections{};
     const SyncConfig& config;
 
     Message start_sync(File*);
@@ -36,6 +37,10 @@ class SyncSystem {
     Message sync(const SyncRequest&);
     Message respond_already_removed(const File&);
     Message respond_requesting(const File&);
+
+    Message get_file(const File&);
+
+    std::vector<Message> sync(const SyncResponse&);
 
   public:
     SyncSystem(const SyncConfig&);
@@ -49,6 +54,8 @@ class SyncSystem {
     std::vector<Message> get_sync_requests(const FileList&);
 
     Message get_sync_response(const SyncRequest&); 
+
+    std::vector<Message> handle_sync_response(const SyncResponse&);
 };
 
 

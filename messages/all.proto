@@ -7,14 +7,15 @@ import "messages/download.proto";
 
 message Message {
     oneof message {
-        ShowFiles         show_files          = 1;
-        FileList          file_list           = 2;
-        SyncRequest       sync_request        = 3;
-        SyncResponse      sync_response       = 4;
-        SignatureAddendum signature_addendum  = 5;
-        FileRequest       file_request        = 6;
-        FileResponse      file_response       = 7;
-        bool              received            = 8; // when there is no other response
-        bool              finish              = 9;
+        ShowFiles         show_files          =  1;
+        FileList          file_list           =  2;
+        SyncRequest       sync_request        =  3;
+        SyncResponse      sync_response       =  4;
+        SignatureAddendum signature_addendum  =  5;
+        Corrections       corrections         =  6;
+        FileRequest       file_request        =  7;
+        FileResponse      file_response       =  8;
+        bool              received            =  9; // when there is no other response
+        bool              finish              = 10;
     } 
 }

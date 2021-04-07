@@ -254,6 +254,16 @@ SignatureAddendum* signature_addendum(
 }
 
 
+// all
+
+Message received() {
+    Message msg{};
+    msg.set_received(true);
+
+    return msg;
+}
+
+
 // other utils
 
 vector<File*> to_vector(
@@ -268,4 +278,19 @@ vector<File*> to_vector(
     );
 
     return files;
+}
+
+vector<pair<Offset, BlockSize>> get_block_positioners(const Blocks& blocks) {
+    vector<pair<Offset, BlockSize>> positioners{};
+    positioners.reserve(blocks.blocks_size());
+
+    for (auto block: blocks.blocks()) {
+        positioners.push_back(get_block_positioners(block));
+    }
+
+    return positioners;
+}
+
+pair<Offset, BlockSize> get_block_positioners(const Block& block) {
+    return {block.offset(), block.size()};
 }

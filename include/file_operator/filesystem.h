@@ -20,12 +20,20 @@ namespace fs {
 
     std::vector<unsigned int> get_request_signatures(const std::filesystem::path&);
     std::vector<unsigned int> get_weak_signatures(const std::filesystem::path&);
+
     unsigned int get_weak_signature(
         const std::filesystem::path&,
         BlockSize = BLOCK_SIZE,
         Offset = 0
     );
 
+    std::string get_strong_signature(
+        const std::filesystem::path&,
+        BlockSize,
+        Offset
+    );
+
+    // read at given offset(s) with given size(s)
     std::vector<std::string> read(
         const std::filesystem::path&,
         const std::vector<std::pair<Offset, BlockSize>>&
@@ -35,6 +43,9 @@ namespace fs {
         Offset,
         BlockSize
     );
+
+    // read whole file
+    std::string read(const std::filesystem::path&);
 
     void move_file(
         const std::filesystem::path& old_path, 

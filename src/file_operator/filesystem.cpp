@@ -72,7 +72,7 @@ File* fs::get_file(const path& path) {
     file->set_size(file_size(path));
 
     ifstream file_stream{path, ios::binary};
-    file->set_signature(get_strong_signature(file_stream));
+    file->set_signature(::get_strong_signature(file_stream));
 
     return file;
 }
@@ -117,6 +117,22 @@ unsigned int fs::get_weak_signature(
 }
 
 
+string fs::get_strong_signature(
+    const std::filesystem::path& file,
+    BlockSize size,
+    Offset offset
+) {
+    ifstream file_stream{file, ios::binary};
+    vector<char> block(size);
+
+    file_stream.seekg(offset, ios::beg);
+    file_stream.read(block.data(), size);
+
+
+    return ::get_strong_signature(string{block.begin(), block.end()});
+}
+
+
 vector<string> fs::read(
     const path& file,
     const vector<pair<Offset, BlockSize>>& blocks
@@ -150,6 +166,17 @@ string fs::read(
     file_stream.read(block.data(), size);
 
     return string{block.begin(), block.end()};
+}
+
+string fs::read(const path& file) {
+    ifstream file_stream{file, ios::binary};
+    auto size{file_size(file)};
+    vector<char> data(size);
+
+    file_stream.seekg(0, ios::beg);
+    file_stream.read(data.data(), size);
+
+    return string{data.begin(), data.end()};
 }
 
 

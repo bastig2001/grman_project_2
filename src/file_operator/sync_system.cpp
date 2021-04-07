@@ -5,7 +5,7 @@
 #include "file_operator/signatures.h"
 #include "config.h"
 #include "utils.h"
-#include "messages/sync.pb.h"
+#include "messages/all.pb.h"
 #include "presentation/logger.h"
 
 #include <algorithm>
@@ -176,10 +176,7 @@ Message SyncSystem::get_sync_response(const SyncRequest& request) {
             remove(files[client_file.name()]);
         }
 
-        Message msg{};
-        msg.set_received(true);
-
-        return msg;
+        return received();
     }
     else if (contains(files, client_file.name())) {
         return sync(request);
@@ -190,15 +187,6 @@ Message SyncSystem::get_sync_response(const SyncRequest& request) {
     else {
         return respond_requesting(client_file);
     }
-}
-
-void SyncSystem::remove(File* file) {
-    logger->info("Removing " + colored(*file));
-
-    removed.insert({file->name(), file});
-    files.erase(file->name());
-
-    fs::remove_file(file->name());
 }
 
 Message SyncSystem::sync(const SyncRequest& request) {
@@ -243,8 +231,6 @@ Message SyncSystem::sync(const SyncRequest& request) {
         );
     }
 
-    // bool last_blocks_match{false};
-
     if (last_block_smaller) {
         auto last_offset{local_file->size() - last_block_size};
         auto last_signature{
@@ -258,8 +244,6 @@ Message SyncSystem::sync(const SyncRequest& request) {
             == 
             request.weak_signatures().at(request.weak_signatures_size() - 1)
         ) {
-            // last_blocks_match = true;
-
             auto last_client_offset{client_file.size() - last_block_size};
 
             matching_offsets.insert({last_offset, last_client_offset});
@@ -385,5 +369,133 @@ Message SyncSystem::respond_requesting(const File& requested_file) {
         sync_response(requested_file, nullopt, nullopt, true)
     );
 
+    return msg;
+}
+
+
+vector<Message> SyncSystem::handle_sync_response(const SyncResponse& response) {
+    auto file{response.requested_file()};
+
+    if (response.requsting_file()) {
+        waiting_for_sync.erase(waiting_for_sync.find(file.name()));
+
+        return {get_file(response.requested_file())};
+        
+    }
+    else if (response.removed()) {
+        if (contains(files, file.name())) {
+            waiting_for_sync.erase(waiting_for_sync.find(file.name()));
+            remove(files[file.name()]);
+        }
+
+        return {received()};
+    }
+    else if (response.has_partial_match() 
+                && 
+             contains(waiting_for_sync, file.name())
+    ) {
+        return sync(response);
+    }
+    else {
+        return {received()};
+    }
+}
+
+vector<Message> SyncSystem::sync(const SyncResponse& response) {
+    auto file{response.requested_file()};
+    auto match{response.partial_match()};
+    vector<Message> msgs;
+
+    if (match.has_signature_requests() 
+            && 
+        match.signature_requests().blocks_size() > 0
+    ) {
+        vector<BlockWithSignature*> blocks_with_signature{};
+        blocks_with_signature.reserve(match.signature_requests().blocks_size());
+
+        for (auto block: match.signature_requests().blocks()) {
+            blocks_with_signature.push_back(
+                block_with_signature(
+                    new Block(block), 
+                    fs::get_strong_signature(
+                        file.name(), 
+                        block.size(), 
+                        block.offset()
+            )));
+        }
+
+        Message msg{};
+        msg.set_allocated_signature_addendum(
+            signature_addendum(match.matched_file(), blocks_with_signature)
+        );
+
+        msgs.push_back(move(msg));
+    }
+    else {
+        waiting_for_sync.erase(file.name());
+    }
+
+    if (match.has_corrections()
+            &&
+        match.corrections().corrections_size() > 0
+    ) {
+        postponed_corrections.insert(
+            {file.name(), match.release_corrections()}
+        );
+    }
+    else if (response.has_correction_request()
+                &&
+             response.correction_request().blocks_size() > 0
+    ) {
+        auto blocks_to_read{
+            get_block_positioners(response.correction_request())
+        };
+
+        auto correction_data{fs::read(file.name(), blocks_to_read)};
+
+        vector<Correction*> corrections{};
+        corrections.reserve(correction_data.size());
+        
+        for (unsigned int i{0}; i < correction_data.size(); i++) {
+            corrections.push_back(
+                correction(
+                    new Block(response.correction_request().blocks().at(i)), 
+                    move(correction_data[i])
+            ));
+        }
+
+        Message msg{};
+        msg.set_allocated_corrections(
+            ::corrections(corrections)
+        );
+    }
+
+    return msgs;
+}
+
+
+void SyncSystem::remove(File* file) {
+    logger->info("Removing " + colored(*file));
+
+    removed.insert({file->name(), file});
+    files.erase(file->name());
+
+    fs::remove_file(file->name());
+}
+
+Message SyncSystem::get_file(const File& file) {
+    Message msg{};
+
+    if (contains(files, file.name())) {
+        msg.set_allocated_file_response(
+            file_response(file, fs::read(file.name()))
+        );
+    }
+    else {
+        msg.set_allocated_file_response(
+            file_response(file, true)
+        );
+    }
+    
     return msg;
 }

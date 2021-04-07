@@ -105,8 +105,16 @@ SignatureAddendum* signature_addendum(
 );
 
 
+// all
+
+Message received();
+
+
 // other utils
 
 std::vector<File*> to_vector(
     const std::unordered_map<std::string, File* /* not copied */>&
 );
+
+std::vector<std::pair<Offset, BlockSize>> get_block_positioners(const Blocks&);
+std::pair<Offset, BlockSize> get_block_positioners(const Block&);
