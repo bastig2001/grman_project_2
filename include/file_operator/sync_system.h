@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "file_operator/signatures.h"
 #include "messages/all.pb.h"
 
 #include <fmt/format.h>
@@ -22,7 +23,7 @@ class SyncSystem {
     std::unordered_map<FileName, File*> removed{};
     std::unordered_map<
         FileName, 
-        std::unordered_map<unsigned long, unsigned long>
+        std::unordered_map<Offset /* local */, Offset /* client */>
     > matching_offsets{};
     const SyncConfig& config;
 

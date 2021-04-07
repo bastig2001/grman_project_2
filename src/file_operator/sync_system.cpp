@@ -1,6 +1,7 @@
 #include "file_operator/sync_system.h"
 #include "file_operator/filesystem.h"
 #include "file_operator/message_utils.h"
+#include "file_operator/operator_utils.h"
 #include "file_operator/signatures.h"
 #include "config.h"
 #include "messages/sync.pb.h"
@@ -203,7 +204,7 @@ void SyncSystem::remove(File* file) {
 Message SyncSystem::sync(const SyncRequest& request) {
     auto client_file{request.file()};
     auto local_file{files[client_file.file_name()]};
-    unsigned int last_block_size{
+    BlockSize last_block_size{
         BLOCK_SIZE - (unsigned int)(client_file.size() % BLOCK_SIZE)
     };
     bool last_block_smaller{last_block_size < BLOCK_SIZE};
@@ -216,7 +217,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
             ? -1 // the last signature in the request is not from a full block
             :  0 
     )};
-    unordered_map<unsigned int, unsigned long> signature_offsets{};
+    unordered_map<unsigned int, Offset> signature_offsets{};
     for (int i{0}; i <  full_signatures_count; i++) {
         signature_offsets.insert(
             {request.weak_signatures().at(i), i * BLOCK_SIZE}
@@ -279,10 +280,87 @@ Message SyncSystem::sync(const SyncRequest& request) {
     if (local_file->timestamp() < client_file.timestamp()) {
         // server has older file and requests correction
 
-        
+        vector<Offset> client_offsets(matching_offsets.size());
+        transform(
+            matching_offsets.begin(),
+            matching_offsets.end(),
+            client_offsets.begin(),
+            [](auto matching_pair){
+                return matching_pair.second;
+            }
+        );
+
+        msg.set_allocated_sync_response(
+            sync_response(
+                client_file,
+                partial_match(
+                    *local_file,
+                    blocks(matching_client_blocks)
+                ),
+                blocks(
+                    get_blocks_between(
+                        move(client_offsets), 
+                        client_file.size(), 
+                        client_file.file_name()
+                ))
+            )
+        );
     }
     else {
         // server has newer file and sends correction
+
+        vector<Offset> client_offsets(matching_offsets.size());
+        transform(
+            matching_offsets.begin(),
+            matching_offsets.end(),
+            client_offsets.begin(),
+            [](auto matching_pair){
+                return matching_pair.second;
+            }
+        );
+
+        auto blocks_to_correct{
+            get_blocks_between(
+                move(client_offsets), 
+                client_file.size(), 
+                client_file.file_name()
+        )};
+
+        vector<Offset> local_offsets(matching_offsets.size());
+        transform(
+            matching_offsets.begin(),
+            matching_offsets.end(),
+            local_offsets.begin(),
+            [](auto matching_pair){
+                return matching_pair.first;
+            }
+        );
+ 
+        auto blocks_to_read{
+            get_blocks_between(move(local_offsets), local_file->size())
+        };
+        auto correction_data{read(local_file->file_name(), blocks_to_read)};
+
+        vector<Correction*> corrections{};
+        corrections.reserve(correction_data.size());
+        
+        for (unsigned int i{0}; i < correction_data.size(); i++) {
+            corrections.push_back(
+                correction(blocks_to_correct[i], move(correction_data[i]))
+            );
+        }
+
+        msg.set_allocated_sync_response(
+            sync_response(
+                client_file,
+                partial_match(
+                    *local_file,
+                    blocks(matching_client_blocks),
+                    ::corrections(corrections)
+                ),
+                nullopt
+            )
+        );
     }
 
     return msg;

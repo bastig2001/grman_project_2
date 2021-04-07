@@ -21,7 +21,7 @@ using namespace std;
 File* file(
     const string& file_name,
     chrono::time_point<chrono::system_clock> timestamp,
-    unsigned long size,
+    size_t size,
     const string& signature
 ) {
     return file(file_name, get_timestamp(timestamp), size, signature);
@@ -30,7 +30,7 @@ File* file(
 File* file(
     const string& file_name,
     unsigned long timestamp,
-    unsigned long size,
+    size_t size,
     const string& signature
 ) {
     auto file{new File};
@@ -44,8 +44,8 @@ File* file(
 
 Block* block(
     const string& file_name, 
-    unsigned long offset, 
-    unsigned int size
+    Offset offset, 
+    BlockSize size
 ) {
     auto block{new Block};
     block->set_file_name(file_name);

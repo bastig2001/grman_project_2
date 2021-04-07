@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ios>
 #include <regex>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -101,11 +102,47 @@ vector<unsigned int> get_weak_signatures(const path& file) {
 
 unsigned int get_weak_signature(
     const std::filesystem::path& file,
-    unsigned long block_size,
-    unsigned long offset
+    BlockSize block_size,
+    Offset offset
 ) {
     ifstream file_stream{file, ios::binary};
     return get_weak_signature(file_stream, block_size, offset);
+}
+
+
+vector<string> read(
+    const path& file,
+    const vector<pair<Offset, BlockSize>>& blocks
+) {
+    ifstream file_stream{file, ios::binary};
+
+    vector<string> data{};
+    data.reserve(blocks.size());
+
+    for (auto [offset, size]: blocks) {
+        vector<char> block(size);
+
+        file_stream.seekg(offset, ios::beg);
+        file_stream.read(block.data(), size);
+
+        data.push_back(string{block.begin(), block.end()});
+    }
+
+    return data;
+}
+
+string read(
+    const path& file,
+    Offset offset,
+    BlockSize size
+) {
+    ifstream file_stream{file, ios::binary};
+    vector<char> block(size);
+
+    file_stream.seekg(offset, ios::beg);
+    file_stream.read(block.data(), size);
+
+    return string{block.begin(), block.end()};
 }
 
 

@@ -3,8 +3,8 @@ syntax = "proto3";
 import "messages/basic.proto";
 
 message Correction {
-    Block block = 1;
-    string data = 2;
+    Block block = 1; // block to replace
+    string data = 2; // with data (sizes might not match)
 }
 
 message Corrections {

@@ -19,20 +19,20 @@
 File* file(
     const std::string& file_name,
     std::chrono::time_point<std::chrono::system_clock> timestamp,
-    unsigned long size,
+    size_t size,
     const std::string& signature
 );
 File* file(
     const std::string& file_name,
     unsigned long timestamp,
-    unsigned long size,
+    size_t size,
     const std::string& signature
 );
 
 Block* block(
     const std::string& file_name, 
-    unsigned long offset = 0, 
-    unsigned int size = BLOCK_SIZE
+    Offset offset = 0, 
+    BlockSize size = BLOCK_SIZE
 );
 
 Blocks* blocks(const std::vector<Block* /* used */>&);

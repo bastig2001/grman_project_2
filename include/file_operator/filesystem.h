@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 
@@ -21,8 +22,18 @@ std::vector<unsigned int> get_request_signatures(const std::filesystem::path&);
 std::vector<unsigned int> get_weak_signatures(const std::filesystem::path&);
 unsigned int get_weak_signature(
     const std::filesystem::path&,
-    unsigned long block_size = BLOCK_SIZE,
-    unsigned long offset = 0
+    BlockSize = BLOCK_SIZE,
+    Offset = 0
+);
+
+std::vector<std::string> read(
+    const std::filesystem::path&,
+    const std::vector<std::pair<Offset, BlockSize>>&
+);
+std::string read(
+    const std::filesystem::path&,
+    Offset,
+    BlockSize
 );
 
 void move_file(
