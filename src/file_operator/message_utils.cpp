@@ -19,22 +19,22 @@ using namespace std;
 // creational functions for basic message types
 
 File* file(
-    const string& file_name,
+    const string& name,
     chrono::time_point<chrono::system_clock> timestamp,
     size_t size,
     const string& signature
 ) {
-    return file(file_name, get_timestamp(timestamp), size, signature);
+    return file(name, get_timestamp(timestamp), size, signature);
 }
 
 File* file(
-    const string& file_name,
+    const string& name,
     unsigned long timestamp,
     size_t size,
     const string& signature
 ) {
     auto file{new File};
-    file->set_file_name(file_name);
+    file->set_name(name);
     file->set_timestamp(timestamp);
     file->set_size(size);
     file->set_signature(signature);

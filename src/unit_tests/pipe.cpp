@@ -63,7 +63,7 @@ TEST_SUITE("pipe") {
             DOCTEST_VALUE_PARAMETERIZED_DATA(file_name, file_names);
 
             auto file{new File};
-            file->set_file_name(file_name);
+            file->set_name(file_name);
             auto file_request{new FileRequest};
             file_request->set_allocated_file(file);
             Message msg{};
@@ -75,7 +75,7 @@ TEST_SUITE("pipe") {
             auto received_msg{pipe.receive()};
             REQUIRE(received_msg);
 
-            CHECK(received_msg.value().file_request().file().file_name() 
+            CHECK(received_msg.value().file_request().file().name() 
                     == 
                   file_name);
         }
@@ -92,7 +92,7 @@ TEST_SUITE("pipe") {
 
             for (auto file_name: file_names) {
                 auto file{new File};
-                file->set_file_name(file_name);
+                file->set_name(file_name);
                 auto file_request{new FileRequest};
                 file_request->set_allocated_file(file);
                 Message msg{};
@@ -106,7 +106,7 @@ TEST_SUITE("pipe") {
                 auto msg{pipe.receive()};
                 REQUIRE(msg);
 
-                CHECK(msg.value().file_request().file().file_name() 
+                CHECK(msg.value().file_request().file().name() 
                         == 
                       file_name);
             }
@@ -127,7 +127,7 @@ TEST_SUITE("pipe") {
 
             for (auto file_name: file_names) {
                 auto file{new File};
-                file->set_file_name(file_name);
+                file->set_name(file_name);
                 auto file_request{new FileRequest};
                 file_request->set_allocated_file(file);
                 Message msg{};
@@ -143,7 +143,7 @@ TEST_SUITE("pipe") {
                 auto msg{pipe.receive()};
                 REQUIRE(msg);
 
-                CHECK(msg.value().file_request().file().file_name() 
+                CHECK(msg.value().file_request().file().name() 
                         == 
                       file_name);
             }

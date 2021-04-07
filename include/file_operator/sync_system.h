@@ -54,5 +54,5 @@ class SyncSystem {
 
 // colouring the file name
 inline std::string colored(const File& file) {
-    return fmt::format(fg(fmt::color::burly_wood), file.file_name());
+    return fmt::format(fg(fmt::color::burly_wood), file.name());
 }

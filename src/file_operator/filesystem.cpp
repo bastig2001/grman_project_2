@@ -67,7 +67,7 @@ vector<File*> get_files(const vector<path>& paths) {
 File* get_file(const path& path) {
     auto file{new File};
 
-    file->set_file_name(path);
+    file->set_name(path);
     file->set_timestamp(get_timestamp(last_write_time(path)));
     file->set_size(file_size(path));
 

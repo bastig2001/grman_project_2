@@ -22,17 +22,17 @@ SyncSystem::SyncSystem(const SyncConfig& config): config{config} {
     logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
 
     for (auto file: get_files(file_paths)) {
-        files.insert({file->file_name(), file});
+        files.insert({file->name(), file});
     }
 }
 
 SyncSystem::~SyncSystem() {
     // this includes also all files in waiting_for_sync
-    for (auto [file_name, file]: files) {
+    for (auto [name, file]: files) {
         delete file;
     }
 
-    for (auto [file_name, file]: removed) {
+    for (auto [name, file]: removed) {
         delete file;
     }
 }
@@ -62,10 +62,10 @@ Message SyncSystem::get_file_list(const ShowFiles& request) {
     };
 
     vector<File*> listed_files{};
-    for (auto [file_name, file]: files) {
+    for (auto [name, file]: files) {
         if ((   list_hidden 
                 || 
-                is_not_hidden(file_name)
+                is_not_hidden(name)
             ) && (
                 !min_timestamp.has_value() 
                 ||
@@ -87,14 +87,14 @@ Message SyncSystem::get_file_list(const ShowFiles& request) {
 
 vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
     vector<Message> msgs{};
-    vector<string> checked_file_names{};
+    vector<string> checked_files{};
 
     for (auto& server_file: server_list.files()) {
-        if (contains(files, server_file.file_name())) {
+        if (contains(files, server_file.name())) {
             // locally there is a file with the same name/relative path
 
-            auto local_file{files[server_file.file_name()]};
-            checked_file_names.push_back(local_file->file_name());
+            auto local_file{files[server_file.name()]};
+            checked_files.push_back(local_file->name());
 
             if (!(local_file->timestamp() == server_file.timestamp() 
                     && 
@@ -112,7 +112,7 @@ vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
                 logger->info(colored(*local_file) + " needs no syncing");
             }
         }
-        else if (contains(removed, server_file.file_name())) {
+        else if (contains(removed, server_file.name())) {
             // locally there was a file with the same name/relative path,
             // it has been removed
 
@@ -125,8 +125,8 @@ vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
         }
     }
 
-    for (auto [file_name, file]: files) {
-        if (!contains(checked_file_names, file_name)) {
+    for (auto [name, file]: files) {
+        if (!contains(checked_files, name)) {
             // server doesn't seem to know of this file
 
             msgs.push_back(start_sync(file));
@@ -139,11 +139,11 @@ vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
 Message SyncSystem::start_sync(File* file) {
     logger->info("Starting syncing process for " + colored(*file));
 
-    waiting_for_sync.insert({file->file_name(), file});
+    waiting_for_sync.insert({file->name(), file});
 
     Message msg{};
     msg.set_allocated_sync_request(
-        sync_request(*file, get_request_signatures(file->file_name()))
+        sync_request(*file, get_request_signatures(file->name()))
     );
     
     return msg;
@@ -173,16 +173,16 @@ Message SyncSystem::get_sync_response(const SyncRequest& request) {
     auto client_file{request.file()};
 
     if (request.removed()) {
-        if (contains(files, client_file.file_name())) {
-            remove(files[client_file.file_name()]);
+        if (contains(files, client_file.name())) {
+            remove(files[client_file.name()]);
         }
 
         msg.set_received(true);
     }
-    else if (contains(files, client_file.file_name())) {
+    else if (contains(files, client_file.name())) {
         sync(request);
     }
-    else if (contains(removed, client_file.file_name())) {
+    else if (contains(removed, client_file.name())) {
         respond_already_removed(client_file);
     }
     else {
@@ -195,15 +195,15 @@ Message SyncSystem::get_sync_response(const SyncRequest& request) {
 void SyncSystem::remove(File* file) {
     logger->info("Removing " + colored(*file));
 
-    removed.insert({file->file_name(), file});
-    files.erase(file->file_name());
+    removed.insert({file->name(), file});
+    files.erase(file->name());
 
-    remove_file(file->file_name());
+    remove_file(file->name());
 }
 
 Message SyncSystem::sync(const SyncRequest& request) {
     auto client_file{request.file()};
-    auto local_file{files[client_file.file_name()]};
+    auto local_file{files[client_file.name()]};
     BlockSize last_block_size{
         BLOCK_SIZE - (unsigned int)(client_file.size() % BLOCK_SIZE)
     };
@@ -224,8 +224,8 @@ Message SyncSystem::sync(const SyncRequest& request) {
         );
     }
 
-    auto signatures{get_weak_signatures(local_file->file_name())};
-    auto& matching_offsets{this->matching_offsets[local_file->file_name()]};
+    auto signatures{get_weak_signatures(local_file->name())};
+    auto& matching_offsets{this->matching_offsets[local_file->name()]};
     for (unsigned long i{0}; i < signatures.size();) {
         if (contains(signature_offsets, signatures[i])) {
             matching_offsets.insert({i, signature_offsets[signatures[i]]});
@@ -241,7 +241,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
 
     for (auto [local_offset, client_offset]: matching_offsets) {
         matching_client_blocks.push_back(
-            block(client_file.file_name(), client_offset)
+            block(client_file.name(), client_offset)
         );
     }
 
@@ -251,7 +251,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
         auto last_offset{local_file->size() - last_block_size};
         auto last_signature{
             get_weak_signature(
-                local_file->file_name(), 
+                local_file->name(), 
                 last_block_size, 
                 last_offset
         )};
@@ -267,7 +267,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
             matching_offsets.insert({last_offset, last_client_offset});
             matching_client_blocks.push_back(
                 block(
-                    client_file.file_name(), 
+                    client_file.name(), 
                     last_client_offset, 
                     last_block_size
             ));
@@ -301,7 +301,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
                     get_blocks_between(
                         move(client_offsets), 
                         client_file.size(), 
-                        client_file.file_name()
+                        client_file.name()
                 ))
             )
         );
@@ -323,7 +323,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
             get_blocks_between(
                 move(client_offsets), 
                 client_file.size(), 
-                client_file.file_name()
+                client_file.name()
         )};
 
         vector<Offset> local_offsets(matching_offsets.size());
@@ -339,7 +339,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
         auto blocks_to_read{
             get_blocks_between(move(local_offsets), local_file->size())
         };
-        auto correction_data{read(local_file->file_name(), blocks_to_read)};
+        auto correction_data{read(local_file->name(), blocks_to_read)};
 
         vector<Correction*> corrections{};
         corrections.reserve(correction_data.size());
