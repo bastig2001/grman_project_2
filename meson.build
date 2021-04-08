@@ -1,6 +1,6 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '0.1.3',
+        version : '0.1.4',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
@@ -24,7 +24,7 @@ add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
 add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
 # json: https://github.com/nlohmann/json
-# add_global_arguments('-I' + get_option('json_include_dir'), language : 'cpp')
+add_global_arguments('-I' + get_option('json_include_dir'), language : 'cpp')
 
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
@@ -64,6 +64,7 @@ src = [
 ]
 
 unit_tests_src = [
+    'src/unit_tests/json_utils.cpp',
     'src/unit_tests/main.cpp',
     'src/unit_tests/operator_utils.cpp',
     'src/unit_tests/pipe.cpp',

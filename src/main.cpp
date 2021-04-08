@@ -61,11 +61,14 @@ int run(const Config& config) {
         : async(launch::deferred, [](){ return 0; })
     };
 
-    auto file_operator = 
-        async(
+    auto file_operator{
+        config.act_as_server.has_value() || config.server.has_value()
+        ? async(
             launch::async, 
             bind(run_file_operator, config.sync, ref(file_operator_inbox))
-        );
+          )
+        : async(launch::deferred, [](){ return 0; })
+    };
 
     int server_return = server.get();
     int client_return = client.get();
