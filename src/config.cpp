@@ -68,14 +68,12 @@ variant<int, Config> configure(int argc, char* argv[]) {
         "Enables logging to console\n"
             "  Default logging level is INFO"
     )->envname("SYNC_LOG_CONSOLE");
-    string log_file{""};
-    auto log_file_option = 
-        app.add_option(
-            "-f, --log-file",
-            log_file,
-            "Enables logging to specified file\n"
-                "  Default logging level is INFO"
-        )->envname("SYNC_LOG_FILE");
+    app.add_option(
+        "-f, --log-file",
+        logger.file,
+        "Enables logging to specified file\n"
+            "  Default logging level is INFO"
+    )->envname("SYNC_LOG_FILE");
     auto log_level_option = 
         app.add_option(
             "--log-level, --log-level-console",
@@ -124,8 +122,6 @@ variant<int, Config> configure(int argc, char* argv[]) {
     serve = serve || *bind_address_option || *bind_port_option;
 
     logger.max_file_size *= 1024; // convert from KB to B
-    
-    logger.file = *log_file_option ? optional{log_file} : nullopt; // set logger file when provided
 
     if (!*log_level_file_option && *log_level_option) {
         // set log.level_file to log.level_console, 

@@ -33,13 +33,13 @@ Logger* get_logger(const LoggerConfig& config) {
             config.log_date
         )};
 
-    if (config.file.has_value()) {
+    if (config.file != "") {
         return new ChainLogger(
             console_logger,
             get_basic_file_logger(
                 config.level_console, 
                 config.log_date, 
-                config.file.value(),
+                config.file,
                 config.max_file_size,
                 config.number_of_files
             )
@@ -120,7 +120,7 @@ LoggerConfig::operator string() {
         << boolalpha
         << " {\n"
         << "  \"log to console\":   " << log_to_console               << ";\n"
-        << "  \"file\":             \"" << optional_to_string(file) << "\";\n"
+        << "  \"file\":             \"" << file                     << "\";\n"
         << "  \"level on console\": " << level_console                << ";\n"
         << "  \"level in file\":    " << level_file                   << ";\n"
         << "  \"max file size\":    " << max_file_size / 1024         << ";\n"

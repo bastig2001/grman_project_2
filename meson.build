@@ -24,6 +24,7 @@ fmt = dependency('fmt')
 
 # json: https://github.com/nlohmann/json
 # add_global_arguments('-I' + get_option('json_include_dir'), language : 'cpp')
+json = dependency('nlohmann_json')
 
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
@@ -63,6 +64,7 @@ src = [
 ]
 
 unit_tests_src = [
+    'src/unit_tests/json_utils.cpp',
     'src/unit_tests/main.cpp',
     'src/unit_tests/operator_utils.cpp',
     'src/unit_tests/pipe.cpp',
@@ -70,7 +72,7 @@ unit_tests_src = [
     'src/unit_tests/utils.cpp'
 ]
 
-dependencies = [thread, fmt, protobuf, crypto]
+dependencies = [thread, fmt, protobuf, crypto, json]
 
 executable('sync', 
            messages,
