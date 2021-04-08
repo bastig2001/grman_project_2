@@ -2,50 +2,50 @@ syntax = "proto3";
 
 import "messages/basic.proto";
 
+message Correction {
+    Block block = 1; // block to replace
+    string data = 2; // with data (sizes might not match)
+}
+
+message Corrections {
+    repeated Correction corrections = 1;
+}
+
 message BlockWithSignature {
     Block block = 1;
     string strong_signature = 2;
 }
 
+message PartialMatch {
+    File matched_file = 1;
+    oneof optional_signature_requests {
+        Blocks signature_requests = 2; 
+    }
+    oneof optional_corrections {
+        Corrections corrections = 3;
+    }
+}
+
 
 message SyncRequest {
-    Block starting_block = 1;
+    File file = 1;
     repeated uint32 weak_signatures = 2;
+    bool removed = 3;
 }
 
 message SyncResponse {
-    repeated Block requested_blocks = 1;
-    oneof response {
-        bool full_match = 2;
-        bool requesting_strong_signatures = 3;
-        string correction_data = 4;
+    File requested_file = 1;
+    oneof optional_partial_match {
+        PartialMatch partial_match = 2;
     }
+    oneof optional_correction_request {
+        Blocks correction_request = 3;
+    }
+    bool requsting_file = 4;
+    bool removed = 5;
 }
 
 message SignatureAddendum {
-    repeated BlockWithSignature blocks_with_signature = 1;
-}
-
-message CheckFileRequest {
-    File file = 1;
-}
-
-message CheckFileResponse {
-    File requested_file = 1;
-    oneof response {
-        bool match = 2;
-        string new_file_name = 3;
-        bool request_syncing = 4;
-        SyncRequest sync_request = 5;
-        bool requesting_file = 6;
-    }
-}
-
-message FileRequest {
-    File file = 1;
-}
-
-message FileResponse {
-    File requested_file = 1;
-    string data = 2;
+    File matched_file = 1;
+    repeated BlockWithSignature blocks_with_signature = 2;
 }

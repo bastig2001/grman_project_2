@@ -2,6 +2,8 @@ syntax = "proto3";
 
 import "messages/sync.proto";
 import "messages/info.proto";
+import "messages/download.proto";
+
 
 message Message {
     oneof message {
@@ -10,11 +12,10 @@ message Message {
         SyncRequest       sync_request        =  3;
         SyncResponse      sync_response       =  4;
         SignatureAddendum signature_addendum  =  5;
-        CheckFileRequest  check_file_request  =  6;
-        CheckFileResponse check_file_response =  7;
-        FileRequest       file_request        =  8;
-        FileResponse      file_response       =  9;
-        bool              received            = 10; // when there is no other response
-        bool              finish              = 11;
+        Corrections       corrections         =  6;
+        FileRequest       file_request        =  7;
+        FileResponse      file_response       =  8;
+        bool              received            =  9; // when there is no other response
+        bool              finish              = 10;
     } 
 }

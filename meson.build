@@ -41,6 +41,7 @@ protoc = generator(
 messages = protoc.process('messages/all.proto',
                           'messages/sync.proto', 
                           'messages/info.proto', 
+                          'messages/download.proto',
                           'messages/basic.proto',
                           preserve_path_from : meson.current_source_dir()
                          )
@@ -51,16 +52,22 @@ inc_dir = include_directories('include')
 src = [
     'src/client.cpp',
     'src/config.cpp',
-    'src/file_operations.cpp',
+    'src/file_operator.cpp',
     'src/server.cpp',
-    'src/sync_utils.cpp',
     'src/utils.cpp',
+    'src/file_operator/filesystem.cpp',
+    'src/file_operator/message_utils.cpp',
+    'src/file_operator/operator_utils.cpp',
+    'src/file_operator/signatures.cpp',
+    'src/file_operator/sync_system.cpp',
     'src/presentation/logger_config.cpp'
 ]
 
 unit_tests_src = [
     'src/unit_tests/main.cpp',
-    'src/unit_tests/sync_utils.cpp',
+    'src/unit_tests/operator_utils.cpp',
+    'src/unit_tests/pipe.cpp',
+    'src/unit_tests/signatures.cpp',
     'src/unit_tests/utils.cpp'
 ]
 
