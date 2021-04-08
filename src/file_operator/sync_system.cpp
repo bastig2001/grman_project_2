@@ -473,6 +473,8 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
         msg.set_allocated_corrections(
             ::corrections(corrections)
         );
+
+        msgs.push_back(msg);
     }
 
     return msgs;
