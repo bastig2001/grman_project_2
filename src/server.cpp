@@ -106,9 +106,10 @@ void handle_client(
     bool finished{false};
     while (client && !finished) {
         Message request{msg_from_base64(client)};
-        logger->debug("Received:\n" + request.DebugString());
 
         if (client) {
+            logger->debug("Received:\n" + request.DebugString());
+            
             auto [response, finish]{get_response(request, file_operator)};
             logger->debug("Sending:\n" + response.DebugString());
             client << msg_to_base64(response) << "\n";

@@ -109,11 +109,14 @@ ExitCode handle_server(
 
             if (server) {
                 Message response{msg_from_base64(server)};
-                logger->debug("Received:\n" + response.DebugString());
+
+                if (server) {
+                    logger->debug("Received:\n" + response.DebugString());
                 
-                finished = handle_response(response, file_operator, inbox);
-                if (finished || file_operator.is_closed()) {
-                    server.close();
+                    finished = handle_response(response, file_operator, inbox);
+                    if (finished || file_operator.is_closed()) {
+                        server.close();
+                    }
                 }
             }  
         }
