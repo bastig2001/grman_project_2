@@ -126,7 +126,12 @@ vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
     }
 
     for (auto [name, file]: files) {
-        if (!contains(checked_files, name)) {
+        if (!contains(checked_files, name)
+            && (
+                server_list.options().include_hidden() 
+                || 
+                fs::is_not_hidden(name)
+            )) {
             // server doesn't seem to know of this file
 
             msgs.push_back(start_sync(file));
