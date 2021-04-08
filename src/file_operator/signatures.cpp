@@ -1,4 +1,4 @@
-#include "sync_utils.h"
+#include "file_operator/signatures.h"
 
 #include <algorithm>
 #include <cmath>
@@ -12,13 +12,13 @@ using namespace std;
 string unsigned_char_to_hexadecimal_string(unsigned char*, unsigned int);
 tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
     const string&, 
-    unsigned long, 
-    unsigned long
+    BlockSize, 
+    Offset
 );
 tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
     const string&, 
-    unsigned long,
-    unsigned long, 
+    BlockSize, 
+    Offset, 
     unsigned int,
     unsigned int
 );
@@ -65,8 +65,8 @@ string unsigned_char_to_hexadecimal_string(
 
 unsigned int get_weak_signature(
     istream& data, 
-    unsigned long block_size, 
-    unsigned long offset
+    BlockSize block_size, 
+    Offset offset
 ) {
     vector<char> block(block_size);
 
@@ -78,16 +78,16 @@ unsigned int get_weak_signature(
 
 unsigned int get_weak_signature(
     const string& data, 
-    unsigned long block_size, 
-    unsigned long offset
+    BlockSize block_size, 
+    Offset offset
 ) {
     return get<2>(calc_weak_signature(data, block_size, offset));
 }
 
 vector<unsigned int> get_weak_signatures(
     const string& data, 
-    unsigned long block_size, 
-    unsigned long initial_offset
+    BlockSize block_size, 
+    Offset initial_offset
 ) {
     unsigned long number_of_signatures{
         data.length() - block_size + 1 - initial_offset
@@ -123,8 +123,8 @@ vector<unsigned int> get_weak_signatures(
 vector<unsigned int> get_weak_signatures(
     istream& data, 
     size_t data_size,
-    unsigned long block_size, 
-    unsigned long initial_offset
+    BlockSize block_size, 
+    Offset initial_offset
 ) {
     unsigned long number_of_signatures{
         data_size - block_size + 1 - initial_offset
@@ -174,8 +174,8 @@ vector<unsigned int> get_weak_signatures(
 
 tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
     const string& data, 
-    unsigned long block_size, 
-    unsigned long offset
+    BlockSize block_size, 
+    Offset offset
 ) {
     unsigned int r1{0};
     for_each(data.begin() + offset, data.begin() + offset + block_size, 
@@ -198,8 +198,8 @@ tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
 
 tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
     const string& data, 
-    unsigned long block_size, 
-    unsigned long preceding_offset, 
+    BlockSize block_size, 
+    Offset preceding_offset, 
     unsigned int preceding_r1,
     unsigned int preceding_r2
 ) {

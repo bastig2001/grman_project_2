@@ -1,4 +1,6 @@
 #include "config.h"
+#include "file_operator.h"
+#include "internal_msg.h"
 #include "server.h"
 #include "client.h"
 #include "presentation/logger.h"
@@ -35,13 +37,41 @@ int main(int argc, char* argv[]) {
 }
 
 int run(const Config& config) {
-    auto server{async(launch::async, bind(run_server, config))};
-    auto client{async(launch::async, bind(run_client, config))};
+    Pipe<InternalMsgWithOriginator> file_operator_inbox;
+
+    auto server{
+        config.act_as_server.has_value()
+        ? async(
+            launch::async, 
+            bind(run_server, 
+                config.act_as_server.value(), 
+                ref(file_operator_inbox)
+          ))
+        : async(launch::deferred, [](){ return 0; })
+    };
+
+    auto client{
+        config.server.has_value()
+        ? async(
+            launch::async, 
+            bind(run_client, 
+                config.server.value(), 
+                ref(file_operator_inbox)
+          ))
+        : async(launch::deferred, [](){ return 0; })
+    };
+
+    auto file_operator = 
+        async(
+            launch::async, 
+            bind(run_file_operator, config.sync, ref(file_operator_inbox))
+        );
 
     int server_return = server.get();
     int client_return = client.get();
+    int file_operator_return = file_operator.get();
 
     google::protobuf::ShutdownProtobufLibrary();
 
-    return server_return | client_return;
+    return server_return | client_return | file_operator_return;
 }

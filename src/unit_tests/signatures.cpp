@@ -1,4 +1,4 @@
-#include "sync_utils.h"
+#include "file_operator/signatures.h"
 #include "unit_tests/doctest_utils.h"
 
 #include <doctest.h>
@@ -79,6 +79,8 @@ TEST_SUITE("sync_utils") {
                 string msg{get<0>(msg_signature_pair)};
 
                 auto signatures{get_weak_signatures(msg, 3)};
+                CHECK(signatures.size() == msg.length() - 2);
+
                 for (unsigned int i{0}; i < signatures.size(); i++) {
                     CHECK(signatures[i] == get_weak_signature(msg, 3, i));
                 }
@@ -90,6 +92,8 @@ TEST_SUITE("sync_utils") {
                 string msg{get<0>(msg_signature_pairs[3])};
 
                 auto signatures{get_weak_signatures(msg, 4, offset)};
+                CHECK(signatures.size() == msg.length() - 3 - offset);
+
                 for (unsigned int i{0}; i < signatures.size(); i++) {
                     CHECK(signatures[i] == get_weak_signature(msg, 4, i + offset));
                 }

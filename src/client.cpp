@@ -1,11 +1,11 @@
 #include "client.h"
 #include "config.h"
-#include "file_operations.h"
+#include "internal_msg.h"
+#include "pipe.h"
 #include "utils.h"
 #include "exit_code.h"
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
-#include "messages/info.pb.h"
 
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
@@ -17,28 +17,39 @@ using namespace std;
 using namespace asio::ip;
 using namespace asio;
 
-int handle_server(tcp::iostream&, const Config&);
-bool handle_response(const Message&);
+bool wait_for(SendingPipe<InternalMsgWithOriginator>&, Pipe<InternalMsg>&);
+ExitCode handle_server(
+    tcp::iostream&, 
+    SendingPipe<InternalMsgWithOriginator>&, 
+    Pipe<InternalMsg>&
+);
+bool handle_response(
+    const Message&, 
+    SendingPipe<InternalMsgWithOriginator>&, 
+    SendingPipe<InternalMsg>&
+);
 
 
-int run_client(const Config& config) {
-    if (config.server.has_value()) {
-        auto server_conf = config.server.value();
+int run_client(
+    const ServerData& config,
+    SendingPipe<InternalMsgWithOriginator>& file_operator
+) {
+    ExitCode exit_code;
+    Pipe<InternalMsg> inbox;
 
-        try {
+    try {
+        if (wait_for(file_operator, inbox)) {
             tcp::iostream server{
-                server_conf.address, 
-                to_string(server_conf.port)
+                config.address, 
+                to_string(config.port)
             };
             socket_base::keep_alive keep_alive;
             server.socket().set_option(keep_alive);
-            server.expires_after(std::chrono::seconds{10});
 
             if (server) {
                 logger->info("Connected to server");
-                int exit_code{handle_server(server, config)};
+                exit_code = handle_server(server, file_operator, inbox);
                 logger->info("Disconnected from server");
-                return exit_code;
             }
             else {
                 logger->error(
@@ -46,52 +57,72 @@ int run_client(const Config& config) {
                     + server.error().message()
                 );
 
-                return ConnectionEstablishmentError;
+                exit_code = ConnectionEstablishmentError;
             }
         }
-        catch (exception& err) {
-            logger->critical(
-                "Following exception occurred during client execution: " 
-                + string{err.what()}
-            );
+        else {
+            exit_code = FileOperatorNotStarted;
+        }  
+    }
+    catch (exception& err) {
+        logger->critical(
+            "Following exception occurred during client execution: " 
+            + string{err.what()}
+        );
 
-            return ClientException;
-        }
+        exit_code = ClientException;
+    }
+
+    inbox.close();
+    file_operator.close();
+    return exit_code;
+}
+
+bool wait_for(
+    SendingPipe<InternalMsgWithOriginator>& file_operator, 
+    Pipe<InternalMsg>& inbox
+) {
+    file_operator.send(
+        InternalMsgWithOriginator(InternalMsgType::ClientWaits, inbox)
+    );
+
+    if (auto response{inbox.receive()}) {
+        return response.value().type == InternalMsgType::FileOperatorStarted;
     }
     else {
-        return Success;
+        return false;
     }
 }
 
-int handle_server(tcp::iostream& server, const Config& config) {
-    auto files{get_files(config.sync_hidden_files)};
-    unsigned int file_index{0};
-    logger->debug("Files to sync:\n" + vector_to_string(files, "\n"));
-
+ExitCode handle_server(
+    tcp::iostream& server, 
+    SendingPipe<InternalMsgWithOriginator>& file_operator,
+    Pipe<InternalMsg>& inbox
+) {
     bool finished{false};
     while (server && !finished) {
-        Message request{};
-        if (file_index < files.size()) {
-            request.set_allocated_check_file_request(
-                get_check_file_request(get_file(files[file_index]))
-            );
-            file_index++;
+        if (auto optional_msg{inbox.receive()}) {
+            auto msg{optional_msg.value()};
+
+            logger->debug("Sending:\n" + msg.msg.DebugString());
+            server << msg_to_base64(msg.msg) << "\n";
+
+            if (server) {
+                Message response{msg_from_base64(server)};
+
+                if (server) {
+                    logger->debug("Received:\n" + response.DebugString());
+                
+                    finished = handle_response(response, file_operator, inbox);
+                    if (finished || file_operator.is_closed()) {
+                        server.close();
+                    }
+                }
+            }  
         }
         else {
-            request.set_finish(true);
+            break;
         }
-        logger->debug("Sending:\n" + request.DebugString());
-        server << msg_to_base64(request) << "\n";
-
-        if (server) {
-            Message response{msg_from_base64(server)};
-            logger->debug("Received:\n" + response.DebugString());
-            
-            finished = handle_response(response);
-            if (finished) {
-                server.close();
-            }
-        }  
     }
 
     if (server.error()) {
@@ -106,35 +137,22 @@ int handle_server(tcp::iostream& server, const Config& config) {
     }
 }
 
-bool handle_response(const Message& response) {
+bool handle_response(
+    const Message& response, 
+    SendingPipe<InternalMsgWithOriginator>& file_operator,
+    SendingPipe<InternalMsg>& inbox
+) {
     bool finish{false};
 
     switch (response.message_case()) {
-        case Message::kShowFiles:
-            break;
-        case Message::kFileList:
-            break;
-        case Message::kSyncRequest:
-            break;
-        case Message::kSyncResponse:
-            break;
-        case Message::kSignatureAddendum:
-            break;
-        case Message::kCheckFileRequest:
-            break;
-        case Message::kCheckFileResponse:
-            break;
-        case Message::kFileRequest:
-            break;
-        case Message::kFileResponse:
-            break;
-        case Message::kReceived:
-            break;
         case Message::kFinish:
             finish = true;
             break;
         case Message::MESSAGE_NOT_SET:
             logger->warn("Received an undefined message");
+            break;
+        default:
+            file_operator.send(get_msg_to_file_operator(inbox, response));
             break;
     }
 
