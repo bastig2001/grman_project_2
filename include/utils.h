@@ -76,3 +76,10 @@ unsigned long get_timestamp(
             time_point.time_since_epoch()
         ).count();
 }
+
+template<typename T>
+std::chrono::time_point<T> get_timepoint(
+    unsigned long timestamp
+) {
+    return std::chrono::time_point<T>(std::chrono::milliseconds{timestamp});
+}

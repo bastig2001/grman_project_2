@@ -34,7 +34,7 @@ std::optional<T> json_to_optional(
 }
 
 
-// functions for implicit (de)serialization between json an optional:
+// functions for implicit (de)serialization between json and optional:
 
 template<typename T>
 void to_json(json& j, const std::optional<T>& option) {
