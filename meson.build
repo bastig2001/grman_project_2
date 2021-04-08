@@ -60,6 +60,7 @@ src = [
     'src/file_operator/operator_utils.cpp',
     'src/file_operator/signatures.cpp',
     'src/file_operator/sync_system.cpp',
+    'src/presentation/command_line.cpp',
     'src/presentation/logger_config.cpp'
 ]
 

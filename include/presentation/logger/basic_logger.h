@@ -20,13 +20,16 @@ class BasicLogger: public Logger {
     {}
 
     bool logs_to_file() const override { 
-        return is_file_logger; 
+        return is_file_logger && logger->level() != spdlog::level::off; 
+    }
+    bool logs_to_console() const override { 
+        return !is_file_logger && logger->level() != spdlog::level::off; 
     }
 
     void set_level(spdlog::level::level_enum level) override {
         logger->set_level(level);
     }
-    spdlog::level::level_enum get_level() override { 
+    spdlog::level::level_enum get_level() const override { 
         return logger->level(); 
     }
 
