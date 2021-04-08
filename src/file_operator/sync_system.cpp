@@ -219,7 +219,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
     auto& matching_offsets{this->matching_offsets[local_file->name()]};
     for (unsigned long i{0}; i < signatures.size();) {
         if (contains(signature_offsets, signatures[i])) {
-            matching_offsets.insert({i, signature_offsets[signatures[i]]});
+            matching_offsets.insert({signature_offsets[signatures[i]], i});
             i += BLOCK_SIZE;
         }
         else {
@@ -230,7 +230,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
     vector<Block*> matching_client_blocks{};
     matching_client_blocks.reserve(matching_offsets.size());
 
-    for (auto [local_offset, client_offset]: matching_offsets) {
+    for (auto [client_offset, local_offset]: matching_offsets) {
         matching_client_blocks.push_back(
             block(client_file.name(), client_offset)
         );
@@ -251,7 +251,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
         ) {
             auto last_client_offset{client_file.size() - last_block_size};
 
-            matching_offsets.insert({last_offset, last_client_offset});
+            matching_offsets.insert({last_client_offset, last_offset});
             matching_client_blocks.push_back(
                 block(
                     client_file.name(), 
@@ -267,13 +267,15 @@ Message SyncSystem::sync(const SyncRequest& request) {
     if (local_file->timestamp() < client_file.timestamp()) {
         // server has older file and requests correction
 
+        waiting_for_sync.insert({local_file->name(), local_file});
+
         vector<Offset> client_offsets(matching_offsets.size());
         transform(
             matching_offsets.begin(),
             matching_offsets.end(),
             client_offsets.begin(),
             [](auto matching_pair){
-                return matching_pair.second;
+                return matching_pair.first;
             }
         );
 
@@ -302,7 +304,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
             matching_offsets.end(),
             client_offsets.begin(),
             [](auto matching_pair){
-                return matching_pair.second;
+                return matching_pair.first;
             }
         );
 
@@ -319,7 +321,7 @@ Message SyncSystem::sync(const SyncRequest& request) {
             matching_offsets.end(),
             local_offsets.begin(),
             [](auto matching_pair){
-                return matching_pair.first;
+                return matching_pair.second;
             }
         );
  
@@ -435,23 +437,36 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
         );
 
         msgs.push_back(move(msg));
+
+        if (match.has_corrections()
+                &&
+            match.corrections().corrections_size() > 0
+        ) {
+            postponed_corrections.insert(
+                {file.name(), match.release_corrections()}
+            );
+        }
     }
     else {
         waiting_for_sync.erase(file.name());
+
+        if (match.has_corrections()
+                &&
+            match.corrections().corrections_size() > 0
+        ) {
+            correct(file, match.corrections());
+        }
     }
 
-    if (match.has_corrections()
+    
+    if (!(match.has_corrections()
             &&
-        match.corrections().corrections_size() > 0
-    ) {
-        postponed_corrections.insert(
-            {file.name(), match.release_corrections()}
-        );
-    }
-    else if (response.has_correction_request()
-                &&
-             response.correction_request().blocks_size() > 0
-    ) {
+          match.corrections().corrections_size() > 0
+        ) && (
+        response.has_correction_request()
+            &&
+        response.correction_request().blocks_size() > 0
+    )) {
         auto blocks_to_read{
             get_block_positioners(response.correction_request())
         };
@@ -480,12 +495,90 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
     return msgs;
 }
 
+void SyncSystem::correct(const File& file, const Corrections&) {
+    logger->info("Correcting " + colored(file));
+}
+
+
+Message SyncSystem::get_sync_response(const SignatureAddendum& addendum) {
+    auto file{addendum.matched_file()};
+
+    if (contains(files, file.name())) {
+        auto& matching_offsets{this->matching_offsets[file.name()]};
+        vector<pair<Offset, BlockSize>> blocks_to_read;
+        vector<Block*> blocks_to_correct;
+
+        for (auto block_with_signature: addendum.blocks_with_signature()) {
+            auto block{block_with_signature.block()};
+            auto signature{block_with_signature.strong_signature()};
+            auto local_offset{matching_offsets[block.offset()]};
+
+            if (signature 
+                != 
+                fs::get_strong_signature(
+                    file.name(), 
+                    block.size(), 
+                    local_offset
+            )) {
+                blocks_to_read.push_back({local_offset, block.size()});
+                blocks_to_correct.push_back(new Block(block));
+            }
+        }
+
+        if (contains(waiting_for_sync, file.name())) {
+            // server has older file and requests correction data
+
+            Message msg{};
+            msg.set_allocated_sync_response(
+                sync_response(
+                    file,
+                    nullopt,
+                    blocks(blocks_to_correct)
+                )
+            );
+
+            return msg;
+        }
+        else {
+            // server has newer file and sends client correction data
+
+            auto correction_data{fs::read(file.name(), blocks_to_read)};
+            vector<Correction*> corrections{};
+            corrections.reserve(correction_data.size());
+
+            for (unsigned int i{0}; i < correction_data.size(); i++) {
+                corrections.push_back(
+                    ::correction(
+                        blocks_to_correct[i],
+                        move(correction_data[i])
+                ));
+            }
+
+            Message msg{};
+            msg.set_allocated_sync_response(
+                sync_response(
+                    file, 
+                    partial_match(file, nullopt, ::corrections(corrections)), 
+                    nullopt
+            ));
+
+            return msg;
+        }
+    }
+    else {
+        return received();
+    }
+}
+
 
 void SyncSystem::remove(File* file) {
     logger->info("Removing " + colored(*file));
 
     removed.insert({file->name(), file});
     files.erase(file->name());
+    waiting_for_sync.erase(waiting_for_sync.find(file->name()));
+    matching_offsets.erase(matching_offsets.find(file->name()));
+    postponed_corrections.erase(postponed_corrections.find(file->name()));
 
     fs::remove_file(file->name());
 }

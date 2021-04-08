@@ -98,7 +98,7 @@ vector<Message> handle_msg(const Message& request,SyncSystem& system) {
         case Message::kSyncResponse:
             return system.handle_sync_response(request.sync_response());
         case Message::kSignatureAddendum:
-            return {};
+            return {system.get_sync_response(request.signature_addendum())};
         case Message::kCorrections:
             return {};
         case Message::kFileRequest:

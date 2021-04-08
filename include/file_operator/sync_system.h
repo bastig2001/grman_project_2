@@ -23,8 +23,8 @@ class SyncSystem {
     std::unordered_map<FileName, File*> removed{};
     std::unordered_map<
         FileName, 
-        std::unordered_map<Offset /* local */, Offset /* client */>
-    > matching_offsets{};
+        std::unordered_map<Offset /* client */, Offset /* local */>
+    > matching_offsets{}; // server side
     std::unordered_map<FileName, Corrections*> postponed_corrections{};
     const SyncConfig& config;
 
@@ -42,6 +42,8 @@ class SyncSystem {
 
     std::vector<Message> sync(const SyncResponse&);
 
+    void correct(const File&, const Corrections&);
+
   public:
     SyncSystem(const SyncConfig&);
 
@@ -56,6 +58,8 @@ class SyncSystem {
     Message get_sync_response(const SyncRequest&); 
 
     std::vector<Message> handle_sync_response(const SyncResponse&);
+
+    Message get_sync_response(const SignatureAddendum&);
 };
 
 
