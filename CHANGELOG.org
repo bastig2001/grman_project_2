@@ -4,6 +4,8 @@
 *** Added
 
 *** Changed
+- Size units at "--log-size" CLI option description changed from KB and MB to KiB and MiB
+- Description for CLI option "--log-date" corrected
 
 *** Removed
 

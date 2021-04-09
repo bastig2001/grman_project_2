@@ -113,8 +113,8 @@ variant<int, Config> configure(int argc, char* argv[]) {
     app.add_option(
         "--log-size",
         logger.max_file_size,
-        "Maximum size of a log file in KB\n"
-            "  Default is 5 MB"
+        "Maximum size of a log file in KiB\n"
+            "  Default is 5 MiB"
     )->envname("SYNC_LOG_SIZE");
     app.add_option(
         "--log-file-number",
@@ -125,7 +125,7 @@ variant<int, Config> configure(int argc, char* argv[]) {
     app.add_flag(
         "--log-date",
         logger.log_date,
-        "Logs the date additionally to the time, when logging to a file"
+        "Logs the date additionally to the time"
     )->envname("SYNC_LOG_DATE");
     app.add_flag(
         "--log-config",
