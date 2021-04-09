@@ -133,6 +133,13 @@ variant<int, Config> configure(int argc, char* argv[]) {
         "Log the used config as a DEBUG message"
     )->envname("SYNC_LOG_CONFIG");
 
+    bool no_color{false};
+    app.add_flag(
+        "--no-color",
+        no_color,
+        "Disables color output to console"
+    )->envname("SYNC_NO_COLOR");
+
     CLI11_PARSE(app, argc, argv);
 
     if (config_file == "") {
@@ -151,7 +158,8 @@ variant<int, Config> configure(int argc, char* argv[]) {
             *server_address_option ? optional{server} : nullopt,
             serve ? optional{act_as_server} : nullopt,
             sync,
-            logger
+            logger,
+            no_color
         };
     }
     else {
@@ -297,6 +305,12 @@ variant<int, Config> override_config(Config&& config, int argc, char* argv[]) {
         logger.log_config
     );
 
+    bool no_color{config.no_color};
+    app.add_flag(
+        "--no-color",
+        no_color
+    );
+
     CLI11_PARSE(app, argc, argv);
 
     // if any of these three have been set, the program shall act as server
@@ -316,7 +330,8 @@ variant<int, Config> override_config(Config&& config, int argc, char* argv[]) {
             : nullopt,
         serve ? optional{act_as_server} : nullopt,
         sync,
-        logger
+        logger,
+        no_color
     };
 }
 

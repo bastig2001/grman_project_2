@@ -3,6 +3,8 @@
 #include "internal_msg.h"
 #include "server.h"
 #include "client.h"
+#include "presentation/command_line.h"
+#include "presentation/format_utils.h"
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
 
@@ -11,7 +13,7 @@
 
 using namespace std;
 
-int run(const Config&);
+int run(Config&);
 
 
 int main(int argc, char* argv[]) {
@@ -29,6 +31,8 @@ int main(int argc, char* argv[]) {
             );
         }
 
+        use_color = !config->no_color;
+
         return run(*config);
     }
     else {
@@ -36,8 +40,21 @@ int main(int argc, char* argv[]) {
     }
 }
 
-int run(const Config& config) {
+int run(Config& config) {
     Pipe<InternalMsgWithOriginator> file_operator_inbox;
+
+    future<void> command_line;
+    if (config.act_as_server.has_value() || config.server.has_value()) {
+        // tart command line
+
+        auto command_line_object = 
+            new CommandLine(logger, config, file_operator_inbox);
+        logger = command_line_object;
+        command_line = async(launch::deferred, ref(*command_line_object));
+    }
+    else {
+        command_line = async(launch::deferred, [](){});
+    }
 
     auto server{
         config.act_as_server.has_value()
@@ -70,6 +87,7 @@ int run(const Config& config) {
         : async(launch::deferred, [](){ return 0; })
     };
 
+    command_line.get();
     int server_return = server.get();
     int client_return = client.get();
     int file_operator_return = file_operator.get();

@@ -6,10 +6,11 @@
 // An implementation of Logger which does nothing
 class NoLogger: public Logger {
   public:
-    bool logs_to_file() const override { return true; }
+    bool logs_to_file() const override { return false; }
+    bool logs_to_console() const override { return false; }
 
     void set_level(spdlog::level::level_enum) override {}
-    spdlog::level::level_enum get_level() override { return spdlog::level::off; }
+    spdlog::level::level_enum get_level() const override { return spdlog::level::off; }
 
     void set_pattern(const std::string&) override {}
 

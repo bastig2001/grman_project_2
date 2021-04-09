@@ -1,7 +1,7 @@
 #pragma once
 
 #include "file_operator/signatures.h"
-#include "messages/all.pb.h"
+#include "messages/basic.pb.h"
 
 #include <filesystem>
 #include <string>

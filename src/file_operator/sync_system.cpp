@@ -6,6 +6,7 @@
 #include "config.h"
 #include "utils.h"
 #include "messages/all.pb.h"
+#include "presentation/format_utils.h"
 #include "presentation/logger.h"
 
 #include <algorithm>

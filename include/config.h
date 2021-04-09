@@ -5,6 +5,7 @@
 #include "presentation/logger_config.h"
 
 #include <json.hpp>
+#include <ios>
 #include <sstream>
 #include <variant>
 #include <string>
@@ -31,7 +32,6 @@ struct SyncConfig {
 
     operator std::string() {
         std::ostringstream output{};
-
         output 
             << std::boolalpha
             << "{\"sync hidden files\": " << sync_hidden_files << "}";
@@ -46,15 +46,22 @@ struct Config {
     std::optional<ServerData> act_as_server;
     SyncConfig sync;
     LoggerConfig logger;
+    bool no_color;
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Config, server, act_as_server, sync, logger)
 
     operator std::string() {
-        return "{\"server\":        " + optional_to_string(server, "{}")        + ",\n"
-               " \"act as server\": " + optional_to_string(act_as_server, "{}") + ",\n"
-               " \"sync\":          " + (std::string)sync                       + ",\n"
-               " \"logger\":      \n" + (std::string)logger                     +  "\n"
-               "}";
+        std::ostringstream output{};
+        output
+            << std::boolalpha
+            << "{\"server\":        " << optional_to_string(server, "{}")        << ",\n"
+            << " \"act as server\": " << optional_to_string(act_as_server, "{}") << ",\n"
+            << " \"sync\":          " << (std::string)sync                       << ",\n"
+            << " \"logger\":      \n" << (std::string)logger                     << ",\n"
+            << " \"no color\":      " << no_color                                << " \n"
+            << "}";
+        
+        return output.str();
     }
 };
 

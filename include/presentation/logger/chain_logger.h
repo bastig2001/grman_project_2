@@ -20,12 +20,15 @@ class ChainLogger: public Logger {
     bool logs_to_file() const override { 
         return logger1->logs_to_file() || logger2->logs_to_file(); 
     }
+    bool logs_to_console() const override { 
+        return logger1->logs_to_console() || logger2->logs_to_console(); 
+    }
 
     void set_level(spdlog::level::level_enum level) override {
         logger1->set_level(level);
         logger2->set_level(level);
     }
-    spdlog::level::level_enum get_level() override { 
+    spdlog::level::level_enum get_level() const override { 
         return std::min(logger1->get_level(), logger2->get_level());
     }
 
