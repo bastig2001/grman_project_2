@@ -10,23 +10,53 @@ using namespace fmt;
 
 string size_to_string(size_t size) {
     if (size >= pow(2, 40)) {
-        return format(fg(color::olive), "{:.2}", size / pow(2, 40))
-             + format(fg(color::sea_green), "TiB");
+        return 
+            format(
+                fg(color::sea_green), 
+                "{:>{}}",
+                format("{:2.1f}", size / pow(2, 40)), 
+                5
+            ) + 
+            format(fg(color::green), "TiB");
     }
     else if (size >= pow(2, 30)) {
-        return format(fg(color::olive), "{:.2}", size / pow(2, 30))
-             + format(fg(color::sea_green), "GiB");
+        return 
+            format(
+                fg(color::sea_green), 
+                "{:>{}}",
+                format("{:2.1f}", size / pow(2, 30)), 
+                5
+            ) + 
+            format(fg(color::green), "GiB");
     }
     else if (size >= pow(2, 20)) {
-        return format(fg(color::olive), "{:.2}", size / pow(2, 20))
-             + format(fg(color::sea_green), "MiB");
+        return 
+            format(
+                fg(color::sea_green), 
+                "{:>{}}",
+                format("{:2.1f}", size / pow(2, 20)), 
+                5
+            ) + 
+            format(fg(color::green), "MiB");
     }
     else if (size >= pow(2, 10)) {
-        return format(fg(color::olive), "{:.2}", size / pow(2, 10))
-             + format(fg(color::sea_green), "KiB");
+        return 
+            format(
+                fg(color::sea_green), 
+                "{:>{}}",
+                format("{:2.1f}", size / pow(2, 10)), 
+                5
+            ) + 
+            format(fg(color::green), "KiB");
     }
     else {
-        return format(fg(color::olive), "{}", size)
-             + format(fg(color::sea_green), "B");
+        return 
+            format(
+                fg(color::sea_green), 
+                "{:>{}}",
+                format("{}", size), 
+                3
+            ) + 
+            format(fg(color::green), "    B");
     }
 }

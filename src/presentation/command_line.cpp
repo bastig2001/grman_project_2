@@ -9,6 +9,7 @@
 #include <peglib.h>
 #include <spdlog/spdlog.h>
 #include <chrono>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -166,9 +167,9 @@ void CommandLine::list() {
 
 void CommandLine::list_long() {
     string output{
-        "signature\t" + 
-        fmt::format(fg(fmt::color::olive), "size\t") +
-        fmt::format(fg(fmt::color::cadet_blue), "last changed\t") +
+        "signature" + string(32 + 2 - 9, ' ') +  
+        fmt::format(fg(fmt::color::sea_green), "size      ") +
+        fmt::format(fg(fmt::color::cadet_blue), "last changed         ") +
         fmt::format(fg(fmt::color::burly_wood), "path\n\n")
     };
 
@@ -176,15 +177,16 @@ void CommandLine::list_long() {
             fs::get_files(fs::get_file_paths(config.sync.sync_hidden_files))
     ) {
         output += 
-            file->signature() + "\t" +
-            size_to_string(file->size()) + "\t" +
+            file->signature() + "  " +
+            size_to_string(file->size()) + "  " +
             fmt::format(
                 fg(fmt::color::cadet_blue),
                 time_to_string(
-                    get_timepoint<std::chrono::system_clock>(file->timestamp())
-            )) + "\t" +
-            fmt::format(fg(fmt::color::burly_wood), file->name()) +
-            "\n";
+                    cast_clock<chrono::time_point<chrono::system_clock>>(
+                        get_timepoint<filesystem::file_time_type::clock>(
+                            file->timestamp()
+            )))) + "  " + 
+            fmt::format(fg(fmt::color::burly_wood), file->name()) + "\n";
         
         delete file;
     }
@@ -193,12 +195,11 @@ void CommandLine::list_long() {
 }
 
 void CommandLine::exit() {
-    running = false;
     file_operator.close();
     pre_output = [](){};
     post_output = [](){};
 
-    println("\nexited\n");
+    println("\nexited");
 }
 
 
@@ -216,8 +217,7 @@ void CommandLine::operator()() {
     // load new stdin settings
     tcsetattr(fileno(stdin), TCSANOW, &new_stdin_settings); 
 
-    running = true;
-    while (running) {
+    while (file_operator.is_open()) {
         fd_set set{};
         struct timeval tv{};
         tv.tv_sec = 0;
@@ -235,6 +235,8 @@ void CommandLine::operator()() {
             handle_input(input_char);
         }
     }
+
+    cout << endl;
 
     // load back original stdin settings
     tcsetattr(fileno(stdin), TCSANOW, &original_stdin_settings);

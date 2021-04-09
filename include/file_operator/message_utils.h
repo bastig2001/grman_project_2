@@ -18,12 +18,6 @@
 
 File* file(
     const std::string& name,
-    std::chrono::time_point<std::chrono::system_clock> timestamp,
-    size_t size,
-    const std::string& signature
-);
-File* file(
-    const std::string& name,
     unsigned long timestamp,
     size_t size,
     const std::string& signature

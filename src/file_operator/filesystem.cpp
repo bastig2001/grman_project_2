@@ -1,4 +1,5 @@
 #include "file_operator/filesystem.h"
+#include "file_operator/message_utils.h"
 #include "file_operator/signatures.h"
 #include "utils.h"
 #include "messages/all.pb.h"
@@ -65,16 +66,15 @@ vector<File*> fs::get_files(const vector<path>& paths) {
 }
 
 File* fs::get_file(const path& path) {
-    auto file{new File};
-
-    file->set_name(path);
-    file->set_timestamp(get_timestamp(last_write_time(path)));
-    file->set_size(file_size(path));
-
     ifstream file_stream{path, ios::binary};
-    file->set_signature(::get_strong_signature(file_stream));
 
-    return file;
+    return 
+        file(
+            path, 
+            get_timestamp(last_write_time(path)), 
+            file_size(path),
+            ::get_strong_signature(file_stream)
+        );
 }
 
 

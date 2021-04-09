@@ -25,8 +25,6 @@ class CommandLine: public Logger {
     Config& config;
     SendingPipe<InternalMsgWithOriginator>& file_operator;
 
-    bool running{};
-
     std::mutex console_mtx{};
 
     std::function<void(spdlog::level::level_enum, const std::string&)> _log;

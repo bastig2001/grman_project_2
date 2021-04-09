@@ -72,7 +72,7 @@ unsigned long get_timestamp(
     std::chrono::time_point<T> time_point
 ) {
     return 
-        std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::duration_cast<std::chrono::seconds>(
             time_point.time_since_epoch()
         ).count();
 }
@@ -81,5 +81,18 @@ template<typename T>
 std::chrono::time_point<T> get_timepoint(
     unsigned long timestamp
 ) {
-    return std::chrono::time_point<T>(std::chrono::milliseconds{timestamp});
+    return std::chrono::time_point<T>(std::chrono::seconds{timestamp});
+}
+
+template<
+    typename DestTimePoint,
+    typename SourceTimePoint,
+    typename DestClock = typename DestTimePoint::clock,
+    typename SourceClock = typename SourceTimePoint::clock
+>
+DestTimePoint cast_clock(const SourceTimePoint time_point) {
+    const auto source_now = SourceClock::now();
+    const auto dest_now = DestClock::now();
+
+    return dest_now + (time_point - source_now);
 }
