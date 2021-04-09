@@ -93,6 +93,7 @@ executable('unit_tests',
            dependencies : dependencies,
            cpp_args : [
                '-DUNIT_TESTS', 
+               # doctest: https://github.com/onqtam/doctest
                '-DDOCTEST_CONFIG_SUPER_FAST_ASSERTS', 
                '-I' + get_option('doctest_include_dir')
             ]
