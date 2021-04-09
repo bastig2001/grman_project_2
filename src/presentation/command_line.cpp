@@ -176,17 +176,7 @@ void CommandLine::list_long() {
     for (auto file: 
             fs::get_files(fs::get_file_paths(config.sync.sync_hidden_files))
     ) {
-        output += 
-            file->signature() + "  " +
-            size_to_string(file->size()) + "  " +
-            fmt::format(
-                fg(fmt::color::cadet_blue),
-                time_to_string(
-                    cast_clock<chrono::time_point<chrono::system_clock>>(
-                        get_timepoint<filesystem::file_time_type::clock>(
-                            file->timestamp()
-            )))) + "  " + 
-            fmt::format(fg(fmt::color::burly_wood), file->name()) + "\n";
+        output += format_file(*file) + "\n";
         
         delete file;
     }

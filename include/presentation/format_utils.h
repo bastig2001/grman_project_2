@@ -1,5 +1,7 @@
 #pragma once
 
+#include "messages/basic.pb.h"
+
 #include <chrono>
 #include <ctime>
 #include <iomanip>
@@ -7,7 +9,14 @@
 #include <string>
 
 
-std::string size_to_string(size_t);
+extern bool use_color;
+
+
+std::string format_file(const File&);
+
+std::string format_size(size_t);
+
+std::string colored(const File&);
 
 
 template<typename T>

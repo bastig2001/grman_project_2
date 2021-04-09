@@ -61,9 +61,3 @@ class SyncSystem {
 
     Message get_sync_response(const SignatureAddendum&);
 };
-
-
-// colouring the file name
-inline std::string colored(const File& file) {
-    return fmt::format(fg(fmt::color::burly_wood), file.name());
-}

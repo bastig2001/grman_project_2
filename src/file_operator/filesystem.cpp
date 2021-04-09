@@ -2,7 +2,7 @@
 #include "file_operator/message_utils.h"
 #include "file_operator/signatures.h"
 #include "utils.h"
-#include "messages/all.pb.h"
+#include "messages/basic.pb.h"
 
 #include <algorithm>
 #include <filesystem>
