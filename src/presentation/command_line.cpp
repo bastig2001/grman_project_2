@@ -166,12 +166,7 @@ void CommandLine::list() {
 }
 
 void CommandLine::list_long() {
-    string output{
-        "signature" + string(32 + 2 - 9, ' ') +  
-        fmt::format(fg(fmt::color::sea_green), "size      ") +
-        fmt::format(fg(fmt::color::cadet_blue), "last changed         ") +
-        fmt::format(fg(fmt::color::burly_wood), "path\n\n")
-    };
+    string output{get_file_list_header()};
 
     for (auto file: 
             fs::get_files(fs::get_file_paths(config.sync.sync_hidden_files))

@@ -4,6 +4,7 @@
 #include "server.h"
 #include "client.h"
 #include "presentation/command_line.h"
+#include "presentation/format_utils.h"
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
 
@@ -29,6 +30,8 @@ int main(int argc, char* argv[]) {
                 "The config is:\n" + (string)*config
             );
         }
+
+        use_color = !config->no_color;
 
         return run(*config);
     }

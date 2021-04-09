@@ -11,6 +11,7 @@
 
 extern bool use_color;
 
+std::string get_file_list_header();
 
 std::string format_file(const File&);
 

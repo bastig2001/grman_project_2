@@ -15,7 +15,24 @@ bool use_color{};
 pair<string, string> get_size_and_unit(size_t);
 
 
-std::string format_file(const File& file) {
+string get_file_list_header() {
+    if (use_color) {
+        return
+            "signature" + string(32 + 2 - 9, ' ') +  
+            fmt::format(fg(fmt::color::sea_green), "size      ") +
+            fmt::format(fg(fmt::color::cadet_blue), "last changed         ") +
+            fmt::format(fg(fmt::color::burly_wood), "path\n\n");
+    }
+    else {
+        return
+            "signature" + string(32 + 2 - 9, ' ') +  
+            "size     \t" +
+            "last changed         " +
+            "path\n\n";
+    }
+}
+
+string format_file(const File& file) {
     auto time{
         time_to_string(
             cast_clock<chrono::time_point<chrono::system_clock>>(
@@ -72,7 +89,7 @@ pair<string, string> get_size_and_unit(size_t size) {
     }
     else {
         return {
-            format("{:>{}}", format("{}  ", size), 3), 
+            format("{:>{}}", format("{}  ", size), 5), 
             "  B"
         };
     }
