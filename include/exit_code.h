@@ -14,10 +14,11 @@ enum ExitCode {
 
     // File Operator
     FileOperatorException = 8,
+    DatabaseNotWorking = 16,
 
     // Other/All
-    LogFileError = 16,
-    FileOperatorNotStarted = 32,
+    LogFileError = 32,
+    FileOperatorNotStarted = 64,
 
     // beginning with 100: CLI ExitCodes
 };

@@ -17,6 +17,7 @@ class ResultVariant {
     ResultVariant(Err&& err): value{std::move(err)}, has_ok{false} {};
 
   public:
+    ResultVariant(): value{}, has_ok{} {};
 
     static ResultVariant<Ok, Err> ok(Ok ok) { 
         return ResultVariant(std::move(ok)); 

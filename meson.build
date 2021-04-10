@@ -31,6 +31,7 @@ add_global_arguments('-I' + get_option('peglib_include_dir'), language: 'cpp')
 
 # sqlite orm: https://github.com/fnc12/sqlite_orm
 add_global_arguments('-I' + get_option('sqlite_orm_include_dir'), language : 'cpp')
+add_global_arguments('-DSQLITE_ORM_OPTIONAL_SUPPORTED', language: 'cpp')
 
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
@@ -58,11 +59,12 @@ inc_dir = include_directories('include')
 src = [
     'src/client.cpp',
     'src/config.cpp',
+    'src/database.cpp',
     'src/file_operator.cpp',
+    'src/message_utils.cpp',
     'src/server.cpp',
     'src/utils.cpp',
     'src/file_operator/filesystem.cpp',
-    'src/file_operator/message_utils.cpp',
     'src/file_operator/operator_utils.cpp',
     'src/file_operator/signatures.cpp',
     'src/file_operator/sync_system.cpp',

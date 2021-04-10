@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file_operator/signatures.h"
+#include "type/definitions.h"
 #include "messages/all.pb.h"
 
 #include <chrono>
@@ -8,10 +9,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
-
-using FileName = std::string;
-using Timestamp = unsigned long;
 
 
 // used ... object is used and get disposed by Protobuf

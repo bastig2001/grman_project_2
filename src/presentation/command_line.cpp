@@ -1,4 +1,5 @@
 #include "presentation/command_line.h"
+#include "messages/basic.h"
 #include "presentation/format_utils.h"
 #include "config.h"
 #include "utils.h"
@@ -171,9 +172,7 @@ void CommandLine::list_long() {
     for (auto file: 
             fs::get_files(fs::get_file_paths(config.sync.sync_hidden_files))
     ) {
-        output += format_file(*file) + "\n";
-        
-        delete file;
+        file.apply([&](msg::File file){ output += format_file(file) + "\n"; });
     }
 
     println(output);

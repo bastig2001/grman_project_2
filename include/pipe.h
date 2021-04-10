@@ -6,8 +6,8 @@
 #include <queue>
 
 
-// The interface for a closable Pipe
-class ClosablePipe {
+// The interface for a closable object (Pipe)
+class Closable {
   public:
     virtual void close() = 0;
 
@@ -17,13 +17,13 @@ class ClosablePipe {
     virtual bool is_empty() const = 0;
     virtual bool is_not_empty() const = 0;
 
-    virtual ~ClosablePipe() = default;
+    virtual ~Closable() = default;
 };
 
 
 // The interface for the sending end of a Pipe
 template<typename T>
-class SendingPipe: public ClosablePipe {
+class SendingPipe: public Closable {
   public:
     // returns true, when the Message(s) was/were sent,
     //        false, when the Pipe is closed
@@ -36,7 +36,7 @@ class SendingPipe: public ClosablePipe {
 
 // The interface for the receiving end of a Pipe
 template<typename T>
-class ReceivingPipe: public ClosablePipe {
+class ReceivingPipe: public Closable {
   public:
     // returns the Message, when the Message was received,
     //             nullopt, when the Pipe is closed

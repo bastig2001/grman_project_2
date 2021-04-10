@@ -1,5 +1,4 @@
-#include "file_operator/message_utils.h"
-#include "messages/sync.pb.h"
+#include "message_utils.h"
 #include "utils.h"
 #include "messages/all.pb.h"
 
