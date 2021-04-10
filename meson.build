@@ -29,6 +29,9 @@ add_global_arguments('-I' + get_option('peglib_include_dir'), language: 'cpp')
 # add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
 # add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
+# sqlite orm: https://github.com/fnc12/sqlite_orm
+add_global_arguments('-I' + get_option('sqlite_orm_include_dir'), language : 'cpp')
+
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
 protoc = find_program('protoc', required : true)
