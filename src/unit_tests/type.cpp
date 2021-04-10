@@ -56,7 +56,7 @@ TEST_SUITE("type") {
         SUBCASE("ok value") {
             auto result{
                 Result<int>::ok(4)
-                .map(function<int(int)>{[](int n){ return n * 3; }})
+                .map<int>([](int n){ return n * 3; })
             };
 
             REQUIRE(result.is_ok());
@@ -65,7 +65,7 @@ TEST_SUITE("type") {
         SUBCASE("error value") {
             auto result{
                 Result<int>::err(Error{99, "XYZ"})
-                .map(function<int(int)>{[](int n){ return n * 3; }})
+                .map<int>([](int n){ return n * 3; })
             };
 
             REQUIRE(result.is_err());
@@ -79,9 +79,9 @@ TEST_SUITE("type") {
         SUBCASE("ok value and ok functor") {
             auto result{
                 Result<int>::ok(4)
-                .flat_map(function<Result<int>(int)>{[](int n){ 
+                .flat_map<int>([](int n){ 
                     return Result<int>::ok(n * 3); 
-                }})
+                })
             };
 
             REQUIRE(result.is_ok());
@@ -90,9 +90,9 @@ TEST_SUITE("type") {
         SUBCASE("error value and ok functor") {
             auto result{
                 Result<int>::err(Error{99, "XYZ"})
-                .flat_map(function<Result<int>(int)>{[](int n){ 
+                .flat_map<int>([](int n){ 
                     return Result<int>::ok(n * 3); 
-                }})
+                })
             };
 
             REQUIRE(result.is_err());
@@ -104,9 +104,9 @@ TEST_SUITE("type") {
         SUBCASE("ok value and error functor") {
             auto result{
                 Result<int>::ok(4)
-                .flat_map(function<Result<int>(int)>{[](int){ 
+                .flat_map<int>([](int){ 
                     return Result<int>::err(Error{42, "error"}); 
-                }})
+                })
             };
 
             REQUIRE(result.is_err());
@@ -118,9 +118,9 @@ TEST_SUITE("type") {
         SUBCASE("error value and error functor") {
             auto result{
                 Result<int>::err(Error{99, "XYZ"})
-                .flat_map(function<Result<int>(int)>{[](int){ 
+                .flat_map<int>([](int){ 
                     return Result<int>::err(Error{42, "error"}); 
-                }})
+                })
             };
 
             REQUIRE(result.is_err());
@@ -144,12 +144,11 @@ TEST_SUITE("type") {
         );
 
         unsigned int sum{
-            seq.collect(
-                0u, 
-                function<unsigned int(unsigned int, unsigned int)>{
-                    [](unsigned int a, unsigned int b){
-                        return a + b;
-                }}
+            seq.collect<unsigned int>(
+                0,
+                [](unsigned int a, unsigned int b){
+                    return a + b;
+                }
         )};
 
         CHECK(sum == 55);
@@ -185,9 +184,9 @@ TEST_SUITE("type") {
 
         auto new_values{
             seq
-            .map(function<int(int)>{[](int i){
+            .map<int>([](int i){
                 return i * 2;
-            }})
+            })
             .to_vector()
         };
 
@@ -216,12 +215,11 @@ TEST_SUITE("type") {
                     return i < 10;
                 }
             )
-            .collect(
-                0u, 
-                function<unsigned int(unsigned int, unsigned int)>{
-                    [](unsigned int a, unsigned int b){
-                        return a + b;
-                }}
+            .collect<unsigned int>(
+                0, 
+                [](unsigned int a, unsigned int b){
+                    return a + b;
+                }
         )};
 
         CHECK(sum == 45);

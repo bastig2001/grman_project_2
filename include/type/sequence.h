@@ -65,12 +65,11 @@ class Sequence {
 
     Sequence<T> where(std::function<bool(const T&)> predicate) {
         return Sequence(
-            std::function<ResultVariant<T, bool>(unsigned int)>{
             [generator{std::move(generator)}, predicate{std::move(predicate)}]
             (unsigned int index){
                 return 
                     generator(index)
-                    .flat_map(std::function<ResultVariant<T, bool>(T)>{
+                    .template flat_map<T>(
                         [predicate{std::move(predicate)}](T value){
                             if (predicate(value)) {
                                 return 
@@ -82,9 +81,9 @@ class Sequence {
                                 return ResultVariant<T, bool>::err(true);
                             }
                         }
-                    });
+                    );
             }
-        });
+        );
     }
 
     void for_each(std::function<void(T)> fn) {
@@ -120,13 +119,12 @@ class Sequence {
 
     std::vector<T> to_vector() {
         return 
-            collect(
+            collect<std::vector<T>>(
                 std::vector<T>{}, 
-                std::function<std::vector<T>(std::vector<T>, T)>{
-                    [](std::vector<T> values, T value){
-                        values.push_back(std::move(value));
-                        return values;
-                    }
-            });
+                [](std::vector<T> values, T value){
+                    values.push_back(std::move(value));
+                    return values;
+                }
+            );
     }
 };
