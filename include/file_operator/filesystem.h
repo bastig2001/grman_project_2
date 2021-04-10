@@ -18,16 +18,16 @@ namespace fs {
     std::vector<File*> get_files(const std::vector<std::filesystem::path>&);
     File* get_file(const std::filesystem::path&);
 
-    std::vector<unsigned int> get_request_signatures(const std::filesystem::path&);
-    std::vector<unsigned int> get_weak_signatures(const std::filesystem::path&);
+    std::vector<WeakSign> get_request_signatures(const std::filesystem::path&);
+    std::vector<WeakSign> get_weak_signatures(const std::filesystem::path&);
 
-    unsigned int get_weak_signature(
+    WeakSign get_weak_signature(
         const std::filesystem::path&,
         BlockSize = BLOCK_SIZE,
         Offset = 0
     );
 
-    std::string get_strong_signature(
+    StrongSign get_strong_signature(
         const std::filesystem::path&,
         BlockSize,
         Offset

@@ -10,6 +10,10 @@
 #include <vector>
 
 
+using FileName = std::string;
+using Timestamp = unsigned long;
+
+
 // used ... object is used and get disposed by Protobuf
 // copied ... object data is copied to new object, 
 //            caller remains owner of the passed in object
@@ -17,14 +21,14 @@
 // creational functions for basic message types
 
 File* file(
-    const std::string& name,
-    unsigned long timestamp,
+    const FileName& name,
+    Timestamp timestamp,
     size_t size,
-    const std::string& signature
+    const StrongSign& signature
 );
 
 Block* block(
-    const std::string& file_name, 
+    const FileName& file_name, 
     Offset offset = 0, 
     BlockSize size = BLOCK_SIZE
 );
@@ -51,7 +55,7 @@ QueryOptions* query_options(
 );
 QueryOptions* query_options(
     bool include_hidden, 
-    std::optional<unsigned long> changed_after
+    std::optional<Timestamp> changed_after
 );
 
 ShowFiles* show_files(QueryOptions* /* used */);
@@ -70,7 +74,7 @@ Corrections* corrections(const std::vector<Correction* /* used */>&);
 
 BlockWithSignature* block_with_signature(
     Block* /* used */, 
-    const std::string& strong_signature
+    const StrongSign& strong_signature
 );
 
 PartialMatch* partial_match(
@@ -81,7 +85,7 @@ PartialMatch* partial_match(
 
 SyncRequest* sync_request(
     const File&,
-    const std::vector<unsigned int>& weak_signatures,
+    const std::vector<WeakSign>& weak_signatures,
     bool removed = false
 );
 
@@ -107,7 +111,7 @@ Message received();
 // other utils
 
 std::vector<File*> to_vector(
-    const std::unordered_map<std::string, File* /* not copied */>&
+    const std::unordered_map<FileName, File* /* not copied */>&
 );
 
 std::vector<std::pair<Offset, BlockSize>> get_block_positioners(const Blocks&);

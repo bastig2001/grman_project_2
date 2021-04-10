@@ -78,12 +78,12 @@ File* fs::get_file(const path& path) {
 }
 
 
-vector<unsigned int> fs::get_request_signatures(const path& file) {
+vector<WeakSign> fs::get_request_signatures(const path& file) {
     ifstream file_stream{file, ios::binary};
     auto size{file_size(file)};
-    vector<unsigned int> signatures{};
+    vector<WeakSign> signatures{};
 
-    for (unsigned long offset{0}; offset < size; offset += BLOCK_SIZE) {
+    for (Offset offset{0}; offset < size; offset += BLOCK_SIZE) {
         signatures.push_back(
             ::get_weak_signature(
                 file_stream,
@@ -95,7 +95,7 @@ vector<unsigned int> fs::get_request_signatures(const path& file) {
     return signatures;
 }
 
-vector<unsigned int> fs::get_weak_signatures(const path& file) {
+vector<WeakSign> fs::get_weak_signatures(const path& file) {
     ifstream file_stream{file, ios::binary};
     auto size{file_size(file)};
 
@@ -107,7 +107,7 @@ vector<unsigned int> fs::get_weak_signatures(const path& file) {
         );
 }
 
-unsigned int fs::get_weak_signature(
+WeakSign fs::get_weak_signature(
     const std::filesystem::path& file,
     BlockSize block_size,
     Offset offset
@@ -117,7 +117,7 @@ unsigned int fs::get_weak_signature(
 }
 
 
-string fs::get_strong_signature(
+StrongSign fs::get_strong_signature(
     const std::filesystem::path& file,
     BlockSize size,
     Offset offset

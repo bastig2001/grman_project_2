@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "file_operator/message_utils.h"
 #include "file_operator/signatures.h"
 #include "messages/all.pb.h"
 
@@ -11,8 +12,6 @@
 #include <string>
 #include <unordered_map>
 
-
-using FileName = std::string;
 
 class SyncSystem {
   private:

@@ -19,10 +19,10 @@ using namespace std;
 // creational functions for basic message types
 
 File* file(
-    const string& name,
-    unsigned long timestamp,
+    const FileName& name,
+    Timestamp timestamp,
     size_t size,
-    const string& signature
+    const StrongSign& signature
 ) {
     auto file{new File};
     file->set_name(name);
@@ -34,7 +34,7 @@ File* file(
 }
 
 Block* block(
-    const string& file_name, 
+    const FileName& file_name, 
     Offset offset, 
     BlockSize size
 ) {
@@ -101,7 +101,7 @@ QueryOptions* query_options(
 
 QueryOptions* query_options(
     bool include_hidden, 
-    optional<unsigned long> changed_after
+    optional<Timestamp> changed_after
 ) {
     auto query_options{new QueryOptions};
 
@@ -159,7 +159,7 @@ Corrections* corrections(const vector<Correction* /* used */>& correction_vector
 
 BlockWithSignature* block_with_signature(
     Block* /* used */ block, 
-    const string& strong_signature
+    const StrongSign& strong_signature
 ) {
     auto block_with_signature{new BlockWithSignature};
     block_with_signature->set_allocated_block(block);
@@ -191,7 +191,7 @@ PartialMatch* partial_match(
 
 SyncRequest* sync_request(
     const File& file,
-    const vector<unsigned int>& weak_signatures,
+    const vector<WeakSign>& weak_signatures,
     bool removed
 ) {
     auto request{new SyncRequest};
@@ -258,7 +258,7 @@ Message received() {
 // other utils
 
 vector<File*> to_vector(
-    const unordered_map<string, File* /* not copied */>& file_map
+    const unordered_map<FileName, File* /* not copied */>& file_map
 ) {
     vector<File*> files(file_map.size());
     transform(
