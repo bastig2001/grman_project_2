@@ -7,45 +7,54 @@
 #include <variant>
 
 
-template<typename T>
-class Result {
+template<typename Ok, typename Err>
+class ResultVariant {
   private:
-    std::variant<Error, T> value;
+    std::variant<Ok, Err> value;
     bool has_ok;
   
-    Result(T&& ok): value{std::move(ok)}, has_ok{true} {};
-    Result(Error&& err): value{std::move(err)}, has_ok{false} {};
+    ResultVariant(Ok&& ok): value{std::move(ok)}, has_ok{true} {};
+    ResultVariant(Err&& err): value{std::move(err)}, has_ok{false} {};
 
   public:
 
-    static Result<T> ok(T&& ok) { return Result(std::move(ok)); }
-    static Result<T> err(Error&& err) { return Result(std::move(err)); }
+    static ResultVariant<Ok, Err> ok(Ok ok) { 
+        return ResultVariant(std::move(ok)); 
+    }
+    static ResultVariant<Ok, Err> err(Err err) { 
+        return ResultVariant(std::move(err)); 
+    }
 
     bool is_ok() const { return has_ok; }
     bool is_err() const { return !has_ok; }
 
     operator bool() const { return is_ok(); }
 
-    T get_ok() { return std::get<T>(std::move(value)); }
-    Error get_err() { return std::get<Error>(std::move(value)); }
+    Ok get_ok() { return std::get<Ok>(std::move(value)); }
+    Err get_err() { return std::get<Err>(std::move(value)); }
 
     template<typename U>
-    Result<U> map(std::function<U(T)> functor) {
+    ResultVariant<U, Err> map(std::function<U(Ok)> functor) {
         if (is_ok()) {
-            return Result<U>::ok(functor(get_ok()));
+            return ResultVariant<U, Err>::ok(functor(get_ok()));
         }
         else {
-            return Result<U>::err(get_err());
+            return ResultVariant<U, Err>::err(get_err());
         }
     }
 
     template<typename U>
-    Result<U> flat_map(std::function<Result<U>(T)> functor) {
+    ResultVariant<U, Err> flat_map(
+        std::function<ResultVariant<U, Err>(Ok)> functor
+    ) {
         if (is_ok()) {
             return functor(get_ok());
         }
         else {
-            return Result<U>::err(get_err());
+            return ResultVariant<U, Err>::err(get_err());
         }
     }
 };
+
+template<typename T>
+using Result = ResultVariant<T, Error>;

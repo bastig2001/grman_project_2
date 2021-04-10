@@ -1,9 +1,11 @@
 #include "type/error.h"
 #include "type/result.h"
+#include "type/sequence.h"
 #include "unit_tests/doctest_utils.h"
 
 #include <doctest.h>
 #include <functional>
+#include <optional>
 
 using namespace std;
 
@@ -127,5 +129,101 @@ TEST_SUITE("type") {
             CHECK(err.code == 99);
             CHECK(err.msg == "XYZ");
         }
+    }
+
+    TEST_CASE("Sequence initialized with generator and collect") {
+        Sequence<unsigned int> seq(
+            [](unsigned int i){
+                if (i <= 10) {
+                    return ResultVariant<unsigned int, bool>::ok(move(i));
+                }
+                else {
+                    return ResultVariant<unsigned int, bool>::err(false);
+                }
+            }
+        );
+
+        unsigned int sum{
+            seq.collect(
+                0u, 
+                function<unsigned int(unsigned int, unsigned int)>{
+                    [](unsigned int a, unsigned int b){
+                        return a + b;
+                }}
+        )};
+
+        CHECK(sum == 55);
+    }
+    TEST_CASE("Sequence initialized with vector and for_each") {
+        vector<int> values{1, 2, 3, 4, 5, 6};
+        Sequence<int> seq(move(values));
+
+        unsigned int sum{0};
+        seq.for_each(
+            [&sum](int i){
+                sum += i;
+            }
+        );
+
+        CHECK(sum == 21);
+    }
+    TEST_CASE("Sequence initialized with iterators and to_vector") {
+        vector<int> values{1, 2, 3, 4, 5, 6};
+        Sequence<int> seq(values.begin(), values.end());
+
+        auto new_values{seq.to_vector()};
+
+        REQUIRE(new_values.size() == values.size());
+
+        for (unsigned int i{0}; i < values.size(); i++) {
+            CHECK(new_values[i] == values[i]);
+        }
+    }
+    TEST_CASE("sequence.map") {
+        vector<int> values{1, 2, 3, 4, 5, 6};
+        Sequence<int> seq(values.begin(), values.end());
+
+        auto new_values{
+            seq
+            .map(function<int(int)>{[](int i){
+                return i * 2;
+            }})
+            .to_vector()
+        };
+
+        REQUIRE(new_values.size() == values.size());
+
+        for (unsigned int i{0}; i < values.size(); i++) {
+            CHECK(new_values[i] == values[i] * 2);
+        }
+    }
+    TEST_CASE("sequence.where") {
+        Sequence<unsigned int> seq(
+            [](unsigned int i){
+                if (i <= 10) {
+                    return ResultVariant<unsigned int, bool>::ok(move(i));
+                }
+                else {
+                    return ResultVariant<unsigned int, bool>::err(false);
+                }
+            }
+        );
+
+        unsigned int sum{
+            seq
+            .where(
+                [](const unsigned int& i){
+                    return i < 10;
+                }
+            )
+            .collect(
+                0u, 
+                function<unsigned int(unsigned int, unsigned int)>{
+                    [](unsigned int a, unsigned int b){
+                        return a + b;
+                }}
+        )};
+
+        CHECK(sum == 45);
     }
 }
