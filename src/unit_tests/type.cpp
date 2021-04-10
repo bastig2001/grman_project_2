@@ -130,6 +130,54 @@ TEST_SUITE("type") {
             CHECK(err.msg == "XYZ");
         }
     }
+    TEST_CASE("result.apply") {
+        SUBCASE("with one function") {
+            SUBCASE("ok value") {
+                auto result{Result<int>::ok(4)};
+
+                bool applied{false};
+                result.apply([&applied](int){ applied = true; });
+
+                CHECK(applied);
+            }
+            SUBCASE("error value") {
+                auto result{Result<int>::err(Error{99, "XYZ"})};
+
+                bool applied{false};
+                result.apply([&applied](int){ applied = true; });
+
+                CHECK_FALSE(applied);
+            }
+        }
+        SUBCASE("with two functions") {
+            SUBCASE("ok value") {
+                auto result{Result<int>::ok(4)};
+
+                bool ok_applied{false};
+                bool err_applied{false};
+                result.apply(
+                    [&ok_applied](int){ ok_applied = true; },
+                    [&err_applied](Error){ err_applied = true; }
+                );
+
+                CHECK(ok_applied);
+                CHECK_FALSE(err_applied);
+            }
+            SUBCASE("error value") {
+                auto result{Result<int>::err(Error{99, "XYZ"})};
+
+                bool ok_applied{false};
+                bool err_applied{false};
+                result.apply(
+                    [&ok_applied](int){ ok_applied = true; },
+                    [&err_applied](Error){ err_applied = true; }
+                );
+
+                CHECK_FALSE(ok_applied);
+                CHECK(err_applied);
+            }
+        }
+    }
 
     TEST_CASE("Sequence initialized with generator and collect") {
         Sequence<unsigned int> seq(

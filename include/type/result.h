@@ -54,6 +54,24 @@ class ResultVariant {
             return ResultVariant<U, Err>::err(get_err());
         }
     }
+
+    void apply(std::function<void(Ok)> fn) {
+        if (is_ok()) {
+            fn(get_ok());
+        }
+    }
+
+    void apply(
+        std::function<void(Ok)> ok_fn, 
+        std::function<void(Err)> err_fn
+    ) {
+        if (is_ok()) {
+            ok_fn(get_ok());
+        }
+        else {
+            err_fn(get_err());
+        }
+    }
 };
 
 template<typename T>
