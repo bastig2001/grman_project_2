@@ -20,15 +20,6 @@ using namespace std;
 
 File* file(
     const string& name,
-    chrono::time_point<chrono::system_clock> timestamp,
-    size_t size,
-    const string& signature
-) {
-    return file(name, get_timestamp(timestamp), size, signature);
-}
-
-File* file(
-    const string& name,
     unsigned long timestamp,
     size_t size,
     const string& signature

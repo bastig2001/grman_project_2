@@ -1,5 +1,23 @@
 * Changelog
 
+** [0.1.6] - 2020-04-10
+*** Added
+- README with detailed description
+
+*** Changed
+- Size units at "--log-size" CLI option description changed from KB and MB to KiB and MiB
+- Description for CLI option "--log-date" corrected
+- File logger always starts on new line
+
+** [0.1.5] - 2020-04-09
+*** Added
+- Command line
+- Help command on the command line
+- List command on the command line
+- List Long command on the command line
+- Exit command on the command line
+- Option to disable colored output via CLI, JSON config file or environment variable
+
 ** [0.1.4] - 2020-04-08
 *** Added
 - Option to use a JSON config file

@@ -113,8 +113,8 @@ variant<int, Config> configure(int argc, char* argv[]) {
     app.add_option(
         "--log-size",
         logger.max_file_size,
-        "Maximum size of a log file in KB\n"
-            "  Default is 5 MB"
+        "Maximum size of a log file in KiB\n"
+            "  Default is 5 MiB"
     )->envname("SYNC_LOG_SIZE");
     app.add_option(
         "--log-file-number",
@@ -125,13 +125,20 @@ variant<int, Config> configure(int argc, char* argv[]) {
     app.add_flag(
         "--log-date",
         logger.log_date,
-        "Logs the date additionally to the time, when logging to a file"
+        "Logs the date additionally to the time"
     )->envname("SYNC_LOG_DATE");
     app.add_flag(
         "--log-config",
         logger.log_config,
         "Log the used config as a DEBUG message"
     )->envname("SYNC_LOG_CONFIG");
+
+    bool no_color{false};
+    app.add_flag(
+        "--no-color",
+        no_color,
+        "Disables color output to console"
+    )->envname("SYNC_NO_COLOR");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -151,7 +158,8 @@ variant<int, Config> configure(int argc, char* argv[]) {
             *server_address_option ? optional{server} : nullopt,
             serve ? optional{act_as_server} : nullopt,
             sync,
-            logger
+            logger,
+            no_color
         };
     }
     else {
@@ -297,6 +305,12 @@ variant<int, Config> override_config(Config&& config, int argc, char* argv[]) {
         logger.log_config
     );
 
+    bool no_color{config.no_color};
+    app.add_flag(
+        "--no-color",
+        no_color
+    );
+
     CLI11_PARSE(app, argc, argv);
 
     // if any of these three have been set, the program shall act as server
@@ -316,7 +330,8 @@ variant<int, Config> override_config(Config&& config, int argc, char* argv[]) {
             : nullopt,
         serve ? optional{act_as_server} : nullopt,
         sync,
-        logger
+        logger,
+        no_color
     };
 }
 

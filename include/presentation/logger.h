@@ -10,9 +10,10 @@
 class Logger {
   public:
     virtual bool logs_to_file() const = 0;
+    virtual bool logs_to_console() const = 0;
 
     virtual void set_level(spdlog::level::level_enum) = 0;
-    virtual spdlog::level::level_enum get_level() = 0;
+    virtual spdlog::level::level_enum get_level() const = 0;
 
     virtual void set_pattern(const std::string&) = 0;
 

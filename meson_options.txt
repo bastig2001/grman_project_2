@@ -5,4 +5,3 @@ option('fmt_include_dir',     type : 'string', value : '/opt/cpp_include', descr
 option('json_include_dir',    type : 'string', value : '/opt/cpp_include', description : 'the include dir of json')
 option('peglib_include_dir',  type : 'string', value : '/opt/cpp_include', description : 'the dir containing peglib.h')
 option('spdlog_include_dir',  type : 'string', value : '/opt/cpp_include', description : 'the include dir of spdlog')
-option('toml_include_dir',    type : 'string', value : '/opt/cpp_include', description : 'the include dir of toml++')

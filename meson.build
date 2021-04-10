@@ -1,6 +1,6 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '0.1.4',
+        version : '0.1.6',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
@@ -25,6 +25,13 @@ add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
 # json: https://github.com/nlohmann/json
 add_global_arguments('-I' + get_option('json_include_dir'), language : 'cpp')
+
+# peglib: https://github.com/yhirose/cpp-peglib
+add_global_arguments('-I' + get_option('peglib_include_dir'), language: 'cpp')
+
+# spdlog: https://github.com/gabime/spdlog
+# add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
+# add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
@@ -60,6 +67,8 @@ src = [
     'src/file_operator/operator_utils.cpp',
     'src/file_operator/signatures.cpp',
     'src/file_operator/sync_system.cpp',
+    'src/presentation/command_line.cpp',
+    'src/presentation/format_utils.cpp',
     'src/presentation/logger_config.cpp'
 ]
 
@@ -88,6 +97,7 @@ executable('unit_tests',
            dependencies : dependencies,
            cpp_args : [
                '-DUNIT_TESTS', 
+               # doctest: https://github.com/onqtam/doctest
                '-DDOCTEST_CONFIG_SUPER_FAST_ASSERTS', 
                '-I' + get_option('doctest_include_dir')
             ]
