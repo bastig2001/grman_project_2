@@ -41,6 +41,33 @@ namespace msg {
            timestamp{timestamp}
         {}
 
-        Removed(File file): name{file.name}, timestamp{file.timestamp} {}
+        Removed(const File& file): name{file.name}, timestamp{file.timestamp} {}
+    };
+
+    struct Data {
+        FileName file_name;
+        Offset offset;
+        BlockSize size;
+        std::string data;
+
+        Data() {}
+
+        Data(
+            FileName file_name,
+            Offset offset,
+            BlockSize size,
+            std::string data
+        ): file_name{file_name},
+           offset{offset},
+           size{size},
+           data{std::move(data)}
+        {}
+
+        Data(const Correction& correction)
+        : file_name{correction.block().file_name()},
+          offset{correction.block().offset()},
+          size{correction.block().size()},
+          data{correction.data()}
+        {}
     };
 }

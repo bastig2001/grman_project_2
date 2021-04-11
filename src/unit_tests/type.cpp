@@ -216,7 +216,7 @@ TEST_SUITE("type") {
     }
     TEST_CASE("Sequence initialized with iterators and to_vector") {
         vector<int> values{1, 2, 3, 4, 5, 6};
-        Sequence<int> seq(values.begin(), values.end());
+        Sequence<int> seq(vector(values.begin(), values.end()));
 
         auto new_values{seq.to_vector()};
 
@@ -228,7 +228,7 @@ TEST_SUITE("type") {
     }
     TEST_CASE("sequence.map") {
         vector<int> values{1, 2, 3, 4, 5, 6};
-        Sequence<int> seq(values.begin(), values.end());
+        Sequence<int> seq(vector(values.begin(), values.end()));
 
         auto new_values{
             seq

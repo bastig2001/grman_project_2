@@ -38,21 +38,6 @@ class Sequence {
     }}
     {}
 
-    template<class Iterator>
-    Sequence(
-        Iterator begin,
-        Iterator end
-    ): generator{
-        [begin{std::move(begin)}, end{std::move(end)}](unsigned int index){
-            if (begin + index < end) {
-                return ResultVariant<T, bool>::ok(*(begin + index));
-            }
-            else {
-                return ResultVariant<T, bool>::err(false); // no more values
-            }
-    }}
-    {}
-
     template<typename U>
     Sequence<U> map(std::function<U(T)> functor) {
         return Sequence<U>(

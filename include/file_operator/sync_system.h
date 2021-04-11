@@ -23,7 +23,9 @@ class SyncSystem {
 
     std::vector<Message> sync(const SyncResponse&);
 
-    void correct(const File&, const Corrections&);
+    void correct(const FileName&);
+
+    Corrections* get_corrections(std::vector<BlockPair*>&&);
 
   public:
     SyncSystem(const SyncConfig&);

@@ -5,6 +5,7 @@
 #include "config.h"
 #include "database.h"
 #include "message_utils.h"
+#include "messages/sync.pb.h"
 #include "utils.h"
 #include "messages/basic.h"
 #include "presentation/format_utils.h"
@@ -372,45 +373,12 @@ Result<Message> SyncSystem::sync(
         else {
             // server file is newer
 
-            auto corrections{
-                Sequence(move(non_matching))
-                .map<Result<Correction*>>([](BlockPair* pair){
-                    return
-                    fs::read(
-                        pair->file_name(), 
-                        pair->offset_server(), 
-                        pair->size_server()
-                    )
-                    .peek(
-                        [](auto){},
-                        [&](Error err){ logger->error(err.msg); }
-                    )
-                    .map<Correction*>([&](string data){
-                        return ::correction(
-                            block(
-                                pair->file_name(),
-                                pair->offset_client(),
-                                pair->size_client()
-                            ),
-                            move(data)
-                        );
-                    });
-                })
-                .where([](Result<Correction*> result){
-                    return result.is_ok();
-                })
-                .map<Correction*>([](Result<Correction*> result){ 
-                    return result.get_ok(); 
-                })
-                .to_vector()
-            };
-
             msg.set_allocated_sync_response(sync_response(
                 client_file,
                 partial_match(
                     local_file.to_proto(),
                     block_pairs(move(matching)),
-                    ::corrections(move(corrections))
+                    get_corrections(move(non_matching))
                 ),
                 nullopt
             ));
@@ -451,18 +419,131 @@ Message SyncSystem::respond_requesting(const File& requested_file) {
 }
 
 
-vector<Message> SyncSystem::handle_sync_response(const SyncResponse& /*response*/) {
-    // auto file{response.requested_file()};
+vector<Message> SyncSystem::handle_sync_response(const SyncResponse& response) {
+    auto file{response.requested_file()};
+
+    if (response.requsting_file()) {
+        return {get_file(response.requested_file())};
+    }
+    else if (response.removed()) {
+        remove(file.name());
+
+        return {received()};
+    }
+    else if (response.has_partial_match()) {
+        return sync(response);
+    }
+    else {
+        return {received()};
+    }
 
     return {};
 }
 
-vector<Message> SyncSystem::sync(const SyncResponse& /*response*/) {
-    return {};
+vector<Message> SyncSystem::sync(const SyncResponse& response) {
+    auto file{response.requested_file()};
+    auto match{response.partial_match()};
+    vector<Message> msgs;
+
+    bool has_signature_requests{
+        match.has_signature_requests() 
+            && 
+        match.signature_requests().block_pairs_size() > 0
+    };
+
+    if (has_signature_requests) {
+        auto signatures{
+            Sequence(vector(
+                match.signature_requests().block_pairs().begin(),
+                match.signature_requests().block_pairs().end()
+            ))
+            .map<Result<BlockWithSignature*>>([](BlockPair pair){
+                return
+                fs::get_strong_signature(
+                    pair.file_name(),
+                    pair.offset_client(),
+                    pair.size_client()
+                )
+                .map<BlockWithSignature*>([&](StrongSign signature){
+                    return block_with_signature(
+                        new BlockPair(pair),
+                        signature
+                    );
+                });
+            })
+            .peek([](Result<BlockWithSignature*> result){
+                result.peek(
+                    [](auto){},
+                    [&](Error err){ logger->error(err.msg); }
+                );
+            })
+            .where([](Result<BlockWithSignature*> result){
+                return result.is_ok();
+            })
+            .map<BlockWithSignature*>([](Result<BlockWithSignature*> result){
+                return result.get_ok();
+            })
+            .to_vector()
+        };
+
+        Message msg{};
+        msg.set_allocated_signature_addendum(
+            signature_addendum(match.matched_file(), move(signatures))
+        );
+
+        msgs.push_back(move(msg));
+    }
+
+    bool has_correction_requests{
+        response.has_correction_request()
+            &&
+        response.correction_request().block_pairs_size() > 0
+    };
+
+    if (match.has_corrections()
+        &&
+        match.corrections().corrections_size() > 0
+    ) {
+        // corrections are postponed
+
+        db::insert_or_replace_data(
+            Sequence(vector(
+                match.corrections().corrections().begin(),
+                match.corrections().corrections().end()
+            ))
+            .map<msg::Data>([](Correction correction){
+                return msg::Data(correction);
+            })
+            .to_vector()
+        );
+    }
+    else if (has_correction_requests) {
+        Message msg{};
+        msg.set_allocated_corrections(get_corrections(
+            Sequence(vector(
+                response.correction_request().block_pairs().begin(),
+                response.correction_request().block_pairs().end()
+            ))
+            .map<BlockPair*>([](BlockPair pair){
+                return new BlockPair(pair);
+            })
+            .to_vector()
+        ));
+
+        msgs.push_back(move(msg));
+    }
+
+    if (!has_correction_requests && !has_signature_requests) {
+        // file can be build 
+
+        correct(file.name());
+    }
+
+    return msgs;
 }
 
-void SyncSystem::correct(const File& file, const Corrections&) {
-    logger->info("Correcting " + colored(msg::File::from_proto(file)));
+void SyncSystem::correct(const FileName& file) {
+    logger->info("Correcting " + colored(file));
 }
 
 
@@ -531,4 +612,43 @@ Message SyncSystem::create_file(const FileResponse& response) {
     );
     
     return received();
+}
+
+
+Corrections* SyncSystem::get_corrections(vector<BlockPair*>&& pairs) {
+    return ::corrections(
+        Sequence(move(pairs))
+        .map<Result<Correction*>>([](BlockPair* pair){
+            return
+            fs::read(
+                pair->file_name(), 
+                pair->offset_server(), 
+                pair->size_server()
+            )
+            .peek(
+                [](auto){},
+                [&](Error err){ logger->error(err.msg); }
+            )
+            .map<Correction*>([&](string data){
+                auto block{::block(
+                    pair->file_name(),
+                    pair->offset_client(),
+                    pair->size_client()
+                )};
+                delete pair;
+
+                return ::correction(
+                    block,
+                    move(data)
+                );
+            });
+        })
+        .where([](Result<Correction*> result){
+            return result.is_ok();
+        })
+        .map<Correction*>([](Result<Correction*> result){ 
+            return result.get_ok(); 
+        })
+        .to_vector()
+    );
 }

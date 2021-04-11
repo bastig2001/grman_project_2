@@ -37,9 +37,21 @@ auto permanent_db{make_storage(
     )
 )};
 
+auto in_memory_db{make_storage(
+    "",
+    make_table(
+        "data",
+        make_column("file_name", &msg::Data::file_name),
+        make_column("offset",    &msg::Data::offset),
+        make_column("size",      &msg::Data::size),
+        make_column("data",      &msg::Data::data)
+    )
+)};
+
 
 void db::create() {
     permanent_db.sync_schema();
+    in_memory_db.sync_schema();
 }
 
 
@@ -106,4 +118,16 @@ optional<Timestamp> db::get_last_checked() {
     else {
         return nullopt;
     }
+}
+
+
+void db::insert_or_replace_data(vector<msg::Data> data) {
+    in_memory_db.replace_range(data.begin(), data.end());
+}
+
+vector<msg::Data> db::get_and_remove_data(FileName file) {
+    return in_memory_db.get_all<msg::Data>(
+        where(c(&msg::Data::file_name) == file),
+        order_by(&msg::Data::offset)
+    );
 }

@@ -9,7 +9,6 @@ message Correction {
 
 message Corrections {
     repeated Correction corrections = 1;
-    bool final = 2;
 }
 
 message BlockWithSignature {

@@ -24,4 +24,7 @@ namespace db {
 
     void insert_or_replace_last_checked(Timestamp);
     std::optional<Timestamp> get_last_checked();
+
+    void insert_or_replace_data(std::vector<msg::Data>);
+    std::vector<msg::Data> get_and_remove_data(FileName); 
 }
