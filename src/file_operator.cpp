@@ -102,9 +102,9 @@ vector<Message> handle_msg(const Message& request,SyncSystem& system) {
         case Message::kCorrections:
             return {};
         case Message::kFileRequest:
-            return {};
+            return {system.get_file(request.file_request().file())};
         case Message::kFileResponse:
-            return {};
+            return {system.create_file(request.file_response())};
         default: 
             return {};
     }

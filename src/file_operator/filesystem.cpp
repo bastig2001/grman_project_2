@@ -6,6 +6,7 @@
 #include "utils.h"
 
 #include <algorithm>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -241,9 +242,29 @@ Result<string> fs::read(const path& file) {
 }
 
 
+Result<bool> fs::write(const path& file, string&& data) {
+    try {
+        if (file.has_parent_path() && !exists(file.parent_path())) {
+            create_directories(file.parent_path());
+        }
+
+        ofstream file_stream{file, ios::binary};
+
+        file_stream.write(data.c_str(), data.size());
+
+        return Result<bool>::ok(true);
+    }
+    catch (const exception& err) {
+        return Result<bool>::err(
+            Error{0, "Writing " + file.string() + ": " + err.what()}
+        );
+    }
+}
+
+
 Result<bool> fs::move_file(const path& old_path, const path& new_path) {
     try {
-        if (!exists(new_path.parent_path())) {
+        if (new_path.has_parent_path() && !exists(new_path.parent_path())) {
             create_directories(new_path.parent_path());
         }
         

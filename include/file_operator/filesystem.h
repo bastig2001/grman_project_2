@@ -48,6 +48,12 @@ namespace fs {
     // read whole file
     Result<std::string> read(const std::filesystem::path&);
 
+    // write new file
+    Result<bool> write(
+        const std::filesystem::path&,
+        std::string&& data
+    );
+
     Result<bool> move_file(
         const std::filesystem::path& old_path, 
         const std::filesystem::path& new_path

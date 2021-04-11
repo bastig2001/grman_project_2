@@ -15,6 +15,8 @@
 #include "messages/all.pb.h"
 
 #include <algorithm>
+#include <chrono>
+#include <filesystem>
 #include <optional>
 #include <unordered_map>
 #include <utility>
@@ -463,6 +465,7 @@ void SyncSystem::remove(const FileName& file) {
     );
 }
 
+
 Message SyncSystem::get_file(const File& file) {
     return
         db::get_file(file.name())
@@ -485,4 +488,26 @@ Message SyncSystem::get_file(const File& file) {
 
             return msg;
         }());
+}
+
+
+Message SyncSystem::create_file(const FileResponse& response) {
+    auto file{msg::File::from_proto(response.requested_file())};
+    file.timestamp = 
+        get_timestamp(
+            cast_clock<chrono::time_point<filesystem::file_time_type::clock>>(
+                chrono::system_clock::now()
+            ));
+
+    db::insert_or_replace_file(file);
+
+    fs::write(file.name, string{response.data()})
+    .apply(
+        [](auto){},
+        [&](Error err){
+            logger->error(err.msg);
+        }
+    );
+    
+    return received();
 }

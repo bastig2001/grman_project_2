@@ -21,8 +21,6 @@ class SyncSystem {
     Message respond_already_removed(const File&);
     Message respond_requesting(const File&);
 
-    Message get_file(const File&);
-
     std::vector<Message> sync(const SyncResponse&);
 
     void correct(const File&, const Corrections&);
@@ -41,4 +39,8 @@ class SyncSystem {
     std::vector<Message> handle_sync_response(const SyncResponse&);
 
     Message get_sync_response(const SignatureAddendum&);
+
+    Message get_file(const File&);
+
+    Message create_file(const FileResponse&);
 };
