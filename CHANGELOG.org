@@ -7,6 +7,14 @@
 
 *** Removed
 
+* [1.0.0] - 2020-04-11
+*** Added
+- File transfer
+- Incremental file transfer for synchronization
+- SQLite database for permanent storage of meta-data
+- Folder ".sync" for database file and temporary file construction for synchronization
+- Ignoring log file and .sync folder when synchronizing
+
 ** [0.1.6] - 2020-04-10
 *** Added
 - README with detailed description

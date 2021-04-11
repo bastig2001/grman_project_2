@@ -62,7 +62,7 @@ namespace fs {
     void remove_file(const std::filesystem::path&);
 
     Result<bool> build_file(
-        std::vector<std::pair<msg::Data, bool>>&&,
+        std::vector<std::pair<msg::Data, bool /* has data */>>&&,
         const std::filesystem::path&
     );
 }

@@ -297,7 +297,7 @@ void remove_empty_dir(const path& directory) {
 
 
 Result<bool> fs::build_file(
-    vector<pair<msg::Data, bool /* have data */>>&& data,
+    vector<pair<msg::Data, bool /* has data */>>&& data,
     const path& path
 ) {
     try {
