@@ -53,6 +53,8 @@ void db::create(bool exists) {
     if (!exists) {
         permanent_db.sync_schema();
     }
+
+    permanent_db.remove_all<msg::File>();
     
     in_memory_db.sync_schema();
 }

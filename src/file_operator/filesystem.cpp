@@ -296,6 +296,37 @@ void remove_empty_dir(const path& directory) {
 }
 
 
+Result<bool> fs::build_file(
+    vector<pair<msg::Data, bool /* have data */>>&& data,
+    const path& path
+) {
+    try {
+        ::path temp_path{::path{".sync"} /= path.filename()};
+
+        ofstream file{temp_path, ios::binary};
+
+        for (auto [block, has_data]: data) {
+            if (has_data) {
+                file.write(block.data.c_str(), block.data.size());
+            }
+            else {
+                file.write(
+                    read(path, block.offset, block.size).get_ok().c_str(), 
+                    block.size
+                );
+            }
+        }
+
+        return move_file(temp_path, path);
+    }
+    catch (const exception& err) {
+        return Result<bool>::err(
+            Error{0, "Building " + path.string() + ": " + err.what()}
+        );
+    }  
+}
+
+
 #ifdef UNIT_TESTS
 #include "unit_tests/doctest_utils.h"
 #include <doctest.h>

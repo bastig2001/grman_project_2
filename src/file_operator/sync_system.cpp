@@ -573,7 +573,22 @@ Message SyncSystem::correct(const Corrections& corrections) {
 void SyncSystem::correct(const FileName& file) {
     logger->info("Correcting " + colored(file));
 
-
+    db::get_file(file)
+    .flat_map<bool>([](msg::File file){
+        return
+            fs::build_file(
+                get_data_spaces(
+                    db::get_and_remove_data(file.name),
+                    file.name,
+                    file.size
+                ),
+                file.name
+            );
+    })
+    .apply(
+        [](auto){},
+        [&](Error err){ logger->error( err.msg ); }
+    );
 }
 
 
