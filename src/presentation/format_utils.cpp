@@ -96,10 +96,14 @@ pair<string, string> get_size_and_unit(size_t size) {
 }
 
 string colored(const msg::File& file) {
+    return colored(file.name);
+}
+
+string colored(const FileName& file) {
     if (use_color) {
-        return fmt::format(fg(fmt::color::burly_wood), file.name);
+        return fmt::format(fg(fmt::color::burly_wood), file);
     }
     else {
-        return file.name;
+        return file;
     }
 }

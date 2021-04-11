@@ -75,12 +75,13 @@ Result<msg::File> fs::get_file(const path& path) {
                 path, 
                 get_timestamp(last_write_time(path)), 
                 file_size(path),
-                ::get_strong_signature(file_stream),
-                0
+                ::get_strong_signature(file_stream)
             });
     }
     catch (const exception& err) {
-        return Result<msg::File>::err(Error{0, err.what()});
+        return Result<msg::File>::err(
+            Error{0, path.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -103,7 +104,9 @@ Result<vector<WeakSign>> fs::get_request_signatures(const path& file) {
         return Result<vector<WeakSign>>::ok(move(signatures));
     }
     catch (const exception& err) {
-        return Result<vector<WeakSign>>::err(Error{0, err.what()});
+        return Result<vector<WeakSign>>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -120,7 +123,9 @@ Result<vector<WeakSign>> fs::get_weak_signatures(const path& file) {
             ));
     }
     catch (const exception& err) {
-        return Result<vector<WeakSign>>::err(Error{0, err.what()});
+        return Result<vector<WeakSign>>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -136,7 +141,9 @@ Result<WeakSign> fs::get_weak_signature(
         );
     }
     catch (const exception& err) {
-        return Result<WeakSign>::err(Error{0, err.what()});
+        return Result<WeakSign>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -159,7 +166,9 @@ Result<StrongSign> fs::get_strong_signature(
         );
     }
     catch (const exception& err) {
-        return Result<StrongSign>::err(Error{0, err.what()});
+        return Result<StrongSign>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -186,7 +195,9 @@ Result<vector<string>> fs::read(
         return Result<vector<string>>::ok(move(data));
     }
     catch (const exception& err) {
-        return Result<vector<string>>::err(Error{0, err.what()});
+        return Result<vector<string>>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -205,7 +216,9 @@ Result<string> fs::read(
         return Result<string>::ok(string{block.begin(), block.end()});
     }
     catch (const exception& err) {
-        return Result<string>::err(Error{0, err.what()});
+        return Result<string>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -221,7 +234,9 @@ Result<string> fs::read(const path& file) {
         return Result<string>::ok(string{data.begin(), data.end()});
     }
     catch (const exception& err) {
-        return Result<string>::err(Error{0, err.what()});
+        return Result<string>::err(
+            Error{0, file.string() + ": " + err.what()}
+        );
     }
 }
 
@@ -238,7 +253,13 @@ Result<bool> fs::move_file(const path& old_path, const path& new_path) {
         return Result<bool>::ok(true);
     }
     catch (const exception& err) {
-        return Result<bool>::err(Error{0, err.what()});
+        return Result<bool>::err(
+            Error{
+                0, 
+                "Moving " + old_path.string() + " to " 
+                + new_path.string() + ": " + err.what()
+            }
+        );
     }  
 }
 

@@ -4,15 +4,17 @@
 #include "type/definitions.h"
 
 #include <sqlite_orm/sqlite_orm.h>
-#include <mutex>
+#include <optional>
 #include <vector>
 
 using namespace std;
 using namespace sqlite_orm;
 
 
-mutex permanent_db_mtx{};
-mutex in_memory_db_mtx{};
+struct LastChecked {
+    int id;
+    Timestamp timestamp;
+};
 
 auto permanent_db{make_storage(
     "",
@@ -21,105 +23,87 @@ auto permanent_db{make_storage(
         make_column("name",      &msg::File::name, primary_key()),
         make_column("timestamp", &msg::File::timestamp),
         make_column("size",      &msg::File::size),
-        make_column("signature", &msg::File::signature),
-        make_column("owner",     &msg::File::owner)
+        make_column("signature", &msg::File::signature)
     ),
     make_table(
         "removed",
-        make_column("name",      &msg::File::name, primary_key()),
-        make_column("timestamp", &msg::File::timestamp),
-        make_column("size",      &msg::File::size),
-        make_column("signature", &msg::File::signature),
-        make_column("owner",     &msg::File::owner)
-    )
-)};
-
-auto in_memory_db{make_storage(
-    "",
+        make_column("name",      &msg::Removed::name, primary_key()),
+        make_column("timestamp", &msg::Removed::timestamp)
+    ),
     make_table(
-        "block",
-        make_column("id",               &msg::Block::id, autoincrement(), primary_key()),
-        make_column("file_name",        &msg::Block::file_name),
-        make_column("offset",           &msg::Block::offset),
-        make_column("size",             &msg::Block::size),
-        make_column("owner",            &msg::Block::owner),
-        make_column("weak_signature",   &msg::Block::weak_signature),
-        make_column("strong_signature", &msg::Block::strong_signature),
-        make_column("data",             &msg::Block::data)
+        "last_checked",
+        make_column("id",        &LastChecked::id, primary_key()),
+        make_column("timestamp", &LastChecked::timestamp)
     )
 )};
 
 
-void db::insert_file(msg::File) {
-
+void db::create() {
+    permanent_db.sync_schema();
 }
 
-void db::insert_files(vector<msg::File>&&) {
 
+void db::insert_or_replace_file(msg::File file) {
+    permanent_db.replace(move(file));
 }
 
-void db::update_file(msg::File) {
-
+void db::insert_or_replace_files(vector<msg::File> files) {
+    permanent_db.replace_range(files.begin(), files.end());
 }
 
-void db::update_files(vector<msg::File>&&) {
-
+void db::delete_file(FileName name) {
+    permanent_db.remove<msg::File>(name);
 }
 
-void db::delete_file(FileName) {
-
-}
-
-void db::delete_files(unsigned int owner) {
-
-}
-
-Result<msg::File> db::get_file(FileName) {
-
+Result<msg::File> db::get_file(FileName name) {
+    if (auto file{permanent_db.get_optional<msg::File>(name)}) {
+        return Result<msg::File>::ok(move(file.value()));
+    }
+    else {
+        return Result<msg::File>::err(
+            Error{0, name + " not found in 'file' table!"}
+        );
+    }
 }
 
 vector<msg::File> db::get_files() {
-
+    return permanent_db.get_all<msg::File>();
 }
 
 
-void db::insert_or_replace_removed(msg::File) {
-
+void db::insert_or_replace_removed(msg::Removed file) {
+    permanent_db.replace(move(file));
 }
 
-void db::insert_or_replace_removed(vector<msg::File>&&) {
-
+void db::insert_or_replace_removed(vector<msg::Removed> files) {
+    permanent_db.replace_range(files.begin(), files.end());
 }
 
-void db::delete_removed(FileName) {
-
+void db::delete_removed(FileName name) {
+    permanent_db.remove<msg::Removed>(name);
 }
 
-Result<msg::File> db::get_removed(FileName) {
-
+Result<msg::Removed> db::get_removed(FileName name) {
+    if (auto file{permanent_db.get_optional<msg::Removed>(name)}) {
+        return Result<msg::Removed>::ok(move(file.value()));
+    }
+    else {
+        return Result<msg::Removed>::err(
+            Error{0, name + " not found in 'removed' table!"}
+        );
+    }
 }
 
 
-void db::insert_or_update_block(msg::Block) {
-
+void db::insert_or_replace_last_checked(Timestamp timestamp) {
+    permanent_db.replace(LastChecked{0, timestamp});
 }
 
-void db::insert_or_update_blocks(vector<msg::Block>&&) {
-
-}
-
-void db::delete_blocks(FileName) {
-
-}
-
-void db::delete_blocks(FileName, unsigned int owner) {
-
-}
-
-void db::delete_blocks(unsigned int owner) {
-
-}
-
-vector<msg::Block> get_blocks(FileName, unsigned int owner) {
-
+optional<Timestamp> db::get_last_checked() {
+    if (auto last_checked{permanent_db.get_optional<LastChecked>(0)}) {
+        return last_checked.value().timestamp;
+    }
+    else {
+        return nullopt;
+    }
 }

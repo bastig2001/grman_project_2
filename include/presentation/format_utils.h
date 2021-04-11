@@ -1,6 +1,7 @@
 #pragma once
 
 #include "messages/basic.h"
+#include "type/definitions.h"
 
 #include <chrono>
 #include <ctime>
@@ -18,6 +19,8 @@ std::string format_file(const msg::File&);
 std::string format_size(size_t);
 
 std::string colored(const msg::File&);
+
+std::string colored(const FileName&);
 
 
 template<typename T>

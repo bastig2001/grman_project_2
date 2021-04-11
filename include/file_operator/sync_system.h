@@ -1,29 +1,23 @@
 #pragma once
 
 #include "config.h"
-#include "message_utils.h"
-#include "file_operator/signatures.h"
+#include "messages/basic.h"
+#include "type/definitions.h"
+#include "type/result.h"
 #include "messages/all.pb.h"
-
-#include <chrono>
-#include <optional>
-#include <string>
-#include <unordered_map>
 
 
 class SyncSystem {
   private:
-    std::optional<std::chrono::time_point<std::chrono::system_clock>> 
-        last_checked{std::nullopt};
     const SyncConfig& config;
 
-    Message start_sync(File*);
+    Result<Message> start_sync(msg::File);
     Message notify_already_removed(const File&);
     Message request(const File&);
 
-    void remove(File*);
+    void remove(const FileName&);
 
-    Message sync(const SyncRequest&);
+    Result<Message> sync(const SyncRequest&, msg::File);
     Message respond_already_removed(const File&);
     Message respond_requesting(const File&);
 
@@ -35,8 +29,6 @@ class SyncSystem {
 
   public:
     SyncSystem(const SyncConfig&);
-
-    ~SyncSystem();
 
     Message get_show_files();
 

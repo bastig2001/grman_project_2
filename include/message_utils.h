@@ -75,13 +75,13 @@ BlockWithSignature* block_with_signature(
 );
 
 PartialMatch* partial_match(
-    const File&, 
+    File* /* used */, 
     std::optional<Blocks* /* used */> signature_requests = std::nullopt,
     std::optional<Corrections* /* used */> = std::nullopt
 );
 
 SyncRequest* sync_request(
-    const File&,
+    File* /* used */,
     const std::vector<WeakSign>& weak_signatures,
     bool removed = false
 );

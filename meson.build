@@ -31,7 +31,8 @@ add_global_arguments('-I' + get_option('peglib_include_dir'), language: 'cpp')
 
 # sqlite orm: https://github.com/fnc12/sqlite_orm
 add_global_arguments('-I' + get_option('sqlite_orm_include_dir'), language : 'cpp')
-add_global_arguments('-DSQLITE_ORM_OPTIONAL_SUPPORTED', language: 'cpp')
+
+sqlite3 = dependency('sqlite3')
 
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
@@ -56,7 +57,8 @@ messages = protoc.process('messages/all.proto',
 
 inc_dir = include_directories('include')
 
-src = [
+sync_src = [
+    'src/main.cpp',
     'src/client.cpp',
     'src/config.cpp',
     'src/database.cpp',
@@ -74,6 +76,14 @@ src = [
 ]
 
 unit_tests_src = [
+    'src/config.cpp',
+    'src/message_utils.cpp',
+    'src/utils.cpp',
+    'src/file_operator/filesystem.cpp',
+    'src/file_operator/operator_utils.cpp',
+    'src/file_operator/signatures.cpp',
+    'src/presentation/format_utils.cpp',
+    'src/presentation/logger_config.cpp',
     'src/unit_tests/json_utils.cpp',
     'src/unit_tests/main.cpp',
     'src/unit_tests/operator_utils.cpp',
@@ -83,18 +93,18 @@ unit_tests_src = [
     'src/unit_tests/utils.cpp'
 ]
 
-dependencies = [thread, fmt, protobuf, crypto, json]
+dependencies = [thread, fmt, protobuf, crypto, json, sqlite3]
 
 executable('sync', 
            messages,
-           sources : ['src/main.cpp'] + src, 
+           sources : sync_src, 
            include_directories : inc_dir,
            dependencies : dependencies
           )
 
 executable('unit_tests', 
            messages,
-           sources : unit_tests_src + src, 
+           sources : unit_tests_src, 
            include_directories : inc_dir,
            dependencies : dependencies,
            cpp_args : [

@@ -93,7 +93,10 @@ QueryOptions* query_options(
         query_options(
             include_hidden, 
             changed_after.has_value()
-            ? optional{get_timestamp(changed_after.value())}
+            ? optional{get_timestamp(
+                cast_clock<chrono::time_point<filesystem::file_time_type::clock>>(
+                    changed_after.value()
+              ))}
             : nullopt
         );
 }
@@ -168,12 +171,12 @@ BlockWithSignature* block_with_signature(
 }
 
 PartialMatch* partial_match(
-    const File& matched_file, 
+    File* /* used */ matched_file, 
     optional<Blocks* /* used */> signature_requests,
     optional<Corrections* /* used */> corrections
 ) {
     auto partial_match{new PartialMatch};
-    partial_match->set_allocated_matched_file(new File(matched_file));
+    partial_match->set_allocated_matched_file(matched_file);
 
     if (signature_requests.has_value()) {
         partial_match->set_allocated_signature_requests(
@@ -189,12 +192,12 @@ PartialMatch* partial_match(
 }
 
 SyncRequest* sync_request(
-    const File& file,
+    File* /* used */ file,
     const vector<WeakSign>& weak_signatures,
     bool removed
 ) {
     auto request{new SyncRequest};
-    request->set_allocated_file(new File(file));
+    request->set_allocated_file(file);
 
     for (unsigned int signature: weak_signatures) {
         request->add_weak_signatures(signature);
