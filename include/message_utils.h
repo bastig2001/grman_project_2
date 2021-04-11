@@ -82,7 +82,11 @@ FileList* file_list(
 
 Correction* correction(Block* /* used */, std::string&& data);
 
-Corrections* corrections(const std::vector<Correction* /* used */>&);
+Corrections* corrections(
+    const std::vector<Correction* /* used */>&, 
+    const FileName&,
+    bool final = false
+);
 
 BlockWithSignature* block_with_signature(
     BlockPair* /* used */, 

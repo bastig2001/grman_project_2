@@ -377,8 +377,12 @@ Result<Message> SyncSystem::sync(
                 client_file,
                 partial_match(
                     local_file.to_proto(),
-                    block_pairs(move(matching)),
-                    get_corrections(move(non_matching))
+                    block_pairs(matching),
+                    get_corrections(
+                        move(non_matching), 
+                        client_file.name(),
+                        matching.size() == 0
+                    )
                 ),
                 nullopt
             ));
@@ -436,8 +440,6 @@ vector<Message> SyncSystem::handle_sync_response(const SyncResponse& response) {
     else {
         return {received()};
     }
-
-    return {};
 }
 
 vector<Message> SyncSystem::sync(const SyncResponse& response) {
@@ -494,30 +496,13 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
         msgs.push_back(move(msg));
     }
 
-    bool has_correction_requests{
-        response.has_correction_request()
-            &&
-        response.correction_request().block_pairs_size() > 0
-    };
-
-    if (match.has_corrections()
-        &&
-        match.corrections().corrections_size() > 0
-    ) {
-        // corrections are postponed
-
-        db::insert_or_replace_data(
-            Sequence(vector(
-                match.corrections().corrections().begin(),
-                match.corrections().corrections().end()
-            ))
-            .map<msg::Data>([](Correction correction){
-                return msg::Data(correction);
-            })
-            .to_vector()
-        );
+    if (match.has_corrections()) {
+        correct(match.corrections());
     }
-    else if (has_correction_requests) {
+    else if (response.has_correction_request()
+            &&
+            response.correction_request().block_pairs_size() > 0
+    ) {
         Message msg{};
         msg.set_allocated_corrections(get_corrections(
             Sequence(vector(
@@ -527,19 +512,39 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
             .map<BlockPair*>([](BlockPair pair){
                 return new BlockPair(pair);
             })
-            .to_vector()
+            .to_vector(),
+            file.name(),
+            !has_signature_requests
         ));
 
         msgs.push_back(move(msg));
     }
 
-    if (!has_correction_requests && !has_signature_requests) {
-        // file can be build 
+    return 
+        msgs.size() > 0
+        ? msgs
+        : vector{received()};
+}
 
-        correct(file.name());
+Message SyncSystem::correct(const Corrections& corrections) {
+    if (corrections.corrections_size() > 0) {
+        db::insert_or_replace_data(
+            Sequence(vector(
+                corrections.corrections().begin(),
+                corrections.corrections().end()
+            ))
+            .map<msg::Data>([](Correction correction){
+                return msg::Data(correction);
+            })
+            .to_vector()
+        );
     }
 
-    return msgs;
+    if(corrections.final()) {
+        correct(corrections.file_name());
+    }
+
+    return received();
 }
 
 void SyncSystem::correct(const FileName& file) {
@@ -595,6 +600,9 @@ Message SyncSystem::get_file(const File& file) {
 
 Message SyncSystem::create_file(const FileResponse& response) {
     auto file{msg::File::from_proto(response.requested_file())};
+
+    logger->info("Got " + colored(file));
+    
     file.timestamp = 
         get_timestamp(
             cast_clock<chrono::time_point<filesystem::file_time_type::clock>>(
@@ -615,7 +623,11 @@ Message SyncSystem::create_file(const FileResponse& response) {
 }
 
 
-Corrections* SyncSystem::get_corrections(vector<BlockPair*>&& pairs) {
+Corrections* SyncSystem::get_corrections(
+    vector<BlockPair*>&& pairs,
+    const FileName& file,
+    bool final
+) {
     return ::corrections(
         Sequence(move(pairs))
         .map<Result<Correction*>>([](BlockPair* pair){
@@ -649,6 +661,8 @@ Corrections* SyncSystem::get_corrections(vector<BlockPair*>&& pairs) {
         .map<Correction*>([](Result<Correction*> result){ 
             return result.get_ok(); 
         })
-        .to_vector()
+        .to_vector(),
+        file,
+        final
     );
 }

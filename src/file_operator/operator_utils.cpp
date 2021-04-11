@@ -27,7 +27,7 @@ vector<BlockPair*> get_block_pairs_between(
 
     Offset last_client_block_end{0};
     Offset last_server_block_end{0};
-    for (auto pair: non_matching) {
+    for (auto pair: matching) {
         if (last_client_block_end < pair->offset_client()
             ||
             last_server_block_end < pair->offset_server()

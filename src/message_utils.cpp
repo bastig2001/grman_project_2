@@ -182,8 +182,14 @@ Correction* correction(Block* /* used */ block, string&& data) {
     return correction;
 }
 
-Corrections* corrections(const vector<Correction* /* used */>& correction_vector) {
+Corrections* corrections(
+    const vector<Correction* /* used */>& correction_vector,
+    const FileName& file,
+    bool final
+) {
     auto corrections{new Corrections};
+    corrections->set_file_name(file);
+    corrections->set_final(final);
 
     for (Correction* correction: correction_vector) {
         corrections->mutable_corrections()->AddAllocated(correction);

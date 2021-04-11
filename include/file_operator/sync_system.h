@@ -25,7 +25,11 @@ class SyncSystem {
 
     void correct(const FileName&);
 
-    Corrections* get_corrections(std::vector<BlockPair*>&&);
+    Corrections* get_corrections(
+        std::vector<BlockPair*>&&,
+        const FileName&,
+        bool final = false
+    );
 
   public:
     SyncSystem(const SyncConfig&);
@@ -45,4 +49,6 @@ class SyncSystem {
     Message get_file(const File&);
 
     Message create_file(const FileResponse&);
+
+    Message correct(const Corrections&);
 };
