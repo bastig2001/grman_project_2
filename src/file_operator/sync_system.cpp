@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <unordered_map>
 #include <utility>
@@ -490,7 +491,7 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
 
         Message msg{};
         msg.set_allocated_signature_addendum(
-            signature_addendum(match.matched_file(), move(signatures))
+            signature_addendum(file, move(signatures))
         );
 
         msgs.push_back(move(msg));
@@ -552,10 +553,75 @@ void SyncSystem::correct(const FileName& file) {
 }
 
 
-Message SyncSystem::get_sync_response(const SignatureAddendum& /*addendum*/) {
-    //auto file{addendum.matched_file()};
+Message SyncSystem::get_sync_response(const SignatureAddendum& addendum) {
+    auto client_file{addendum.matched_file()};
 
-    return received();
+    return
+    db::get_file(client_file.name())
+    .map<Message>([&](msg::File local_file){
+        vector<BlockPair*> matching{};
+        vector<BlockPair*> non_matching{};
+
+        for (auto block_with_signature: addendum.blocks_with_signature()) {
+            auto block_pair{new BlockPair(block_with_signature.block())};
+            auto signature{block_with_signature.strong_signature()};
+
+            bool match{
+                fs::get_strong_signature(
+                    block_pair->file_name(),
+                    block_pair->size_server(),
+                    block_pair->offset_server()
+                )
+                .map<bool>([&](StrongSign local_signature){
+                    return local_signature == signature;
+                })
+                .peek(
+                    [](auto){},
+                    [&](Error err){ logger->error(err.msg); }
+                )
+                .or_else(false)
+            };
+
+            if (match) {
+                matching.push_back(block_pair);
+            }
+            else {
+                non_matching.push_back(block_pair);
+            }
+        }
+
+        Message msg{};
+
+        if (client_file.timestamp() > local_file.timestamp) {
+            // client file is newer
+
+            msg.set_allocated_sync_response(sync_response(
+                client_file,
+                partial_match(local_file.to_proto()),
+                block_pairs(non_matching)
+            ));
+        }
+        else {
+            // server file is newer
+
+            msg.set_allocated_sync_response(sync_response(
+                client_file,
+                partial_match(
+                    local_file.to_proto(),
+                    nullopt,
+                    get_corrections(
+                        move(non_matching), 
+                        client_file.name(),
+                        true
+                    )
+                ),
+                nullopt
+            ));
+        }
+
+        return msg;
+    })
+    .or_else(received());
 }
 
 
