@@ -77,21 +77,30 @@ class ResultVariant {
         }
     }
 
-    void peek(std::function<void(Ok)> fn) const {
+    ResultVariant<Ok, Err> peek(std::function<void(Ok)> fn) const {
         if (is_ok()) {
             fn(get_const_ok());
+
+            return ResultVariant<Ok, Err>::ok(get_const_ok());
+        }
+        else {
+            return ResultVariant<Ok, Err>::err(get_const_err());
         }
     }
 
-    void peek(
+    ResultVariant<Ok, Err> peek(
         std::function<void(Ok)> ok_fn, 
         std::function<void(Err)> err_fn
     ) const {
         if (is_ok()) {
             ok_fn(get_const_ok());
+
+            return ResultVariant<Ok, Err>::ok(get_const_ok());
         }
         else {
             err_fn(get_const_err());
+
+            return ResultVariant<Ok, Err>::err(get_const_err());
         }
     }
 

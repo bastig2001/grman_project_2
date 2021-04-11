@@ -8,15 +8,9 @@
 #include <vector>
 
 
-std::vector<Block*> get_blocks_between(
-    std::vector<Offset>&& offsets,
-    size_t file_size,
-    const std::string& file_name,
-    BlockSize block_size = BLOCK_SIZE
-);
-
-std::vector<std::pair<Offset, BlockSize>> get_blocks_between(
-    std::vector<Offset>&& offsets,
-    size_t file_size,
-    BlockSize block_size = BLOCK_SIZE
+std::vector<BlockPair*> get_block_pairs_between(
+    std::vector<BlockPair*>& matching,
+    const FileName&,
+    size_t client_file_size,
+    size_t server_file_size
 );

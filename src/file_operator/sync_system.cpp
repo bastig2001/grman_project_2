@@ -145,6 +145,7 @@ vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
             else {
                 // file seems to be newer
 
+                db::delete_removed(server_file.name());
                 msgs.push_back((request(server_file)));
             }
             
@@ -249,154 +250,174 @@ Result<Message> SyncSystem::sync(
             ? -1 // the last signature in the request is not from a full block
             :  0 
     )};
-    unordered_map<unsigned int, Offset> signature_offsets{};
+
+    unordered_map<unsigned int, vector<Offset>> signature_offsets{};
     for (int i{0}; i <  full_signatures_count; i++) {
-        signature_offsets.insert(
-            {request.weak_signatures().at(i), i * BLOCK_SIZE}
-        );
+        auto signature{request.weak_signatures().at(i)};
+
+        if (contains(signature_offsets, signature)) {
+            signature_offsets[signature].push_back(i * BLOCK_SIZE);
+        }
+        else {
+            signature_offsets.insert({signature, {i * BLOCK_SIZE}});
+        }
     }
 
-    if (auto signatures_result{fs::get_weak_signatures(local_file.name)}) {
-        auto signatures{signatures_result.get_ok()};
-        unordered_map<Offset, Offset> matching_offsets{};
+    return
+    fs::get_weak_signatures(local_file.name)
+    .flat_map<vector<BlockPair*>>([&](vector<WeakSign> signatures){
+        vector<pair<Offset /* client */, Offset /* local */>> matching_offsets{};
+        Offset client_offset{0};
         for (unsigned long i{0}; i < signatures.size();) {
+
             if (contains(signature_offsets, signatures[i])) {
-                matching_offsets.insert({signature_offsets[signatures[i]], i});
-                i += BLOCK_SIZE;
+                while (
+                    signature_offsets[signatures[i]].size() > 0
+                        &&
+                    client_offset > signature_offsets[signatures[i]][0]
+                ) {
+                    signature_offsets[signatures[i]].erase(
+                        signature_offsets[signatures[i]].begin()
+                    );
+                }
+
+                if (signature_offsets[signatures[i]].size() > 0) {
+                    client_offset = signature_offsets[signatures[i]][0];
+                    signature_offsets[signatures[i]].erase(
+                        signature_offsets[signatures[i]].begin()
+                    );
+
+                    matching_offsets.push_back({client_offset, i});
+                    i += BLOCK_SIZE;
+                }
+                else {
+                    i++;
+                }
             }
             else {
                 i++;
             }
         }
 
-        vector<Block*> matching_client_blocks{};
-        matching_client_blocks.reserve(matching_offsets.size());
+        vector<BlockPair*> matching_blocks{};
+        matching_blocks.reserve(matching_offsets.size());
 
         for (auto [client_offset, local_offset]: matching_offsets) {
-            matching_client_blocks.push_back(
-                block(client_file.name(), client_offset)
+            matching_blocks.push_back(
+                block_pair(client_file.name(), client_offset, local_offset)
             );
         }
 
         if (last_block_smaller) {
             auto last_offset{local_file.size - last_block_size};
-            auto last_signature{
+
+            return
                 fs::get_weak_signature(
                     local_file.name, 
                     last_block_size, 
                     last_offset
-            ).get_ok()};
-
-            if (last_signature 
-                == 
-                request.weak_signatures().at(request.weak_signatures_size() - 1)
-            ) {
-                auto last_client_offset{client_file.size() - last_block_size};
-
-                matching_offsets.insert({last_client_offset, last_offset});
-                matching_client_blocks.push_back(
-                    block(
-                        client_file.name(), 
-                        last_client_offset, 
-                        last_block_size
-                ));
-            }
-        }
-
-
-        Message msg{};
-
-        if (local_file.timestamp < client_file.timestamp()) {
-            // server has older file and requests correction
-
-            vector<Offset> client_offsets(matching_offsets.size());
-            transform(
-                matching_offsets.begin(),
-                matching_offsets.end(),
-                client_offsets.begin(),
-                [](auto matching_pair){
-                    return matching_pair.first;
-                }
-            );
-
-            msg.set_allocated_sync_response(
-                sync_response(
-                    client_file,
-                    partial_match(
-                        local_file.to_proto(),
-                        blocks(matching_client_blocks)
-                    ),
-                    blocks(
-                        get_blocks_between(
-                            move(client_offsets), 
-                            client_file.size(), 
-                            client_file.name()
-                    ))
                 )
-            );
+                .map<vector<BlockPair*>>([&](WeakSign last_signature){
+                    if (last_signature 
+                        == 
+                        request.weak_signatures()
+                            .at(request.weak_signatures_size() - 1)
+                    ) {
+                        auto last_client_offset{client_file.size() - last_block_size};
+
+                        matching_blocks.push_back(
+                            block_pair(
+                                client_file.name(), 
+                                last_client_offset, 
+                                last_offset,
+                                last_block_size
+                        ));
+                    }
+
+                    return matching_blocks;
+                });
         }
         else {
-            // server has newer file and sends correction
+            return Result<vector<BlockPair*>>::ok(matching_blocks);
+        }
+    })
+    .map<pair<vector<BlockPair*> /* matching */, vector<BlockPair*> /* not matching */>>(
+    [&](vector<BlockPair*> matching){
+        return pair{
+            matching, 
+            get_block_pairs_between(
+                matching, 
+                local_file.name, 
+                client_file.size(), 
+                local_file.size
+            )
+        };
+    })
+    .map<Message>([&](pair<vector<BlockPair*>, vector<BlockPair*>> pairs){
+        auto [matching, non_matching]{pairs};
+        Message msg{};
 
-            vector<Offset> client_offsets(matching_offsets.size());
-            transform(
-                matching_offsets.begin(),
-                matching_offsets.end(),
-                client_offsets.begin(),
-                [](auto matching_pair){
-                    return matching_pair.first;
-                }
-            );
+        if (client_file.timestamp() > local_file.timestamp) {
+            // client file is newer
 
-            auto blocks_to_correct{
-                get_blocks_between(
-                    move(client_offsets), 
-                    client_file.size(), 
-                    client_file.name()
-            )};
+            msg.set_allocated_sync_response(sync_response(
+                client_file,
+                partial_match(
+                    local_file.to_proto(),
+                    block_pairs(move(matching))
+                ),
+                block_pairs(non_matching)
+            ));
+        }
+        else {
+            // server file is newer
 
-            vector<Offset> local_offsets(matching_offsets.size());
-            transform(
-                matching_offsets.begin(),
-                matching_offsets.end(),
-                local_offsets.begin(),
-                [](auto matching_pair){
-                    return matching_pair.second;
-                }
-            );
-    
-            auto blocks_to_read{
-                get_blocks_between(move(local_offsets), local_file.size)
+            auto corrections{
+                Sequence(move(non_matching))
+                .map<Result<Correction*>>([](BlockPair* pair){
+                    return
+                    fs::read(
+                        pair->file_name(), 
+                        pair->offset_server(), 
+                        pair->size_server()
+                    )
+                    .peek(
+                        [](auto){},
+                        [&](Error err){ logger->error(err.msg); }
+                    )
+                    .map<Correction*>([&](string data){
+                        return ::correction(
+                            block(
+                                pair->file_name(),
+                                pair->offset_client(),
+                                pair->size_client()
+                            ),
+                            move(data)
+                        );
+                    });
+                })
+                .where([](Result<Correction*> result){
+                    return result.is_ok();
+                })
+                .map<Correction*>([](Result<Correction*> result){ 
+                    return result.get_ok(); 
+                })
+                .to_vector()
             };
-            auto correction_data{fs::read(local_file.name, blocks_to_read).get_ok()};
 
-            vector<Correction*> corrections{};
-            corrections.reserve(correction_data.size());
-            
-            for (unsigned int i{0}; i < correction_data.size(); i++) {
-                corrections.push_back(
-                    correction(blocks_to_correct[i], move(correction_data[i]))
-                );
-            }
-
-            msg.set_allocated_sync_response(
-                sync_response(
-                    client_file,
-                    partial_match(
-                        local_file.to_proto(),
-                        blocks(matching_client_blocks),
-                        ::corrections(corrections)
-                    ),
-                    nullopt
-                )
-            );
+            msg.set_allocated_sync_response(sync_response(
+                client_file,
+                partial_match(
+                    local_file.to_proto(),
+                    block_pairs(move(matching)),
+                    ::corrections(move(corrections))
+                ),
+                nullopt
+            ));
         }
 
-        return Result<Message>::ok(msg);
-    }
-    else {
-        return Result<Message>::err(signatures_result.get_err());
-    }
+        return msg;
+    });
 }
 
 Message SyncSystem::respond_already_removed(const File& requested_file) {

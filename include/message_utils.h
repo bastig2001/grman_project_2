@@ -30,7 +30,22 @@ Block* block(
     BlockSize size = BLOCK_SIZE
 );
 
-Blocks* blocks(const std::vector<Block* /* used */>&);
+BlockPair* block_pair(
+    const FileName& file_name, 
+    Offset offset_client,
+    Offset offset_server, 
+    BlockSize size = BLOCK_SIZE
+);
+
+BlockPair* block_pair(
+    const FileName& file_name, 
+    Offset offset_client,
+    Offset offset_server, 
+    BlockSize size_client,
+    BlockSize size_server
+);
+
+BlockPairs* block_pairs(const std::vector<BlockPair* /* used */>&);
 
 
 // creational functions for download message types
@@ -67,16 +82,19 @@ FileList* file_list(
 
 Correction* correction(Block* /* used */, std::string&& data);
 
-Corrections* corrections(const std::vector<Correction* /* used */>&);
+Corrections* corrections(
+    const std::vector<Correction* /* used */>&, 
+    bool final = false
+);
 
 BlockWithSignature* block_with_signature(
-    Block* /* used */, 
+    BlockPair* /* used */, 
     const StrongSign& strong_signature
 );
 
 PartialMatch* partial_match(
     File* /* used */, 
-    std::optional<Blocks* /* used */> signature_requests = std::nullopt,
+    std::optional<BlockPairs* /* used */> signature_requests = std::nullopt,
     std::optional<Corrections* /* used */> = std::nullopt
 );
 
@@ -89,7 +107,7 @@ SyncRequest* sync_request(
 SyncResponse* sync_response(
     const File& requested_file,
     std::optional<PartialMatch* /* used */>,
-    std::optional<Blocks* /* used */> correction_request,
+    std::optional<BlockPairs* /* used */> correction_request,
     bool requesting_file = false,
     bool removed = false
 );
@@ -111,5 +129,7 @@ std::vector<File*> to_vector(
     const std::unordered_map<FileName, File* /* not copied */>&
 );
 
-std::vector<std::pair<Offset, BlockSize>> get_block_positioners(const Blocks&);
+std::vector<std::pair<Offset, BlockSize>> get_block_positioners(
+    const std::vector<Block>&
+);
 std::pair<Offset, BlockSize> get_block_positioners(const Block&);

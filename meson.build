@@ -86,7 +86,6 @@ unit_tests_src = [
     'src/presentation/logger_config.cpp',
     'src/unit_tests/json_utils.cpp',
     'src/unit_tests/main.cpp',
-    'src/unit_tests/operator_utils.cpp',
     'src/unit_tests/pipe.cpp',
     'src/unit_tests/signatures.cpp',
     'src/unit_tests/type.cpp',
