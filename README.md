@@ -42,7 +42,7 @@ The *server* has default values for everything and can be simply started with th
 To start the *client* you need to at least specify the address of the server to which to connect
 with the command line argument `-a` or `--server-address`.
 
-***Note: Sync does not yet change any files, it only sends synchronization messages between client and server!***
+At the moment, the client does only one synchronization round, you have to manually abort the application and restart it to synchronize again.
 
 ### Configuration
 
