@@ -38,27 +38,12 @@ class Sequence {
     }}
     {}
 
-    template<class Iterator>
-    Sequence(
-        Iterator begin,
-        Iterator end
-    ): generator{
-        [begin{std::move(begin)}, end{std::move(end)}](unsigned int index){
-            if (begin + index < end) {
-                return ResultVariant<T, bool>::ok(*(begin + index));
-            }
-            else {
-                return ResultVariant<T, bool>::err(false); // no more values
-            }
-    }}
-    {}
-
     template<typename U>
     Sequence<U> map(std::function<U(T)> functor) {
-        return Sequence(
+        return Sequence<U>(
             [generator{std::move(generator)}, functor{std::move(functor)}]
             (unsigned int index){
-                return generator(index).map(functor);
+                return generator(index).template map<U>(functor);
             }
         );
     }
@@ -84,6 +69,13 @@ class Sequence {
                     );
             }
         );
+    }
+
+    Sequence<T> peek(std::function<void(const T&)> fn) {
+        return map<T>([fn{std::move(fn)}](T value){
+            fn(value);
+            return value;
+        });
     }
 
     void for_each(std::function<void(T)> fn) {

@@ -1,5 +1,4 @@
-#include "file_operator/message_utils.h"
-#include "messages/sync.pb.h"
+#include "message_utils.h"
 #include "utils.h"
 #include "messages/all.pb.h"
 
@@ -46,11 +45,44 @@ Block* block(
     return block;
 }
 
-Blocks* blocks(const vector<Block* /* used */>& block_vector) {
-    auto blocks{new Blocks};
+BlockPair* block_pair(
+    const FileName& file_name, 
+    Offset offset_client,
+    Offset offset_server, 
+    BlockSize size
+) {
+    auto block_pair{new BlockPair};
+    block_pair->set_file_name(file_name);
+    block_pair->set_offset_client(offset_client);
+    block_pair->set_offset_server(offset_server);
+    block_pair->set_size_client(size);
+    block_pair->set_size_server(size);
 
-    for (Block* block: block_vector) {
-        blocks->mutable_blocks()->AddAllocated(block);
+    return block_pair;
+}
+
+BlockPair* block_pair(
+    const FileName& file_name, 
+    Offset offset_client,
+    Offset offset_server, 
+    BlockSize size_client,
+    BlockSize size_server
+) {
+    auto block_pair{new BlockPair};
+    block_pair->set_file_name(file_name);
+    block_pair->set_offset_client(offset_client);
+    block_pair->set_offset_server(offset_server);
+    block_pair->set_size_client(size_client);
+    block_pair->set_size_server(size_server);
+
+    return block_pair;
+}
+
+BlockPairs* block_pairs(const vector<BlockPair* /* used */>& block_vector) {
+    auto blocks{new BlockPairs};
+
+    for (BlockPair* block_pair: block_vector) {
+        blocks->mutable_block_pairs()->AddAllocated(block_pair);
     }
 
     return blocks;
@@ -94,7 +126,10 @@ QueryOptions* query_options(
         query_options(
             include_hidden, 
             changed_after.has_value()
-            ? optional{get_timestamp(changed_after.value())}
+            ? optional{get_timestamp(
+                cast_clock<chrono::time_point<filesystem::file_time_type::clock>>(
+                    changed_after.value()
+              ))}
             : nullopt
         );
 }
@@ -147,8 +182,14 @@ Correction* correction(Block* /* used */ block, string&& data) {
     return correction;
 }
 
-Corrections* corrections(const vector<Correction* /* used */>& correction_vector) {
+Corrections* corrections(
+    const vector<Correction* /* used */>& correction_vector,
+    const FileName& file,
+    bool final
+) {
     auto corrections{new Corrections};
+    corrections->set_file_name(file);
+    corrections->set_final(final);
 
     for (Correction* correction: correction_vector) {
         corrections->mutable_corrections()->AddAllocated(correction);
@@ -158,23 +199,23 @@ Corrections* corrections(const vector<Correction* /* used */>& correction_vector
 }
 
 BlockWithSignature* block_with_signature(
-    Block* /* used */ block, 
+    BlockPair* /* used */ block_pair, 
     const StrongSign& strong_signature
 ) {
     auto block_with_signature{new BlockWithSignature};
-    block_with_signature->set_allocated_block(block);
+    block_with_signature->set_allocated_block(block_pair);
     block_with_signature->set_strong_signature(strong_signature);
 
     return block_with_signature;
 }
 
 PartialMatch* partial_match(
-    const File& matched_file, 
-    optional<Blocks* /* used */> signature_requests,
+    File* /* used */ matched_file, 
+    optional<BlockPairs* /* used */> signature_requests,
     optional<Corrections* /* used */> corrections
 ) {
     auto partial_match{new PartialMatch};
-    partial_match->set_allocated_matched_file(new File(matched_file));
+    partial_match->set_allocated_matched_file(matched_file);
 
     if (signature_requests.has_value()) {
         partial_match->set_allocated_signature_requests(
@@ -190,12 +231,12 @@ PartialMatch* partial_match(
 }
 
 SyncRequest* sync_request(
-    const File& file,
+    File* /* used */ file,
     const vector<WeakSign>& weak_signatures,
     bool removed
 ) {
     auto request{new SyncRequest};
-    request->set_allocated_file(new File(file));
+    request->set_allocated_file(file);
 
     for (unsigned int signature: weak_signatures) {
         request->add_weak_signatures(signature);
@@ -209,7 +250,7 @@ SyncRequest* sync_request(
 SyncResponse* sync_response(
     const File& requested_file,
     optional<PartialMatch* /* used */> partial_match,
-    optional<Blocks* /* used */> correction_request,
+    optional<BlockPairs* /* used */> correction_request,
     bool requesting_file,
     bool removed
 ) {
@@ -271,11 +312,13 @@ vector<File*> to_vector(
     return files;
 }
 
-vector<pair<Offset, BlockSize>> get_block_positioners(const Blocks& blocks) {
+vector<pair<Offset, BlockSize>> get_block_positioners(
+    const vector<Block>& blocks
+) {
     vector<pair<Offset, BlockSize>> positioners{};
-    positioners.reserve(blocks.blocks_size());
+    positioners.reserve(blocks.size());
 
-    for (auto block: blocks.blocks()) {
+    for (auto block: blocks) {
         positioners.push_back(get_block_positioners(block));
     }
 

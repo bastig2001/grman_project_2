@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file_operator/signatures.h"
+#include "messages/basic.h"
 #include "messages/all.pb.h"
 
 #include <string>
@@ -8,15 +9,15 @@
 #include <vector>
 
 
-std::vector<Block*> get_blocks_between(
-    std::vector<Offset>&& offsets,
-    size_t file_size,
-    const std::string& file_name,
-    BlockSize block_size = BLOCK_SIZE
+std::vector<BlockPair*> get_block_pairs_between(
+    std::vector<BlockPair*>& matching,
+    const FileName&,
+    size_t client_file_size,
+    size_t server_file_size
 );
 
-std::vector<std::pair<Offset, BlockSize>> get_blocks_between(
-    std::vector<Offset>&& offsets,
-    size_t file_size,
-    BlockSize block_size = BLOCK_SIZE
+std::vector<std::pair<msg::Data, bool>> get_data_spaces(
+    std::vector<msg::Data>&& data,
+    const FileName&,
+    size_t file_size
 );

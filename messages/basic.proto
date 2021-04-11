@@ -13,6 +13,14 @@ message Block {
     uint32 size = 3;
 }
 
-message Blocks {
-    repeated Block blocks = 1;
+message BlockPair {
+    string file_name = 1;
+    uint64 offset_client = 2;
+    uint64 offset_server = 3;
+    uint32 size_client = 4;
+    uint32 size_server = 5;
+}
+
+message BlockPairs {
+    repeated BlockPair block_pairs = 1;
 }

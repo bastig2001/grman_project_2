@@ -1,13 +1,11 @@
 #pragma once
 
+#include "type/definitions.h"
+
 #include <istream>
 #include <vector>
 #include <string>
 
-using Offset = unsigned long;
-using BlockSize = unsigned int;
-using WeakSign = unsigned int;
-using StrongSign = std::string;
 
 const BlockSize BLOCK_SIZE{6000};
 

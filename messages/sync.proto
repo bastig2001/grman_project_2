@@ -9,17 +9,19 @@ message Correction {
 
 message Corrections {
     repeated Correction corrections = 1;
+    string file_name = 2;
+    bool final = 3;
 }
 
 message BlockWithSignature {
-    Block block = 1;
+    BlockPair block = 1;
     string strong_signature = 2;
 }
 
 message PartialMatch {
     File matched_file = 1;
     oneof optional_signature_requests {
-        Blocks signature_requests = 2; 
+        BlockPairs signature_requests = 2; 
     }
     oneof optional_corrections {
         Corrections corrections = 3;
@@ -39,7 +41,7 @@ message SyncResponse {
         PartialMatch partial_match = 2;
     }
     oneof optional_correction_request {
-        Blocks correction_request = 3;
+        BlockPairs correction_request = 3;
     }
     bool requsting_file = 4;
     bool removed = 5;

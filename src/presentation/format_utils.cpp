@@ -32,17 +32,17 @@ string get_file_list_header() {
     }
 }
 
-string format_file(const File& file) {
+string format_file(const msg::File& file) {
     auto time{
         time_to_string(
             cast_clock<chrono::time_point<chrono::system_clock>>(
                 get_timepoint<filesystem::file_time_type::clock>(
-                    file.timestamp()
+                    file.timestamp
     )))};
 
     return 
-        file.signature() + "  " +
-        format_size(file.size()) + "  " +
+        file.signature + "  " +
+        format_size(file.size) + "  " +
         (use_color
             ? fmt::format(fg(fmt::color::cadet_blue), time)
             : time
@@ -95,11 +95,15 @@ pair<string, string> get_size_and_unit(size_t size) {
     }
 }
 
-string colored(const File& file) {
+string colored(const msg::File& file) {
+    return colored(file.name);
+}
+
+string colored(const FileName& file) {
     if (use_color) {
-        return fmt::format(fg(fmt::color::burly_wood), file.name());
+        return fmt::format(fg(fmt::color::burly_wood), file);
     }
     else {
-        return file.name();
+        return file;
     }
 }

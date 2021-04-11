@@ -1,6 +1,7 @@
 #pragma once
 
-#include "messages/basic.pb.h"
+#include "messages/basic.h"
+#include "type/definitions.h"
 
 #include <chrono>
 #include <ctime>
@@ -13,11 +14,13 @@ extern bool use_color;
 
 std::string get_file_list_header();
 
-std::string format_file(const File&);
+std::string format_file(const msg::File&);
 
 std::string format_size(size_t);
 
-std::string colored(const File&);
+std::string colored(const msg::File&);
+
+std::string colored(const FileName&);
 
 
 template<typename T>

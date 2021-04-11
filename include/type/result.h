@@ -17,6 +17,7 @@ class ResultVariant {
     ResultVariant(Err&& err): value{std::move(err)}, has_ok{false} {};
 
   public:
+    ResultVariant(): value{}, has_ok{} {};
 
     static ResultVariant<Ok, Err> ok(Ok ok) { 
         return ResultVariant(std::move(ok)); 
@@ -32,6 +33,9 @@ class ResultVariant {
 
     Ok get_ok() { return std::get<Ok>(std::move(value)); }
     Err get_err() { return std::get<Err>(std::move(value)); }
+
+    Ok get_const_ok() const { return std::get<Ok>(value); }
+    Err get_const_err() const { return std::get<Err>(value); }
 
     template<typename U>
     ResultVariant<U, Err> map(std::function<U(Ok)> functor) {
@@ -52,6 +56,60 @@ class ResultVariant {
         }
         else {
             return ResultVariant<U, Err>::err(get_err());
+        }
+    }
+
+    void apply(std::function<void(Ok)> fn) {
+        if (is_ok()) {
+            fn(get_ok());
+        }
+    }
+
+    void apply(
+        std::function<void(Ok)> ok_fn, 
+        std::function<void(Err)> err_fn
+    ) {
+        if (is_ok()) {
+            ok_fn(get_ok());
+        }
+        else {
+            err_fn(get_err());
+        }
+    }
+
+    ResultVariant<Ok, Err> peek(std::function<void(Ok)> fn) const {
+        if (is_ok()) {
+            fn(get_const_ok());
+
+            return ResultVariant<Ok, Err>::ok(get_const_ok());
+        }
+        else {
+            return ResultVariant<Ok, Err>::err(get_const_err());
+        }
+    }
+
+    ResultVariant<Ok, Err> peek(
+        std::function<void(Ok)> ok_fn, 
+        std::function<void(Err)> err_fn
+    ) const {
+        if (is_ok()) {
+            ok_fn(get_const_ok());
+
+            return ResultVariant<Ok, Err>::ok(get_const_ok());
+        }
+        else {
+            err_fn(get_const_err());
+
+            return ResultVariant<Ok, Err>::err(get_const_err());
+        }
+    }
+
+    Ok or_else(Ok value) {
+        if (is_ok()) {
+            return get_ok();
+        }
+        else {
+            return value;
         }
     }
 };
