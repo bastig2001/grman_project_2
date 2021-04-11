@@ -22,7 +22,7 @@ vector<Message> handle_msg(const Message&, SyncSystem&);
 
 
 int run_file_operator(
-    const SyncConfig& config,
+    const Config& config,
     ReceivingPipe<InternalMsgWithOriginator>& inbox
 ) {
     ExitCode exit_code;

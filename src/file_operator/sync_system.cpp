@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
-#include <functional>
 #include <optional>
+#include <regex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -27,11 +27,27 @@
 using namespace std;
 
 
-SyncSystem::SyncSystem(const SyncConfig& config): config{config} {
-    auto file_paths = fs::get_file_paths(config.sync_hidden_files);
+SyncSystem::SyncSystem(const Config& config): config{config} {
+    auto file_paths{
+        Sequence(fs::get_file_paths(config.sync.sync_hidden_files))
+        .where([&](const filesystem::path& path){
+            return (
+                config.logger.file == ""
+                ||
+                absolute(path) != absolute(filesystem::path(config.logger.file))
+            ) &&
+                !regex_match(path.c_str(), regex{"^\\.sync.*$"}); // if in .sync folder
+        })
+        .to_vector()
+    };
+
     logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
 
-    db::create();
+    if (!filesystem::exists(".sync/")) {
+        filesystem::create_directory(".sync/");
+    }
+
+    db::create(filesystem::exists(".sync/db.sqlite"));
     db::insert_or_replace_files(
         Sequence(fs::get_files(file_paths))
         .peek([](Result<msg::File> file){
@@ -58,8 +74,14 @@ Message SyncSystem::get_show_files() {
     msg.set_allocated_show_files(
         show_files(
             query_options(
-                config.sync_hidden_files,
+                config.sync.sync_hidden_files,
                 db::get_last_checked()
+    )));
+
+    db::insert_or_replace_last_checked(
+        get_timestamp(
+            cast_clock<chrono::time_point<filesystem::file_time_type::clock>>(
+                chrono::system_clock::now()
     )));
 
     return msg;
@@ -68,7 +90,7 @@ Message SyncSystem::get_show_files() {
 
 Message SyncSystem::get_file_list(const ShowFiles& request) {
     bool list_hidden{
-        config.sync_hidden_files && request.options().include_hidden()
+        config.sync.sync_hidden_files && request.options().include_hidden()
     };
     optional<Timestamp> min_timestamp{
         request.options().has_timestamp()
@@ -550,6 +572,8 @@ Message SyncSystem::correct(const Corrections& corrections) {
 
 void SyncSystem::correct(const FileName& file) {
     logger->info("Correcting " + colored(file));
+
+
 }
 
 

@@ -17,7 +17,7 @@ struct LastChecked {
 };
 
 auto permanent_db{make_storage(
-    "",
+    ".sync/db.sqlite",
     make_table(
         "file",
         make_column("name",      &msg::File::name, primary_key()),
@@ -49,8 +49,11 @@ auto in_memory_db{make_storage(
 )};
 
 
-void db::create() {
-    permanent_db.sync_schema();
+void db::create(bool exists) {
+    if (!exists) {
+        permanent_db.sync_schema();
+    }
+    
     in_memory_db.sync_schema();
 }
 

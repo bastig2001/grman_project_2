@@ -9,7 +9,7 @@
 
 
 namespace db {
-    void create();
+    void create(bool exists);
 
     void insert_or_replace_file(msg::File);
     void insert_or_replace_files(std::vector<msg::File>);

@@ -9,7 +9,7 @@
 
 class SyncSystem {
   private:
-    const SyncConfig& config;
+    const Config& config;
 
     Result<Message> start_sync(msg::File);
     Message notify_already_removed(const File&);
@@ -32,7 +32,7 @@ class SyncSystem {
     );
 
   public:
-    SyncSystem(const SyncConfig&);
+    SyncSystem(const Config&);
 
     Message get_show_files();
 
