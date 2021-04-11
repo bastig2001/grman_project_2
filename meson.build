@@ -1,6 +1,6 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '0.1.6',
+        version : '1.0.0',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
@@ -33,6 +33,11 @@ add_global_arguments('-I' + get_option('peglib_include_dir'), language: 'cpp')
 # add_global_arguments('-I' + get_option('spdlog_include_dir'), language : 'cpp')
 # add_global_arguments('-DSPDLOG_FMT_EXTERNAL=ON', language : 'cpp')
 
+# sqlite orm: https://github.com/fnc12/sqlite_orm
+add_global_arguments('-I' + get_option('sqlite_orm_include_dir'), language : 'cpp')
+
+sqlite3 = dependency('sqlite3')
+
 # begin protobuf: https://developers.google.com/protocol-buffers/
 # protobuf: must be installed independently and has to be found...
 protoc = find_program('protoc', required : true)
@@ -56,14 +61,16 @@ messages = protoc.process('messages/all.proto',
 
 inc_dir = include_directories('include')
 
-src = [
+sync_src = [
+    'src/main.cpp',
     'src/client.cpp',
     'src/config.cpp',
+    'src/database.cpp',
     'src/file_operator.cpp',
+    'src/message_utils.cpp',
     'src/server.cpp',
     'src/utils.cpp',
     'src/file_operator/filesystem.cpp',
-    'src/file_operator/message_utils.cpp',
     'src/file_operator/operator_utils.cpp',
     'src/file_operator/signatures.cpp',
     'src/file_operator/sync_system.cpp',
@@ -73,26 +80,34 @@ src = [
 ]
 
 unit_tests_src = [
+    'src/config.cpp',
+    'src/message_utils.cpp',
+    'src/utils.cpp',
+    'src/file_operator/filesystem.cpp',
+    'src/file_operator/operator_utils.cpp',
+    'src/file_operator/signatures.cpp',
+    'src/presentation/format_utils.cpp',
+    'src/presentation/logger_config.cpp',
     'src/unit_tests/json_utils.cpp',
     'src/unit_tests/main.cpp',
-    'src/unit_tests/operator_utils.cpp',
     'src/unit_tests/pipe.cpp',
     'src/unit_tests/signatures.cpp',
+    'src/unit_tests/type.cpp',
     'src/unit_tests/utils.cpp'
 ]
 
-dependencies = [thread, protobuf, crypto]
+dependencies = [thread, protobuf, crypto, sqlite3]
 
 executable('sync', 
            messages,
-           sources : ['src/main.cpp'] + src, 
+           sources : sync_src, 
            include_directories : inc_dir,
            dependencies : dependencies
           )
 
 executable('unit_tests', 
            messages,
-           sources : unit_tests_src + src, 
+           sources : unit_tests_src, 
            include_directories : inc_dir,
            dependencies : dependencies,
            cpp_args : [

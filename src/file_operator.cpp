@@ -2,8 +2,8 @@
 #include "config.h"
 #include "exit_code.h"
 #include "internal_msg.h"
+#include "message_utils.h"
 #include "pipe.h"
-#include "file_operator/message_utils.h"
 #include "file_operator/sync_system.h"
 #include "messages/all.pb.h"
 #include "presentation/logger.h"
@@ -22,7 +22,7 @@ vector<Message> handle_msg(const Message&, SyncSystem&);
 
 
 int run_file_operator(
-    const SyncConfig& config,
+    const Config& config,
     ReceivingPipe<InternalMsgWithOriginator>& inbox
 ) {
     ExitCode exit_code;
@@ -100,11 +100,11 @@ vector<Message> handle_msg(const Message& request,SyncSystem& system) {
         case Message::kSignatureAddendum:
             return {system.get_sync_response(request.signature_addendum())};
         case Message::kCorrections:
-            return {};
+            return {system.correct(request.corrections())};
         case Message::kFileRequest:
-            return {};
+            return {system.get_file(request.file_request().file())};
         case Message::kFileResponse:
-            return {};
+            return {system.create_file(request.file_response())};
         default: 
             return {};
     }

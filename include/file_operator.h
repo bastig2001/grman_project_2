@@ -6,6 +6,6 @@
 
 
 int run_file_operator(
-    const SyncConfig&, 
+    const Config&, 
     ReceivingPipe<InternalMsgWithOriginator>&
 );

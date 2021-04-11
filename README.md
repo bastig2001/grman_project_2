@@ -18,6 +18,8 @@ The **dependencies** for this C++17 project are:
 * [JSON](https://github.com/nlohmann/json)
 * [Protocol Buffers](https://developers.google.com/protocol-buffers/)
 * [spdlog](https://github.com/gabime/spdlog)
+* [SQLite ORM](https://github.com/fnc12/sqlite_orm)
+* [SQLite 3](https://www.sqlite.org/index.html)
 
 For the **unit tests** you also need [doctest](https://github.com/onqtam/doctest).
 

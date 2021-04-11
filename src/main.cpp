@@ -82,7 +82,7 @@ int run(Config& config) {
         config.act_as_server.has_value() || config.server.has_value()
         ? async(
             launch::async, 
-            bind(run_file_operator, config.sync, ref(file_operator_inbox))
+            bind(run_file_operator, config, ref(file_operator_inbox))
           )
         : async(launch::deferred, [](){ return 0; })
     };

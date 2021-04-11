@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file_operator/signatures.h"
+#include "type/definitions.h"
 #include "messages/all.pb.h"
 
 #include <chrono>
@@ -17,19 +18,34 @@
 // creational functions for basic message types
 
 File* file(
-    const std::string& name,
-    unsigned long timestamp,
+    const FileName& name,
+    Timestamp timestamp,
     size_t size,
-    const std::string& signature
+    const StrongSign& signature
 );
 
 Block* block(
-    const std::string& file_name, 
+    const FileName& file_name, 
     Offset offset = 0, 
     BlockSize size = BLOCK_SIZE
 );
 
-Blocks* blocks(const std::vector<Block* /* used */>&);
+BlockPair* block_pair(
+    const FileName& file_name, 
+    Offset offset_client,
+    Offset offset_server, 
+    BlockSize size = BLOCK_SIZE
+);
+
+BlockPair* block_pair(
+    const FileName& file_name, 
+    Offset offset_client,
+    Offset offset_server, 
+    BlockSize size_client,
+    BlockSize size_server
+);
+
+BlockPairs* block_pairs(const std::vector<BlockPair* /* used */>&);
 
 
 // creational functions for download message types
@@ -51,7 +67,7 @@ QueryOptions* query_options(
 );
 QueryOptions* query_options(
     bool include_hidden, 
-    std::optional<unsigned long> changed_after
+    std::optional<Timestamp> changed_after
 );
 
 ShowFiles* show_files(QueryOptions* /* used */);
@@ -66,29 +82,33 @@ FileList* file_list(
 
 Correction* correction(Block* /* used */, std::string&& data);
 
-Corrections* corrections(const std::vector<Correction* /* used */>&);
+Corrections* corrections(
+    const std::vector<Correction* /* used */>&, 
+    const FileName&,
+    bool final = false
+);
 
 BlockWithSignature* block_with_signature(
-    Block* /* used */, 
-    const std::string& strong_signature
+    BlockPair* /* used */, 
+    const StrongSign& strong_signature
 );
 
 PartialMatch* partial_match(
-    const File&, 
-    std::optional<Blocks* /* used */> signature_requests = std::nullopt,
+    File* /* used */, 
+    std::optional<BlockPairs* /* used */> signature_requests = std::nullopt,
     std::optional<Corrections* /* used */> = std::nullopt
 );
 
 SyncRequest* sync_request(
-    const File&,
-    const std::vector<unsigned int>& weak_signatures,
+    File* /* used */,
+    const std::vector<WeakSign>& weak_signatures,
     bool removed = false
 );
 
 SyncResponse* sync_response(
     const File& requested_file,
     std::optional<PartialMatch* /* used */>,
-    std::optional<Blocks* /* used */> correction_request,
+    std::optional<BlockPairs* /* used */> correction_request,
     bool requesting_file = false,
     bool removed = false
 );
@@ -107,8 +127,10 @@ Message received();
 // other utils
 
 std::vector<File*> to_vector(
-    const std::unordered_map<std::string, File* /* not copied */>&
+    const std::unordered_map<FileName, File* /* not copied */>&
 );
 
-std::vector<std::pair<Offset, BlockSize>> get_block_positioners(const Blocks&);
+std::vector<std::pair<Offset, BlockSize>> get_block_positioners(
+    const std::vector<Block>&
+);
 std::pair<Offset, BlockSize> get_block_positioners(const Block&);

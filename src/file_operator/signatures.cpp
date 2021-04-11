@@ -10,12 +10,12 @@
 using namespace std;
 
 string unsigned_char_to_hexadecimal_string(unsigned char*, unsigned int);
-tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
+tuple<unsigned int, unsigned int, WeakSign> calc_weak_signature(
     const string&, 
     BlockSize, 
     Offset
 );
-tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
+tuple<unsigned int, unsigned int, WeakSign> increment_weak_signature(
     const string&, 
     BlockSize, 
     Offset, 
@@ -23,17 +23,17 @@ tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
     unsigned int
 );
 
-const unsigned int buffer_size{10000};
+const size_t buffer_size{10000};
 const unsigned int signature_modulus{(unsigned int)(pow(2, 16))};
 
 
-string get_strong_signature(const string& bytes) {
+StrongSign get_strong_signature(const string& bytes) {
     unsigned char digest[MD5_DIGEST_LENGTH];
     MD5((unsigned char*)bytes.c_str(), bytes.length(), digest);
     return unsigned_char_to_hexadecimal_string(digest, MD5_DIGEST_LENGTH);
 }
 
-string get_strong_signature(istream& bytes) {
+StrongSign get_strong_signature(istream& bytes) {
     MD5_CTX ctx{};
     MD5_Init(&ctx);
 
@@ -63,7 +63,7 @@ string unsigned_char_to_hexadecimal_string(
 }
 
 
-unsigned int get_weak_signature(
+WeakSign get_weak_signature(
     istream& data, 
     BlockSize block_size, 
     Offset offset
@@ -76,7 +76,7 @@ unsigned int get_weak_signature(
     return get_weak_signature(string{block.begin(), block.end()}, block_size);
 }
 
-unsigned int get_weak_signature(
+WeakSign get_weak_signature(
     const string& data, 
     BlockSize block_size, 
     Offset offset
@@ -84,15 +84,15 @@ unsigned int get_weak_signature(
     return get<2>(calc_weak_signature(data, block_size, offset));
 }
 
-vector<unsigned int> get_weak_signatures(
+vector<WeakSign> get_weak_signatures(
     const string& data, 
     BlockSize block_size, 
     Offset initial_offset
 ) {
-    unsigned long number_of_signatures{
+    size_t number_of_signatures{
         data.length() - block_size + 1 - initial_offset
     };
-    vector<unsigned int> signatures{};
+    vector<WeakSign> signatures{};
     signatures.reserve(number_of_signatures);
 
     auto [r1, r2, signature]{
@@ -103,7 +103,7 @@ vector<unsigned int> get_weak_signatures(
     )};
     signatures.push_back(signature);
     
-    for (unsigned int i{0}; i < number_of_signatures - 1; i++) {
+    for (size_t i{0}; i < number_of_signatures - 1; i++) {
         auto [new_r1, new_r2, signature]{
             increment_weak_signature(
                 data, 
@@ -120,16 +120,16 @@ vector<unsigned int> get_weak_signatures(
     return signatures;
 }
 
-vector<unsigned int> get_weak_signatures(
+vector<WeakSign> get_weak_signatures(
     istream& data, 
     size_t data_size,
     BlockSize block_size, 
     Offset initial_offset
 ) {
-    unsigned long number_of_signatures{
+    size_t number_of_signatures{
         data_size - block_size + 1 - initial_offset
     };
-    vector<unsigned int> signatures{};
+    vector<WeakSign> signatures{};
     signatures.reserve(number_of_signatures);
 
     vector<char> block(block_size + 1);
@@ -144,13 +144,13 @@ vector<unsigned int> get_weak_signatures(
     )};
     signatures.push_back(signature);
     
-    for (unsigned int i{0}; i < number_of_signatures - 1; i++) {
+    for (size_t i{0}; i < number_of_signatures - 1; i++) {
         data.seekg(initial_offset + i, ios::beg);
         data.read(block.data(), block_size + 1);
 
         if (!(data.gcount() < 0) 
             && 
-            ((unsigned long)data.gcount() == block_size + 1)
+            ((size_t)data.gcount() == block_size + 1)
         ) {
             auto [new_r1, new_r2, signature]{
                 increment_weak_signature(
@@ -172,7 +172,7 @@ vector<unsigned int> get_weak_signatures(
     return signatures;
 }
 
-tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
+tuple<unsigned int, unsigned int, WeakSign> calc_weak_signature(
     const string& data, 
     BlockSize block_size, 
     Offset offset
@@ -196,7 +196,7 @@ tuple<unsigned int, unsigned int, unsigned int> calc_weak_signature(
     return {r1, r2 , r1 + signature_modulus * r2};
 }
 
-tuple<unsigned int, unsigned int, unsigned int> increment_weak_signature(
+tuple<unsigned int, unsigned int, WeakSign> increment_weak_signature(
     const string& data, 
     BlockSize block_size, 
     Offset preceding_offset, 
