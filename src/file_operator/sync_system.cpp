@@ -228,7 +228,12 @@ vector<Message> SyncSystem::get_sync_requests(const FileList& server_list) {
                 server_list.options().include_hidden() 
                 || 
                 fs::is_not_hidden(file.name)
-            )) {
+            ) && (
+                !server_list.options().has_timestamp()
+                ||
+                server_list.options().timestamp() <= file.timestamp
+            )
+        ) {
             // server doesn't seem to know of this file
 
             start_sync(move(file))
