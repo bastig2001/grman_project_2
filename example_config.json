@@ -5,7 +5,8 @@
     },
     "act_as_server": {},
     "sync": {
-        "sync_hidden_files": false
+        "sync_hidden_files": false,
+        "number_of_workers": 4
     },
     "logger": {
         "log_to_console": true,

@@ -77,6 +77,13 @@ variant<int, Config> configure(int argc, char* argv[]) {
         sync.sync_hidden_files,
         "Sync also hidden files"
     )->envname("SYNC_HIDDEN");
+    app.add_option(
+        "--number-of-file-operators",
+        sync.number_of_workers,
+        "The number of workers for the file operator"
+    )
+    ->envname("SYNC_FILE_OPERATOR_NUMBER")
+    ->check(CLI::PositiveNumber);
 
     LoggerConfig logger{};
     app.add_flag(
@@ -267,6 +274,10 @@ variant<int, Config> override_config(Config&& config, int argc, char* argv[]) {
     app.add_flag(
         "--hidden",
         sync.sync_hidden_files
+    );
+    app.add_option(
+        "--number-of-file-operators",
+        sync.number_of_workers
     );
 
     LoggerConfig logger{move(config.logger)};

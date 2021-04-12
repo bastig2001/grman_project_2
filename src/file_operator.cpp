@@ -11,6 +11,7 @@
 #include <exception>
 #include <functional>
 #include <future>
+#include <vector>
 
 using namespace std;
 
@@ -31,14 +32,13 @@ int run_file_operator(
     ReceivingPipe<InternalMsgWithOriginator>& inbox
 ) {
     int exit_code;
-    size_t number_of_workers{4};
     vector<future<int>> workers{};
-    workers.reserve(number_of_workers);
+    workers.reserve(config.sync.number_of_workers);
 
     try {
         SyncSystem system(config);
 
-        for (size_t i{0}; i < number_of_workers; i++) {
+        for (size_t i{0}; i < config.sync.number_of_workers; i++) {
             workers.push_back(async(
                 launch::async,
                 bind(run_file_operator_worker, ref(system), ref(inbox))
@@ -48,7 +48,7 @@ int run_file_operator(
         logger->debug("All File Operator workers are started");
 
         exit_code = Success;
-        
+
         for (auto& worker: workers) {
             exit_code |= worker.get();
         }

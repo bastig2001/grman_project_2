@@ -1,8 +1,12 @@
 * Changelog
 
 ** [Unreleased]
+*** Added
+- Option to set number of file operator workers via CLI, JSON config file or environment variable
+
 *** Changed
 - Program does not need to be aborted when exiting the command line
+- Correct initialization of file logger
 
 ** [1.0.0] - 2020-04-11
 *** Added
