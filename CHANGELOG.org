@@ -3,6 +3,7 @@
 ** [Unreleased]
 *** Added
 - Option to set number of file operator workers via CLI, JSON config file or environment variable
+- Command "sync" to start synchronization process 
 
 *** Changed
 - Program does not need to be aborted when exiting the command line

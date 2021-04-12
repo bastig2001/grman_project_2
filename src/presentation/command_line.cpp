@@ -1,7 +1,8 @@
 #include "presentation/command_line.h"
-#include "messages/basic.h"
 #include "presentation/format_utils.h"
 #include "config.h"
+#include "internal_msg.h"
+#include "messages/basic.h"
 #include "utils.h"
 #include "file_operator/filesystem.h"
 
@@ -101,10 +102,11 @@ void CommandLine::critical(const string& msg) {
 
 void CommandLine::init_command_parser() {
     command_parser = {R"(
-        Procedure <- Help / ListLong / List / Exit
+        Procedure <- Help / ListLong / List / Sync / Exit
         Help      <- 'help'i / 'h'i
         ListLong  <- 'list long'i / 'll'i
         List      <- 'list'i / 'ls'i
+        Sync      <- 'sync'i
         Exit      <- 'quit'i / 'q'i / 'exit'i
 
         %whitespace <- [ \t]*
@@ -119,6 +121,8 @@ void CommandLine::init_command_parser() {
         [this](const peg::SemanticValues&){ list(); };
     command_parser["ListLong"] = 
         [this](const peg::SemanticValues&){ list_long(); };
+    command_parser["Sync"] =
+        [this](const peg::SemanticValues&){ sync(); };
     command_parser["Exit"] = 
         [this](const peg::SemanticValues&){ exit(); };
 }
@@ -151,8 +155,9 @@ void CommandLine::help() {
     println(
         "Following Commands are available:\n"
         "  h, help        outputs this help message\n"
-        "  ls, list       lists all files which are to be synced \n"
-        "  ll, list long  lists all files which are to be synced with more information \n"
+        "  ls, list       lists all files which are to be synced\n"
+        "  ll, list long  lists all files which are to be synced with more information\n"
+        "  sync           starts synchronisation with server\n"
         "  q, quit, exit  quits and exits the program\n"
     );
 }
@@ -176,6 +181,11 @@ void CommandLine::list_long() {
     }
 
     println(output);
+}
+
+void CommandLine::sync() {
+    NoPipe<InternalMsg> pipe;
+    file_operator.send(InternalMsgWithOriginator(InternalMsgType::Sync, pipe));
 }
 
 void CommandLine::exit() {

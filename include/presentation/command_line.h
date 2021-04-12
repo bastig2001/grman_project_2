@@ -38,6 +38,7 @@ class CommandLine: public Logger {
     void help();
     void list();
     void list_long();
+    void sync();
     void exit();
 
     bool in_esc_mode{false};

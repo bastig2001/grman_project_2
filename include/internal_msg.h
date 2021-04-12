@@ -8,6 +8,7 @@
 enum class InternalMsgType {
     ServerWaits,
     ClientWaits,
+    Sync,
     FileOperatorStarted,
     HandleMessage,
     SendMessage

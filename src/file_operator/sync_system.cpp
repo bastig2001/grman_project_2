@@ -28,7 +28,55 @@ using namespace std;
 
 
 SyncSystem::SyncSystem(const Config& config): config{config} {
-    auto file_paths{
+    auto file_paths{get_file_paths()};
+
+    logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
+
+    if (!filesystem::exists(".sync/")) {
+        filesystem::create_directory(".sync/");
+    }
+
+    db::create(filesystem::exists(".sync/db.sqlite"));
+    db::insert_files(get_files(move(file_paths)));
+}
+
+
+void SyncSystem::check_filesystem() {
+    auto new_files{get_files(get_file_paths())};
+    auto old_files{db::get_files()};
+
+    unordered_map<FileName, msg::File> old_files_by_name;
+    old_files_by_name.reserve(old_files.size());
+    
+    for (auto file: old_files) {
+        old_files_by_name.insert({file.name, move(file)});
+    }
+
+    for (auto file: new_files) {
+        if (contains(old_files_by_name, file.name)) {
+            logger->debug(file.name + " still exists");
+
+            old_files_by_name.erase(file.name);
+            db::update_file(move(file));
+        }
+        else {
+            logger->debug(file.name + " is new");
+
+            db::insert_file(move(file));
+        }
+    }
+
+    for (auto [name, remaining_file]: old_files_by_name) {
+        logger->debug(name + " was removed");
+
+        db::insert_removed(remaining_file);
+        db::delete_file(name);
+    }
+}
+
+
+vector<filesystem::path> SyncSystem::get_file_paths() {
+    return
         Sequence(fs::get_file_paths(config.sync.sync_hidden_files))
         .where([&](const filesystem::path& path){
             return (
@@ -38,18 +86,12 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
             ) &&
                 !regex_match(path.c_str(), regex{"^\\.sync.*$"}); // if in .sync folder
         })
-        .to_vector()
-    };
+        .to_vector();
+}
 
-    logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
-
-    if (!filesystem::exists(".sync/")) {
-        filesystem::create_directory(".sync/");
-    }
-
-    db::create(filesystem::exists(".sync/db.sqlite"));
-    db::insert_or_replace_files(
-        Sequence(fs::get_files(file_paths))
+vector<msg::File> SyncSystem::get_files(vector<filesystem::path>&& paths) {
+    return 
+        Sequence(fs::get_files(move(paths)))
         .peek([](Result<msg::File> file){
             file.peek(
                 [](auto){},
@@ -64,8 +106,7 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
         .map<msg::File>([](Result<msg::File> file){
             return file.get_ok();
         })
-        .to_vector()
-    );
+        .to_vector();
 }
 
 
@@ -78,7 +119,7 @@ Message SyncSystem::get_show_files() {
                 db::get_last_checked()
     )));
 
-    db::insert_or_replace_last_checked(
+    db::insert_or_update_last_checked(
         get_timestamp(
             cast_clock<chrono::time_point<filesystem::file_time_type::clock>>(
                 chrono::system_clock::now()
@@ -551,7 +592,7 @@ vector<Message> SyncSystem::sync(const SyncResponse& response) {
 
 Message SyncSystem::correct(const Corrections& corrections) {
     if (corrections.corrections_size() > 0) {
-        db::insert_or_replace_data(
+        db::insert_data(
             Sequence(vector(
                 corrections.corrections().begin(),
                 corrections.corrections().end()
@@ -670,7 +711,7 @@ void SyncSystem::remove(const FileName& file) {
     db::get_file(file)
     .apply(
         [](msg::File file){
-            db::insert_or_replace_removed(file);
+            db::insert_removed(file);
             db::delete_file(file.name);
             fs::remove_file(file.name);
         }
@@ -714,7 +755,7 @@ Message SyncSystem::create_file(const FileResponse& response) {
                 chrono::system_clock::now()
             ));
 
-    db::insert_or_replace_file(file);
+    db::insert_file(file);
 
     fs::write(file.name, string{response.data()})
     .apply(

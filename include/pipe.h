@@ -123,3 +123,24 @@ class Pipe: public SendingPipe<T>, public ReceivingPipe<T> {
         close();
     }
 };
+
+
+// The non-implementation for the Pipe interfaces, it does nothing
+template<typename T>
+class NoPipe: public SendingPipe<T>, public ReceivingPipe<T> {
+  public:
+    void close() override {}
+
+    bool is_open() const override { return false; }
+    bool is_closed() const override { return true; }
+
+    bool is_empty() const override { return true; }
+    bool is_not_empty() const override { return false; }
+
+    bool send(const std::vector<T>&) override { return false; }
+
+    bool send(T) override { return false; }
+
+    std::optional<T> receive() override { return std::nullopt; }
+};
+

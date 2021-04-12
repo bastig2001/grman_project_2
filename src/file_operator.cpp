@@ -17,11 +17,8 @@ using namespace std;
 
 int run_file_operator_worker(
     SyncSystem&, 
-    ReceivingPipe<InternalMsgWithOriginator>&
-);
-vector<InternalMsg> get_response(
-    const InternalMsgWithOriginator&,
-    SyncSystem&
+    ReceivingPipe<InternalMsgWithOriginator>&,
+    SendingPipe<InternalMsg>*&
 );
 vector<InternalMsg> wrap_messages(const vector<Message>&);
 vector<Message> handle_msg(const Message&, SyncSystem&);
@@ -32,17 +29,25 @@ int run_file_operator(
     ReceivingPipe<InternalMsgWithOriginator>& inbox
 ) {
     int exit_code;
-    vector<future<int>> workers{};
-    workers.reserve(config.sync.number_of_workers);
 
     try {
+        vector<future<int>> workers{};
+        workers.reserve(config.sync.number_of_workers);
+
         SyncSystem system(config);
+
+        NoPipe<InternalMsg> no_pipe;
+        SendingPipe<InternalMsg>* client{&no_pipe};
 
         for (size_t i{0}; i < config.sync.number_of_workers; i++) {
             workers.push_back(async(
                 launch::async,
-                bind(run_file_operator_worker, ref(system), ref(inbox))
-            ));
+                bind(
+                    run_file_operator_worker, 
+                    ref(system), 
+                    ref(inbox), 
+                    ref(client)
+            )));
         }
 
         logger->debug("All File Operator workers are started");
@@ -69,14 +74,46 @@ int run_file_operator(
 
 int run_file_operator_worker(
     SyncSystem& system, 
-    ReceivingPipe<InternalMsgWithOriginator>& inbox
+    ReceivingPipe<InternalMsgWithOriginator>& inbox,
+    SendingPipe<InternalMsg>*& client
 ) {
     ExitCode exit_code;
 
     try {
         while (auto optional_msg{inbox.receive()}) {
-            auto msg{optional_msg.value()};
-            msg.originator.send(get_response(msg, system));
+            auto request{optional_msg.value()};
+
+            switch (request.type) {
+                case InternalMsgType::Sync:
+                    system.check_filesystem();
+                    client->send({
+                        get_msg_to_originator(system.get_show_files())
+                    });
+                    break;
+                case InternalMsgType::ClientWaits:
+                    client = &request.originator;
+                    request.originator.send({
+                        InternalMsg(InternalMsgType::FileOperatorStarted),
+                        get_msg_to_originator(system.get_show_files())
+                    });
+                    break;
+                case InternalMsgType::ServerWaits:
+                    request.originator.send(
+                        {InternalMsg(InternalMsgType::FileOperatorStarted)}
+                    );
+                    break;
+                case InternalMsgType::HandleMessage:
+                    request.originator.send(
+                        wrap_messages(handle_msg(request.msg, system))
+                    );
+                    break;
+                default:
+                    // There shouldn't be anything else
+                    throw invalid_argument(
+                        "Received invalid InternalMsgType " + 
+                        to_string((int)request.type)
+                    );
+            }
         }
 
         exit_code = Success;
@@ -91,29 +128,6 @@ int run_file_operator_worker(
     }
 
     return exit_code;
-}
-
-vector<InternalMsg> get_response(
-    const InternalMsgWithOriginator& request,
-    SyncSystem& system
-) {
-    switch (request.type) {
-        case InternalMsgType::ServerWaits:
-            return {InternalMsg(InternalMsgType::FileOperatorStarted)};
-        case InternalMsgType::ClientWaits:
-            return {
-                InternalMsg(InternalMsgType::FileOperatorStarted),
-                get_msg_to_originator(system.get_show_files())
-            };
-        case InternalMsgType::HandleMessage:
-            return wrap_messages(handle_msg(request.msg, system));
-        default:
-            // There shouldn't be anything else
-            throw invalid_argument(
-                "Received invalid InternalMsgType " + 
-                to_string((int)request.type)
-            );
-    }
 }
 
 vector<InternalMsg> wrap_messages(
