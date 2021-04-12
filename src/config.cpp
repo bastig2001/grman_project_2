@@ -84,6 +84,14 @@ variant<int, Config> configure(int argc, char* argv[]) {
     )
     ->envname("SYNC_FILE_OPERATOR_NUMBER")
     ->check(CLI::PositiveNumber);
+    app.add_option(
+        "-m, --minutes-between",
+        sync.minutes_between,
+        "The number of minutes after which the client starts another synchronisation process\n"
+            "  Default are 5 minutes"
+    )
+    ->envname("SYNC_MINUTES_BETWEEN")
+    ->check(CLI::PositiveNumber);
 
     LoggerConfig logger{};
     app.add_flag(
@@ -198,10 +206,26 @@ optional<Config> read_config(const std::string& file_name) {
             }; 
             
             if (ip_address_err == "") {
-                return config;
+                if (config.sync.number_of_workers > 0) {
+                    if (config.sync.minutes_between > 0) {
+                        return config;
+                    }
+                    else {
+                        cerr << "\"sync\".\"minutes_between\" in config file "
+                                "must be a positive number" << endl;
+
+                        return nullopt;
+                    }
+                }
+                else {
+                    cerr << "\"sync\".\"number_of_workers\" in config file "
+                            "must be a positive number" << endl;
+
+                    return nullopt;
+                }
             }
             else {
-                cerr << "Address of \"act as server\" in config file"
+                cerr << "Address of \"act_as_server\" in config file "
                         "is not an IP address: " << ip_address_err << endl;
 
                 return nullopt;
@@ -278,6 +302,10 @@ variant<int, Config> override_config(Config&& config, int argc, char* argv[]) {
     app.add_option(
         "--number-of-file-operators",
         sync.number_of_workers
+    );
+    app.add_option(
+        "-m, --minutes-between-sync",
+        sync.minutes_between
     );
 
     LoggerConfig logger{move(config.logger)};

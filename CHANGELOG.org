@@ -3,7 +3,8 @@
 ** [Unreleased]
 *** Added
 - Option to set number of file operator workers via CLI, JSON config file or environment variable
-- Command "sync" to start synchronization process 
+- Option to specify number of minutes after which the client automatically starts another synchronization process and the files are reloaded
+- Command "sync" to start synchronization process with server and reload files
 
 *** Changed
 - Program does not need to be aborted when exiting the command line

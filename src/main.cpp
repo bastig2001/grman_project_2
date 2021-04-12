@@ -9,8 +9,10 @@
 #include "presentation/logger.h"
 #include "messages/all.pb.h"
 
+#include <chrono>
 #include <functional>
 #include <future>
+#include <thread>
 
 using namespace std;
 
@@ -43,10 +45,13 @@ int main(int argc, char* argv[]) {
 
 int run(Config& config) {
     Pipe<InternalMsgWithOriginator> file_operator_inbox;
+    bool server_or_client{
+        config.act_as_server.has_value() || config.server.has_value()
+    };
 
     future<void> command_line;
-    if (config.act_as_server.has_value() || config.server.has_value()) {
-        // tart command line
+    if (server_or_client) {
+        // start command line
 
         auto command_line_object = 
             new CommandLine(logger, config, file_operator_inbox);
@@ -80,13 +85,31 @@ int run(Config& config) {
     };
 
     auto file_operator{
-        config.act_as_server.has_value() || config.server.has_value()
+        server_or_client
         ? async(
             launch::async, 
             bind(run_file_operator, config, ref(file_operator_inbox))
           )
         : async(launch::deferred, [](){ return 0; })
     };
+
+    if (server_or_client) {
+        // start thread to message the file operator
+        // after specified amount of time to sync
+
+        thread{[&](){
+            while (true) {
+                this_thread::sleep_for(
+                    chrono::minutes{config.sync.minutes_between}
+                );
+
+                NoPipe<InternalMsg> pipe;
+                file_operator_inbox.send(
+                    InternalMsgWithOriginator(InternalMsgType::Sync, pipe)
+                );
+            }
+        }}.detach();
+    }
 
     command_line.get();
     int return_value{file_operator.get()};

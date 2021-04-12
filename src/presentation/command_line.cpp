@@ -157,7 +157,7 @@ void CommandLine::help() {
         "  h, help        outputs this help message\n"
         "  ls, list       lists all files which are to be synced\n"
         "  ll, list long  lists all files which are to be synced with more information\n"
-        "  sync           starts synchronisation with server\n"
+        "  sync           starts synchronisation with server, reloads all files\n"
         "  q, quit, exit  quits and exits the program\n"
     );
 }

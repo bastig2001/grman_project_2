@@ -28,14 +28,22 @@ struct ServerData {
 struct SyncConfig {
     bool sync_hidden_files{false};
     size_t number_of_workers{4};
+    unsigned short minutes_between{5};
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(SyncConfig, sync_hidden_files, number_of_workers)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+        SyncConfig, 
+        sync_hidden_files, 
+        number_of_workers, 
+        minutes_between
+    )
 
     operator std::string() {
         std::ostringstream output{};
         output 
             << std::boolalpha
-            << "{\"sync hidden files\": " << sync_hidden_files << "}";
+            << "{\"sync hidden files\": " << sync_hidden_files << ", "
+            << "\"number of workers\": "  << number_of_workers << ", "
+            << "\"minutes between\": "    << minutes_between   << "}";
 
         return output.str();
     }
@@ -49,7 +57,14 @@ struct Config {
     LoggerConfig logger;
     bool no_color;
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Config, server, act_as_server, sync, logger, no_color)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+        Config, 
+        server, 
+        act_as_server, 
+        sync, 
+        logger, 
+        no_color
+    )
 
     operator std::string() {
         std::ostringstream output{};
