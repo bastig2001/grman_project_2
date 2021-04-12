@@ -5,6 +5,7 @@
 #include "pipe.h"
 
 
+// runs the file operator and synchronization system
 int run_file_operator(
     const Config&, 
     ReceivingPipe<InternalMsgWithOriginator>&

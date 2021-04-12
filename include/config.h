@@ -82,4 +82,6 @@ struct Config {
 };
 
 
+// Gets the configuration from the CLI arguments, environment variables 
+// and JSON config file, as specified by the application user
 std::variant<int, Config> configure(int argc, char* argv[]);

@@ -17,7 +17,7 @@ TEST_SUITE("type") {
             CHECK(result.is_ok());
         }
         SUBCASE("error value") {
-            auto result{Result<int>::err(Error{1, ""})};
+            auto result{Result<int>::err(Error{""})};
             CHECK_FALSE(result.is_ok());
         }
     }
@@ -27,7 +27,7 @@ TEST_SUITE("type") {
             CHECK_FALSE(result.is_err());
         }
         SUBCASE("error value") {
-            auto result{Result<int>::err(Error{1, ""})};
+            auto result{Result<int>::err(Error{""})};
             CHECK(result.is_err());
         }
     }
@@ -37,7 +37,7 @@ TEST_SUITE("type") {
             CHECK(result);
         }
         SUBCASE("error value") {
-            auto result{Result<int>::err(Error{1, ""})};
+            auto result{Result<int>::err(Error{""})};
             CHECK_FALSE(result);
         }
     }
@@ -46,10 +46,9 @@ TEST_SUITE("type") {
         CHECK(result.get_ok() == 3);
     }
     TEST_CASE("result.get_err") {
-        auto result{Result<int>::err(Error{1, "abc"})};
+        auto result{Result<int>::err(Error{"abc"})};
 
         Error err{result.get_err()};
-        CHECK(err.code == 1);
         CHECK(err.msg == "abc");
     }
     TEST_CASE("result.map") {
@@ -64,14 +63,13 @@ TEST_SUITE("type") {
         }
         SUBCASE("error value") {
             auto result{
-                Result<int>::err(Error{99, "XYZ"})
+                Result<int>::err(Error{"XYZ"})
                 .map<int>([](int n){ return n * 3; })
             };
 
             REQUIRE(result.is_err());
 
             Error err{result.get_err()};
-            CHECK(err.code == 99);
             CHECK(err.msg == "XYZ");
         }
     }
@@ -89,7 +87,7 @@ TEST_SUITE("type") {
         }
         SUBCASE("error value and ok functor") {
             auto result{
-                Result<int>::err(Error{99, "XYZ"})
+                Result<int>::err(Error{"XYZ"})
                 .flat_map<int>([](int n){ 
                     return Result<int>::ok(n * 3); 
                 })
@@ -98,35 +96,32 @@ TEST_SUITE("type") {
             REQUIRE(result.is_err());
 
             Error err{result.get_err()};
-            CHECK(err.code == 99);
             CHECK(err.msg == "XYZ");
         }
         SUBCASE("ok value and error functor") {
             auto result{
                 Result<int>::ok(4)
                 .flat_map<int>([](int){ 
-                    return Result<int>::err(Error{42, "error"}); 
+                    return Result<int>::err(Error{"error"}); 
                 })
             };
 
             REQUIRE(result.is_err());
 
             Error err{result.get_err()};
-            CHECK(err.code == 42);
             CHECK(err.msg == "error");
         }
         SUBCASE("error value and error functor") {
             auto result{
-                Result<int>::err(Error{99, "XYZ"})
+                Result<int>::err(Error{"XYZ"})
                 .flat_map<int>([](int){ 
-                    return Result<int>::err(Error{42, "error"}); 
+                    return Result<int>::err(Error{"error"}); 
                 })
             };
 
             REQUIRE(result.is_err());
 
             Error err{result.get_err()};
-            CHECK(err.code == 99);
             CHECK(err.msg == "XYZ");
         }
     }
@@ -141,7 +136,7 @@ TEST_SUITE("type") {
                 CHECK(applied);
             }
             SUBCASE("error value") {
-                auto result{Result<int>::err(Error{99, "XYZ"})};
+                auto result{Result<int>::err(Error{"XYZ"})};
 
                 bool applied{false};
                 result.apply([&applied](int){ applied = true; });
@@ -164,7 +159,7 @@ TEST_SUITE("type") {
                 CHECK_FALSE(err_applied);
             }
             SUBCASE("error value") {
-                auto result{Result<int>::err(Error{99, "XYZ"})};
+                auto result{Result<int>::err(Error{"XYZ"})};
 
                 bool ok_applied{false};
                 bool err_applied{false};

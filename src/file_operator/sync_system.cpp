@@ -5,7 +5,6 @@
 #include "config.h"
 #include "database.h"
 #include "message_utils.h"
-#include "messages/sync.pb.h"
 #include "utils.h"
 #include "messages/basic.h"
 #include "presentation/format_utils.h"
@@ -19,7 +18,6 @@
 #include <chrono>
 #include <filesystem>
 #include <optional>
-#include <regex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -28,7 +26,7 @@ using namespace std;
 
 
 SyncSystem::SyncSystem(const Config& config): config{config} {
-    auto file_paths{get_file_paths()};
+    auto file_paths{get_file_paths(config)};
 
     logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
 
@@ -42,7 +40,7 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
 
 
 void SyncSystem::check_filesystem() {
-    auto new_files{get_files(get_file_paths())};
+    auto new_files{get_files(get_file_paths(config))};
     auto old_files{db::get_files()};
 
     unordered_map<FileName, msg::File> old_files_by_name;
@@ -72,41 +70,6 @@ void SyncSystem::check_filesystem() {
         db::insert_removed(remaining_file);
         db::delete_file(name);
     }
-}
-
-
-vector<filesystem::path> SyncSystem::get_file_paths() {
-    return
-        Sequence(fs::get_file_paths(config.sync.sync_hidden_files))
-        .where([&](const filesystem::path& path){
-            return (
-                config.logger.file == ""
-                ||
-                absolute(path) != absolute(filesystem::path(config.logger.file))
-            ) &&
-                !regex_match(path.c_str(), regex{"^\\.sync.*$"}); // if in .sync folder
-        })
-        .to_vector();
-}
-
-vector<msg::File> SyncSystem::get_files(vector<filesystem::path>&& paths) {
-    return 
-        Sequence(fs::get_files(move(paths)))
-        .peek([](Result<msg::File> file){
-            file.peek(
-                [](auto){},
-                [](Error err){
-                    logger->error(err.msg);
-                }
-            );
-        })
-        .where([](const Result<msg::File>& file){
-            return file.is_ok();
-        })
-        .map<msg::File>([](Result<msg::File> file){
-            return file.get_ok();
-        })
-        .to_vector();
 }
 
 
@@ -610,31 +573,10 @@ Message SyncSystem::correct(const Corrections& corrections) {
     }
 
     if(corrections.final()) {
-        correct(corrections.file_name());
+        ::correct(corrections.file_name());
     }
 
     return received();
-}
-
-void SyncSystem::correct(const FileName& file) {
-    logger->info("Correcting " + colored(file));
-
-    db::get_file(file)
-    .flat_map<bool>([](msg::File file){
-        return
-            fs::build_file(
-                get_data_spaces(
-                    db::get_and_remove_data(file.name),
-                    file.name,
-                    file.size
-                ),
-                file.name
-            );
-    })
-    .apply(
-        [](auto){},
-        [&](Error err){ logger->error( err.msg ); }
-    );
 }
 
 
@@ -707,20 +649,6 @@ Message SyncSystem::get_sync_response(const SignatureAddendum& addendum) {
         return msg;
     })
     .or_else(received());
-}
-
-
-void SyncSystem::remove(const FileName& file) {
-    logger->info("Removing " + colored(file));
-
-    db::get_file(file)
-    .apply(
-        [](msg::File file){
-            db::insert_removed(file);
-            db::delete_file(file.name);
-            fs::remove_file(file.name);
-        }
-    );
 }
 
 

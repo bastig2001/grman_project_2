@@ -15,6 +15,7 @@
 #include <vector>
 
 
+// A command line which can act as a logger
 class CommandLine: public Logger {
   private:
     const std::string prompt{"> "};
@@ -22,7 +23,7 @@ class CommandLine: public Logger {
     const unsigned int max_input_history_size{100};
 
     Logger* logger;
-    Config& config;
+    const Config& config;
     SendingPipe<InternalMsgWithOriginator>& file_operator;
 
     std::mutex console_mtx{};
@@ -92,7 +93,7 @@ class CommandLine: public Logger {
     }
 
   public:
-    CommandLine(Logger*, Config&, SendingPipe<InternalMsgWithOriginator>&);
+    CommandLine(Logger*, const Config&, SendingPipe<InternalMsgWithOriginator>&);
 
     ~CommandLine();
 
@@ -112,5 +113,6 @@ class CommandLine: public Logger {
     void error(const std::string&) override;
     void critical(const std::string&) override;
 
+    // this runs the command line until its ended by the application user
     void operator()();
 };

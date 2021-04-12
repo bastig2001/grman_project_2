@@ -5,8 +5,8 @@
 #include "message_utils.h"
 #include "pipe.h"
 #include "file_operator/sync_system.h"
-#include "messages/all.pb.h"
 #include "presentation/logger.h"
+#include "messages/all.pb.h"
 
 #include <exception>
 #include <functional>

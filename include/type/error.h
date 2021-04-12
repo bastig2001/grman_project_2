@@ -3,7 +3,7 @@
 #include <string>
 
 
+// A structure representing an erro with a message
 struct Error {
-    int code;
     std::string msg;
 };

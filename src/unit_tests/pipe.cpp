@@ -1,6 +1,6 @@
 #include "pipe.h"
-#include "sync.p/messages/all.pb.h"
 #include "unit_tests/doctest_utils.h"
+#include "messages/all.pb.h"
 
 #include <algorithm>
 #include <doctest.h>

@@ -5,4 +5,5 @@
 #include "pipe.h"
 
 
+// runs the synchronization client
 int run_client(const ServerData&, SendingPipe<InternalMsgWithOriginator>&);

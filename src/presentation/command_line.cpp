@@ -2,9 +2,10 @@
 #include "presentation/format_utils.h"
 #include "config.h"
 #include "internal_msg.h"
-#include "messages/basic.h"
 #include "utils.h"
+#include "messages/basic.h"
 #include "file_operator/filesystem.h"
+#include "file_operator/operator_utils.h"
 
 #include <fmt/core.h>
 #include <fmt/color.h>
@@ -24,7 +25,7 @@ using namespace placeholders;
 
 CommandLine::CommandLine(
     Logger* logger, 
-    Config& config,
+    const Config& config,
     SendingPipe<InternalMsgWithOriginator>& file_operator
 ): logger{logger},
    config{config},
@@ -174,10 +175,8 @@ void CommandLine::list() {
 void CommandLine::list_long() {
     string output{get_file_list_header()};
 
-    for (auto file: 
-            fs::get_files(fs::get_file_paths(config.sync.sync_hidden_files))
-    ) {
-        file.apply([&](msg::File file){ output += format_file(file) + "\n"; });
+    for (auto file: get_files(get_file_paths(config))) {
+        output += format_file(file) + "\n";
     }
 
     println(output);

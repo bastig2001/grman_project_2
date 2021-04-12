@@ -1,9 +1,9 @@
 #include "file_operator/signatures.h"
 
-#include <algorithm>
-#include <cmath>
 #include <fmt/core.h>
 #include <openssl/md5.h>
+#include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <tuple>
 

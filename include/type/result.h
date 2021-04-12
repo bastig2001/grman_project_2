@@ -7,6 +7,8 @@
 #include <variant>
 
 
+// An enhancement to the normal variant 
+// specifically for the use with optional errors/failures
 template<typename Ok, typename Err>
 class ResultVariant {
   private:
@@ -37,6 +39,8 @@ class ResultVariant {
     Ok get_const_ok() const { return std::get<Ok>(value); }
     Err get_const_err() const { return std::get<Err>(value); }
 
+    // applies the given functor to the ok value, if present,
+    // and uses its result as new ok value
     template<typename U>
     ResultVariant<U, Err> map(std::function<U(Ok)> functor) {
         if (is_ok()) {
@@ -47,6 +51,8 @@ class ResultVariant {
         }
     }
 
+    // applies the given failable functor to the ok value, if present,
+    // and uses its result
     template<typename U>
     ResultVariant<U, Err> flat_map(
         std::function<ResultVariant<U, Err>(Ok)> functor
@@ -59,12 +65,15 @@ class ResultVariant {
         }
     }
 
+    // applies the given function to the ok value, if present,
     void apply(std::function<void(Ok)> fn) {
         if (is_ok()) {
             fn(get_ok());
         }
     }
 
+    // applies dependent on which value is available
+    // either the function for the ok value or the one for the error value
     void apply(
         std::function<void(Ok)> ok_fn, 
         std::function<void(Err)> err_fn
@@ -77,6 +86,8 @@ class ResultVariant {
         }
     }
 
+    // same as apply for one function but doesn't change the object
+    // and it's chainable
     ResultVariant<Ok, Err> peek(std::function<void(Ok)> fn) const {
         if (is_ok()) {
             fn(get_const_ok());
@@ -88,6 +99,8 @@ class ResultVariant {
         }
     }
 
+    // same as apply for two functions but doesn't change the object
+    // and it's chainable
     ResultVariant<Ok, Err> peek(
         std::function<void(Ok)> ok_fn, 
         std::function<void(Err)> err_fn
@@ -104,6 +117,8 @@ class ResultVariant {
         }
     }
 
+    // returns the contained ok value, if present,
+    // otherwise the given value
     Ok or_else(Ok value) {
         if (is_ok()) {
             return get_ok();
@@ -114,5 +129,7 @@ class ResultVariant {
     }
 };
 
+
+// An alias for the most commonly used ResultVariant
 template<typename T>
 using Result = ResultVariant<T, Error>;

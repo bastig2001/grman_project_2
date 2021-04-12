@@ -1,6 +1,6 @@
 #include "utils.h"
-#include "unit_tests/doctest_utils.h"
 #include "config.h"
+#include "unit_tests/doctest_utils.h"
 
 #include <doctest.h>
 #include <filesystem>

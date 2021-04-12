@@ -1,6 +1,6 @@
 #include "json_utils.h"
-#include "unit_tests/doctest_utils.h"
 #include "config.h"
+#include "unit_tests/doctest_utils.h"
 
 #include <json.hpp>
 #include <doctest.h>

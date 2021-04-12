@@ -84,7 +84,6 @@ unit_tests_src = [
     'src/message_utils.cpp',
     'src/utils.cpp',
     'src/file_operator/filesystem.cpp',
-    'src/file_operator/operator_utils.cpp',
     'src/file_operator/signatures.cpp',
     'src/presentation/format_utils.cpp',
     'src/presentation/logger_config.cpp',

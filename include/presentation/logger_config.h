@@ -34,4 +34,5 @@ struct LoggerConfig {
     operator std::string();
 };
 
+// Creates and resturn a Logger object based on the given config
 Logger* get_logger(const LoggerConfig&);

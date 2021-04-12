@@ -16,7 +16,7 @@
 
 using namespace std;
 
-int run(Config&);
+int run(const Config&);
 
 
 int main(int argc, char* argv[]) {
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     }
 }
 
-int run(Config& config) {
+int run(const Config& config) {
     Pipe<InternalMsgWithOriginator> file_operator_inbox;
     bool server_or_client{
         config.act_as_server.has_value() || config.server.has_value()

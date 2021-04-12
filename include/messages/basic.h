@@ -7,6 +7,8 @@
 #include <optional>
 
 
+// Messages to represent the same or similar types as with protobuf 
+// internally and for the database
 namespace msg {
     struct File {
         FileName name;

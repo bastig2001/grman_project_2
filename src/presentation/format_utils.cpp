@@ -90,7 +90,7 @@ pair<string, string> get_size_and_unit(size_t size) {
     else {
         return {
             format("{:>{}}", format("{}  ", size), 5), 
-            "  B"
+            "B  "
         };
     }
 }

@@ -1,8 +1,17 @@
 #include "file_operator/operator_utils.h"
+#include "file_operator/filesystem.h"
+#include "database.h"
 #include "message_utils.h"
+#include "messages/basic.h"
+#include "presentation/logger.h"
+#include "presentation/format_utils.h"
 #include "type/definitions.h"
+#include "type/result.h"
+#include "type/sequence.h"
 
 #include <algorithm>
+#include <filesystem>
+#include <regex>
 #include <utility>
 #include <vector>
 
@@ -61,7 +70,7 @@ vector<BlockPair*> get_block_pairs_between(
     return non_matching;
 }
 
-vector<pair<msg::Data, bool>> get_data_spaces(
+vector<pair<msg::Data, bool /* has data */>> get_data_spaces(
     vector<msg::Data>&& data,
     const FileName& file_name,
     size_t file_size
@@ -108,4 +117,72 @@ vector<pair<msg::Data, bool>> get_data_spaces(
     }
 
     return blocks;
+}
+
+vector<filesystem::path> get_file_paths(const Config& config) {
+    return
+        Sequence(fs::get_file_paths(config.sync.sync_hidden_files))
+        .where([&](const filesystem::path& path){
+            return (
+                config.logger.file == ""
+                ||
+                absolute(path) != absolute(filesystem::path(config.logger.file))
+            ) &&
+                !regex_match(path.c_str(), regex{"^\\.sync.*$"}); // if in .sync folder
+        })
+        .to_vector();
+}
+
+vector<msg::File> get_files(vector<filesystem::path>&& paths) {
+    return 
+        Sequence(fs::get_files(move(paths)))
+        .peek([](Result<msg::File> file){
+            file.peek(
+                [](auto){},
+                [](Error err){
+                    logger->error(err.msg);
+                }
+            );
+        })
+        .where([](const Result<msg::File>& file){
+            return file.is_ok();
+        })
+        .map<msg::File>([](Result<msg::File> file){
+            return file.get_ok();
+        })
+        .to_vector();
+}
+
+void correct(const FileName& file) {
+    logger->info("Correcting " + colored(file));
+
+    db::get_file(file)
+    .flat_map<bool>([](msg::File file){
+        return
+            fs::build_file(
+                get_data_spaces(
+                    db::get_and_remove_data(file.name),
+                    file.name,
+                    file.size
+                ),
+                file.name
+            );
+    })
+    .apply(
+        [](auto){},
+        [&](Error err){ logger->error( err.msg ); }
+    );
+}
+
+void remove(const FileName& file) {
+    logger->info("Removing " + colored(file));
+
+    db::get_file(file)
+    .apply(
+        [](msg::File file){
+            db::insert_removed(file);
+            db::delete_file(file.name);
+            fs::remove_file(file.name);
+        }
+    );
 }

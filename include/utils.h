@@ -19,6 +19,7 @@ Message msg_from_base64(std::istream&);
 std::string to_base64(const std::string&);
 std::string from_base64(const std::string&);
 
+// converts the given vector to a string with the specified separator
 std::string vector_to_string(
     const std::vector<std::string>& elements, 
     const std::string& separator = ", "
@@ -51,6 +52,7 @@ std::string optional_to_string(
 }
 
 
+// checks if the given hashmap contains the sought-after key
 template<typename K, typename V>
 bool contains(
     const std::unordered_map<K, V>& map,
@@ -59,6 +61,7 @@ bool contains(
     return map.find(key) != map.end();
 }
 
+// checks if the given vector contains the sought-after value
 template<typename T>
 bool contains(
     const std::vector<T>& values,
@@ -68,6 +71,8 @@ bool contains(
 }
 
 
+// returns the number of seconds between the given time point 
+// and the beginning of the epoch (1st of January 1970)
 template<typename T>
 unsigned long get_timestamp(
     std::chrono::time_point<T> time_point
@@ -78,6 +83,8 @@ unsigned long get_timestamp(
         ).count();
 }
 
+// returns for the given number of seconds after the beginning of the epoch
+// the corresponding time point
 template<typename T>
 std::chrono::time_point<T> get_timepoint(
     unsigned long timestamp
@@ -85,6 +92,8 @@ std::chrono::time_point<T> get_timepoint(
     return std::chrono::time_point<T>(std::chrono::seconds{timestamp});
 }
 
+// casts the given time point from the source clock 
+// to a specified destination clock
 template<
     typename DestTimePoint,
     typename SourceTimePoint,
@@ -99,6 +108,7 @@ DestTimePoint cast_clock(const SourceTimePoint time_point) {
 }
 
 
+// checks if the given future is ready
 template<typename T>
 bool is_ready(const std::future<T>& future) {
     return future.wait_for(std::chrono::milliseconds(10)) 

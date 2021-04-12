@@ -99,7 +99,7 @@ Result<msg::File> db::get_file(FileName name) {
     }
     else {
         return Result<msg::File>::err(
-            Error{0, name + " not found in 'file' table!"}
+            Error{name + " not found in 'file' table!"}
         );
     }
 }
@@ -137,7 +137,7 @@ Result<msg::Removed> db::get_removed(FileName name) {
     }
     else {
         return Result<msg::Removed>::err(
-            Error{0, name + " not found in 'removed' table!"}
+            Error{name + " not found in 'removed' table!"}
         );
     }
 }

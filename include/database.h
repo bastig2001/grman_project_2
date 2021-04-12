@@ -8,6 +8,7 @@
 #include <vector>
 
 
+// All functions to interact with the database(s)
 namespace db {
     void create(bool exists);
 

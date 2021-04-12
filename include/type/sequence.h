@@ -9,6 +9,8 @@
 #include <vector>
 
 
+// A chainable and lazily executed sequence of values over a given source,
+// only final methods cause the Sequence to be executed fully
 template<typename T>
 class Sequence {
   private:
@@ -38,6 +40,8 @@ class Sequence {
     }}
     {}
 
+    // applies the given functor to each value
+    // and uses its result as new value
     template<typename U>
     Sequence<U> map(std::function<U(T)> functor) {
         return Sequence<U>(
@@ -48,6 +52,7 @@ class Sequence {
         );
     }
 
+    // removes all values for which the predicate return false from the sequence
     Sequence<T> where(std::function<bool(const T&)> predicate) {
         return Sequence(
             [generator{std::move(generator)}, predicate{std::move(predicate)}]
@@ -71,6 +76,7 @@ class Sequence {
         );
     }
 
+    // executes the given function for each value without using it up
     Sequence<T> peek(std::function<void(const T&)> fn) {
         return map<T>([fn{std::move(fn)}](T value){
             fn(value);
@@ -78,6 +84,8 @@ class Sequence {
         });
     }
 
+    // final method:
+    // executes the given function for each value
     void for_each(std::function<void(T)> fn) {
         for (unsigned int i{0};; i++) {
             auto value{generator(i)};
@@ -92,15 +100,18 @@ class Sequence {
         }
     }
 
+    // final method:
+    // collects all values into one value which is returned 
+    // with the given initialization value and collector function
     template<typename U>
-    U collect(U start_value, std::function<U(U, T)> fn) {
+    U collect(U start_value, std::function<U(U, T)> collector) {
         U result{std::move(start_value)};
 
         for (unsigned int i{0};; i++) {
             auto value{generator(i)};
 
             if (value.is_ok()) {
-                result = fn(std::move(result), value.get_ok());
+                result = collector(std::move(result), value.get_ok());
             }
             else if (!value.get_err()) {
                 // there are no more values
@@ -109,6 +120,8 @@ class Sequence {
         }
     }
 
+    // final method:
+    // collect all values into one vector which is returned
     std::vector<T> to_vector() {
         return 
             collect<std::vector<T>>(
