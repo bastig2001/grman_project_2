@@ -14,6 +14,7 @@ namespace db {
     void insert_or_replace_file(msg::File);
     void insert_or_replace_files(std::vector<msg::File>);
     void delete_file(FileName);
+    void delete_all_files();
     Result<msg::File> get_file(FileName);
     std::vector<msg::File> get_files();
 

@@ -9,10 +9,15 @@
 #include "presentation/logger.h"
 
 #include <exception>
-#include <stdexcept>
+#include <functional>
+#include <future>
 
 using namespace std;
 
+int run_file_operator_worker(
+    SyncSystem&, 
+    ReceivingPipe<InternalMsgWithOriginator>&
+);
 vector<InternalMsg> get_response(
     const InternalMsgWithOriginator&,
     SyncSystem&
@@ -25,11 +30,50 @@ int run_file_operator(
     const Config& config,
     ReceivingPipe<InternalMsgWithOriginator>& inbox
 ) {
-    ExitCode exit_code;
+    int exit_code;
+    size_t number_of_workers{4};
+    vector<future<int>> workers{};
+    workers.reserve(number_of_workers);
 
     try {
         SyncSystem system(config);
 
+        for (size_t i{0}; i < number_of_workers; i++) {
+            workers.push_back(async(
+                launch::async,
+                bind(run_file_operator_worker, ref(system), ref(inbox))
+            ));
+        }
+
+        logger->debug("All File Operator workers are started");
+
+        exit_code = Success;
+        
+        for (auto& worker: workers) {
+            exit_code |= worker.get();
+        }
+    }
+    catch (exception& err) {
+        logger->critical(
+            "Following exception occurred during file operator execution: " 
+            + string{err.what()}
+        );
+
+        exit_code = FileOperatorException;
+    }
+
+    inbox.close();
+
+    return exit_code;
+}
+
+int run_file_operator_worker(
+    SyncSystem& system, 
+    ReceivingPipe<InternalMsgWithOriginator>& inbox
+) {
+    ExitCode exit_code;
+
+    try {
         while (auto optional_msg{inbox.receive()}) {
             auto msg{optional_msg.value()};
             msg.originator.send(get_response(msg, system));
@@ -45,8 +89,6 @@ int run_file_operator(
 
         exit_code = FileOperatorException;
     }
-
-    inbox.close();
 
     return exit_code;
 }

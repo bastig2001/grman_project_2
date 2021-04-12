@@ -3,6 +3,7 @@
 #include "messages/basic.h"
 #include "type/definitions.h"
 
+#include <mutex>
 #include <sqlite_orm/sqlite_orm.h>
 #include <optional>
 #include <vector>
@@ -15,6 +16,10 @@ struct LastChecked {
     int id;
     Timestamp timestamp;
 };
+
+
+mutex permanent_db_mtx{};
+mutex in_memory_db_mtx{};
 
 auto permanent_db{make_storage(
     ".sync/db.sqlite",
@@ -50,6 +55,8 @@ auto in_memory_db{make_storage(
 
 
 void db::create(bool exists) {
+    scoped_lock db_lck{permanent_db_mtx, in_memory_db_mtx};
+
     if (!exists) {
         permanent_db.sync_schema();
     }
@@ -61,18 +68,32 @@ void db::create(bool exists) {
 
 
 void db::insert_or_replace_file(msg::File file) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.replace(move(file));
 }
 
 void db::insert_or_replace_files(vector<msg::File> files) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.replace_range(files.begin(), files.end());
 }
 
 void db::delete_file(FileName name) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.remove<msg::File>(name);
 }
 
+void db::delete_all_files() {
+    lock_guard db_lck{permanent_db_mtx};
+
+    permanent_db.remove_all<msg::File>();
+}
+
 Result<msg::File> db::get_file(FileName name) {
+    lock_guard db_lck{permanent_db_mtx};
+
     if (auto file{permanent_db.get_optional<msg::File>(name)}) {
         return Result<msg::File>::ok(move(file.value()));
     }
@@ -84,23 +105,33 @@ Result<msg::File> db::get_file(FileName name) {
 }
 
 vector<msg::File> db::get_files() {
+    lock_guard db_lck{permanent_db_mtx};
+
     return permanent_db.get_all<msg::File>();
 }
 
 
 void db::insert_or_replace_removed(msg::Removed file) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.replace(move(file));
 }
 
 void db::insert_or_replace_removed(vector<msg::Removed> files) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.replace_range(files.begin(), files.end());
 }
 
 void db::delete_removed(FileName name) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.remove<msg::Removed>(name);
 }
 
 Result<msg::Removed> db::get_removed(FileName name) {
+    lock_guard db_lck{permanent_db_mtx};
+
     if (auto file{permanent_db.get_optional<msg::Removed>(name)}) {
         return Result<msg::Removed>::ok(move(file.value()));
     }
@@ -113,10 +144,14 @@ Result<msg::Removed> db::get_removed(FileName name) {
 
 
 void db::insert_or_replace_last_checked(Timestamp timestamp) {
+    lock_guard db_lck{permanent_db_mtx};
+
     permanent_db.replace(LastChecked{0, timestamp});
 }
 
 optional<Timestamp> db::get_last_checked() {
+    lock_guard db_lck{permanent_db_mtx};
+
     if (auto last_checked{permanent_db.get_optional<LastChecked>(0)}) {
         return last_checked.value().timestamp;
     }
@@ -127,10 +162,14 @@ optional<Timestamp> db::get_last_checked() {
 
 
 void db::insert_or_replace_data(vector<msg::Data> data) {
+    lock_guard db_lck{in_memory_db_mtx};
+
     in_memory_db.replace_range(data.begin(), data.end());
 }
 
 vector<msg::Data> db::get_and_remove_data(FileName file) {
+    lock_guard db_lck{in_memory_db_mtx};
+
     return in_memory_db.get_all<msg::Data>(
         where(c(&msg::Data::file_name) == file),
         order_by(&msg::Data::offset)
