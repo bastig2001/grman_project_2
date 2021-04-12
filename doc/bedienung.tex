@@ -1,0 +1,17 @@
+\section{Bedienung}
+
+Es gibt viele verschiedene Möglichkeiten die Applikation zu bedienen. Parameter kann mittels CLI, Umgebungsvariablen oder einer Konfigurationsdatei in \textsl{JSON} bestimmen.
+Weiters kann man, sobald das Programm gestartet ist, über eine Kommandozeile noch zusätzlich mit dem System interagieren. Die genauen Details zu all diesen Interaktionsmöglichkeiten
+lassen sich in der \textit{README} nachlesen. Hier wird nun die grundsätzliche Bedienung überblicksmäßig beschrieben.
+
+Zur Synchronisation eines Verzeichnisses muss man über die Konsole in dieses Verzeichnis navigieren und von dort aus das Programm \verb|sync| starten. Das Programm übernimmt
+beim Starten das derzeitige Arbeitsverzeichnis als Synchronisationsverzeichnis. Beim Starten kann man festlegen, ob man einen Synchronisations-Server, einen Synchronisations-Client 
+oder beides haben will. Um einen Server zu starten reicht das Kommandozeilenargument \verb|-s|, dies startet einen Server der auf allen Eingangsadressen auf Port 9876 hört.
+Um einen Client zu starten, muss man das Kommandozeilenargument \verb|-a| und eine Adresse oder Hostnamen angeben, der Client verbindet sich dann zu diesem Host auf Port 9876 und 
+startet die Synchronisation. Um beide als ein Systemprozess zu starten, muss man beide Kommandozeilenargumente angeben. Der Server läuft solange bis man ihn nicht abbricht
+und der Client macht nach dem die Synchronisation vollendet ist nichts mehr, muss allerdings auch manuell abgebrochen werden.
+
+Beim Synchronisationsverzeichnis sollte sicher gegangen werden, dass das Programm die entsprechenden Rechte hat, um alle Dateien zu lesen und zu beschreiben.
+Im Synchronisationsverzeichnis wird außerdem noch das Unterverzeichnis \textit{.sync} erstellt, in welches man lieber keine Dateien speichern sollte, da dieses Unterverzeichnis 
+die Datenbankdatei für die Applikation enthält und sämtliche temporären Dateien zum Aufbau der neueren Versionen auch hier erstellt und beschrieben werden. Außerdem werden Dateien
+im Unterverzeichnis \textit{.sync} nicht synchronisiert.
