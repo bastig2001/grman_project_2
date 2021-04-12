@@ -80,7 +80,8 @@ variant<int, Config> configure(int argc, char* argv[]) {
     app.add_option(
         "--number-of-file-operators",
         sync.number_of_workers,
-        "The number of workers for the file operator"
+        "The number of workers for the file operator\n"
+            "  Default is 4"
     )
     ->envname("SYNC_FILE_OPERATOR_NUMBER")
     ->check(CLI::PositiveNumber);

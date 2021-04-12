@@ -10,6 +10,7 @@
 - Program does not need to be aborted when exiting the command line
 - Correct initialization of file logger
 - Correct reaction of client to server list (query timestamp is now considered -> less synchronization requests)
+- README contains new and corrected information
 
 ** [1.0.0] - 2020-04-11
 *** Added

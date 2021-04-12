@@ -16,6 +16,7 @@ The **dependencies** for this C++17 project are:
 * [cpp-peglib](https://github.com/yhirose/cpp-peglib)
 * [fmt](https://github.com/fmtlib/fmt)
 * [JSON](https://github.com/nlohmann/json)
+* [OpenSSL](https://www.openssl.org/)
 * [Protocol Buffers](https://developers.google.com/protocol-buffers/)
 * [spdlog](https://github.com/gabime/spdlog)
 * [SQLite ORM](https://github.com/fnc12/sqlite_orm)
@@ -39,10 +40,11 @@ To synchronize a directory, start `sync` in this directory.
 
 The *server* has default values for everything and can be simply started with the command line argument `-s` or `--serve`.
 
-To start the *client* you need to at least specify the address of the server to which to connect
+To start the *client* you need to at least specify the address or hostname of the server to which to connect
 with the command line argument `-a` or `--server-address`.
 
-At the moment, the client does only one synchronization round, you have to manually abort the application and restart it to synchronize again.
+A client starts with a new synchronization round in a with `-m` specifiable interval or 
+you can choose ti immediately reload everything and start a new synchronization process with the command `sync`.
 
 ### Configuration
 
@@ -60,25 +62,27 @@ The concrete order in which the configurations are applied is the following:
 The following table shows all command line parameters (CLI), their equivalent environment variables (EV),
 their types and the default values together with a description:
 
-| CLI                                    | EV                     | Type        | Default                   | Description |
-| -------------------------------------- | ---------------------- |:-----------:|:-------------------------:| ----------- |
-| `-h, --help`                           |                        | flag        |                           | Prints a help message and exits |
-| `-c, --config`                         | `SYNC_CONFIG`          | path        |                           | JSON config file from which to load the configuration |
-| `-a, --server-address`                 | `SYNC_SERVER_ADDRESS`  | address     |                           | The host to which to connect for syncing |
-| `-p, --server-port`                    | `SYNC_SERVER_PORT`     | port number | `9876`                    | The port of the server to which to connect for syncing |
-| `-s, --serve`                          | `SYNC_SERVE`           | flag        |                           | Enables the server |
-| `    --bind-address`                   | `SYNC_BIND_ADDRESS`    | IP-address  | `0.0.0.0`                 | The IP-address to which to bind as server. `0.0.0.0` means *listen to all*. Also enables the server |
-| `    --bind-port`                      | `SYNC_BIND_PORT`       | port number | `9876`                    | The port to which to bind as server. Also enables the server |
-| `    --hidden`                         | `SYNC_HIDDEN`          | flag        |                           | Sync also hidden files |
-| `-l, --log-to-console`                 | `SYNC_LOG_CONSOLE`     | flag        |                           | Enables logging to console |
-| `-f, --log-file`                       | `SYNC_LOG_FILE`        | path        |                           | Enables logging to specified file |
-| `    --log-level, --log-level-console` | `SYNC_LOG_LEVEL`       | log level   | `2` ... INFO              | Sets the visible logging level. Which number corresponds to which logging level is listed further down |
-| `    --log-level-file`                 | `SYNC_LOG_LEVEL_FILE`  | log level   | the same as `--log-level` | Sets the visible logging level for the log file. By default it takes the logging level specified with `--log-level` or any equivalent |
-| `    --log-size`                       | `SYNC_LOG_SIZE`        | size in KiB | 5 MiB                     | Maximum size of a log file in KiB |
-| `    --log-file-number`                | `SYNC_LOG_FILE_NUMBER` | integer     | `2`                       | Number of log files between which the logger rotates |
-| `    --log-date`                       | `SYNC_LOG_DATE`        | flag        |                           | Logs the date additionally to the time |
-| `    --log-config`                     | `SYNC_LOG_CONFIG`      | flag        |                           | Log the used config as a DEBUG message |
-| `    --no-color`                       | `SYNC_NO_COLOR`        | flag        |                           | Disables color output to console |
+| CLI                                    | EV                          | Type              | Default                   | Description |
+| -------------------------------------- | --------------------------- |:-----------------:|:-------------------------:| ----------- |
+| `-h, --help`                           |                             | flag              |                           | Prints a help message and exits |
+| `-c, --config`                         | `SYNC_CONFIG`               | path              |                           | JSON config file from which to load the configuration |
+| `-a, --server-address`                 | `SYNC_SERVER_ADDRESS`       | address           |                           | The host to which to connect for syncing |
+| `-p, --server-port`                    | `SYNC_SERVER_PORT`          | port number       | `9876`                    | The port of the server to which to connect for syncing |
+| `-s, --serve`                          | `SYNC_SERVE`                | flag              |                           | Enables the server |
+| `    --bind-address`                   | `SYNC_BIND_ADDRESS`         | IP-address        | `0.0.0.0`                 | The IP-address to which to bind as server. `0.0.0.0` means *listen to all*. Also enables the server |      
+| `    --bind-port`                      | `SYNC_BIND_PORT`            | port number       | `9876`                    | The port to which to bind as server. Also enables the server |
+| `    --hidden`                         | `SYNC_HIDDEN`               | flag              |                           | Sync also hidden files |
+| `    --number-of-file-operators`       | `SYNC_FILE_OPERATOR_NUMBER` | positive integer  | `4`                       | The number of workers for the file operator |
+| `-m, --minutes-between`                | `SYNC_MINUTES_BETWEEN`      | number of minutes | 5 Minutes                 | The time after which the client starts another synchronization process |
+| `-l, --log-to-console`                 | `SYNC_LOG_CONSOLE`          | flag              |                           | Enables logging to console |
+| `-f, --log-file`                       | `SYNC_LOG_FILE`             | path              |                           | Enables logging to specified file |
+| `    --log-level, --log-level-console` | `SYNC_LOG_LEVEL`            | log level         | `2` ... INFO              | Sets the visible logging level. Which number corresponds to which logging level is listed further down |      
+| `    --log-level-file`                 | `SYNC_LOG_LEVEL_FILE`       | log level         | the same as `--log-level` | Sets the visible logging level for the log file. By default it takes the logging level specified with `--log-level` or any equivalent |      
+| `    --log-size`                       | `SYNC_LOG_SIZE`             | size in KiB       | 5 MiB                     | Maximum size of a log file in KiB |
+| `    --log-file-number`                | `SYNC_LOG_FILE_NUMBER`      | integer           | `2`                       | Number of log files between which the logger rotates |
+| `    --log-date`                       | `SYNC_LOG_DATE`             | flag              |                           | Logs the date additionally to the time |
+| `    --log-config`                     | `SYNC_LOG_CONFIG`           | flag              |                           | Log the used config as a DEBUG message |
+| `    --no-color`                       | `SYNC_NO_COLOR`             | flag              |                           | Disables color output to console |
 
 Logging levels and their corresponding integer values:
 
@@ -101,7 +105,8 @@ Given these arguments, *Sync* starts as a client connecting to `myhost:9876`
 which does not synchronize hidden files. Logging to console is enabled with level INFO 
 and it also logs to the file `test.log` with level DEBUG. The log file will have a size of 5 MiB at most, 
 then the logger will rotate to a second file. The used configuration is logged as a DEBUG message 
-(so only visible in the log file).
+(so only visible in the log file). The file operator consist out of four worker threads and
+every 5 Minutes, the files will be reloaded and client starts another synchronization round.
 
 #### JSON Config File
 
@@ -120,6 +125,8 @@ and the equivalent command line parameter (CLI) together with a description:
 | `act_as_server.address`   | string  | `--bind-address`                   | The IP-address to which to bind as server. `0.0.0.0` means *listen to all* |
 | `act_as_server.port`      | integer | `--bind-port`                      | The port to which to bind as server. |
 | `sync.sync_hidden_files`* | boolean | `--hidden`                         | If to sync hidden files |
+| `sync.number_of_workers`* | integer | `--number-of-file-operators`       | The number of workers for the file operator. The number must be positive  <>
+| `sync.minutes_between`*   | integer | `-m, --minutes-between`            | The number of minutes after which the client starts another synchronization process. the number must be positive |
 | `logger.log_to_console`*  | boolean | `-l, --log-to-console`             | If to log to the console |
 | `logger.file`*            | string  | `-f, --log-file`                   | Logging to specified file |
 | `logger.level_console`*   | integer | `--log-level, --log-level-console` | The visible logging level. Which number corresponds to which logging level is listed further up in the section *CLI and Environment Variables* |
@@ -146,7 +153,9 @@ A JSON config file might for example look as follows:
     },
     "act_as_server": {},
     "sync": {
-        "sync_hidden_files": false
+        "sync_hidden_files": false,
+        "number_of_workers": 4,
+        "minutes_between": 5
     },
     "logger": {
         "log_to_console": true,
@@ -166,7 +175,8 @@ Given this config file, *Sync* starts as a client connecting to `myhost:9876`
 which does not synchronize hidden files. Logging to console is enabled with level INFO 
 and it also logs to the file `test.log` with level DEBUG. The log file will have a size of 5 MiB at most, 
 then the logger will rotate to a second file. The used configuration is logged as a DEBUG message 
-(so only visible in the log file).
+(so only visible in the log file). The file operator consist out of four worker threads and
+every 5 Minutes, the files will be reloaded and client starts another synchronization round.
 
 ### Command Line
 
@@ -175,8 +185,7 @@ This command line supports all necessities you would expect from a basic command
 You can walk through a history of your last 100 calls with the up and down arrow keys 
 and execute any command again with the enter key once selected.
 (Your history isn't saved between program invocations, so you always start with an empty history).
-To exit the command line you can call the command `q`, `quit` or `exit`, or use the shortcut CTRL+D
-(it might still be necessary for you to abort some parts of *Sync* with CTRL+C).
+To exit the command line you can call the command `q`, `quit` or `exit`, or use the shortcut CTRL+D.
 
 The following table shows all commands which are available in the *Sync* command line with a description:
 
@@ -185,13 +194,14 @@ The following table shows all commands which are available in the *Sync* command
 | `h, help`       | Outputs a help message |
 | `ls, list`      | Lists all files which are to be synced |
 | `ll, list long` | Lists all files which are to be synced with more information (their signature, size and time point of last change) |
+| `sync`          | Starts synchronization with server, when possible, and reloads all files
 | `q, quit, exit` | Quits and exits the program (at least the command line) |
 
 ## Algorithm
 
 The algorithm used for synchronizing the data between a client and a server
-is based on [rsync algorithm](https://en.wikipedia.org/wiki/Rsync#Algorithm)
-as described in [PhD theses by Andrew Tridgell](https://www.samba.org/~tridge/phd_thesis.pdf).
+is based on the [rsync algorithm](https://en.wikipedia.org/wiki/Rsync#Algorithm)
+as described in the [PhD theses by Andrew Tridgell](https://www.samba.org/~tridge/phd_thesis.pdf).
 
 The messages used for communication between client and server can be viewed in `messages/`
 and the algorithm's implementation is in `src/file_operator/`.
