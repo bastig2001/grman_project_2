@@ -1,8 +1,9 @@
+#include "client.h"
 #include "config.h"
 #include "file_operator.h"
 #include "internal_msg.h"
 #include "server.h"
-#include "client.h"
+#include "utils.h"
 #include "presentation/command_line.h"
 #include "presentation/format_utils.h"
 #include "presentation/logger.h"
@@ -88,11 +89,17 @@ int run(Config& config) {
     };
 
     command_line.get();
-    int server_return = server.get();
-    int client_return = client.get();
-    int file_operator_return = file_operator.get();
+    int return_value{file_operator.get()};
+
+    if (is_ready(client)) {
+        return_value |= client.get();
+    }
+    
+    if (is_ready(server)) {
+        return_value |= server.get();
+    }
 
     google::protobuf::ShutdownProtobufLibrary();
 
-    return server_return | client_return | file_operator_return;
+    exit(return_value);
 }
