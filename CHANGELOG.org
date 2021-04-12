@@ -1,6 +1,6 @@
 * Changelog
 
-** [Unreleased]
+** [1.0.1] - 2020-04-12
 *** Added
 - Option to set number of file operator workers via CLI, JSON config file or environment variable
 - Option to specify number of minutes after which the client automatically starts another synchronization process and the files are reloaded
