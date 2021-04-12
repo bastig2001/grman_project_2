@@ -27,9 +27,7 @@ string get_pattern(bool);
 Logger* get_logger(const LoggerConfig& config) {
     auto console_logger{
         get_basic_console_logger(
-            config.log_to_console 
-                ? config.level_console 
-                : spdlog::level::err, 
+            config.level_console,
             config.log_date
         )};
 
@@ -37,7 +35,7 @@ Logger* get_logger(const LoggerConfig& config) {
         return new ChainLogger(
             console_logger,
             get_basic_file_logger(
-                config.level_console, 
+                config.level_file, 
                 config.log_date, 
                 config.file,
                 config.max_file_size,
