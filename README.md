@@ -19,8 +19,8 @@ The **dependencies** for this C++17 project are:
 * [OpenSSL](https://www.openssl.org/)
 * [Protocol Buffers](https://developers.google.com/protocol-buffers/)
 * [spdlog](https://github.com/gabime/spdlog)
-* [SQLite ORM](https://github.com/fnc12/sqlite_orm)
 * [SQLite 3](https://www.sqlite.org/index.html)
+* [SQLite ORM](https://github.com/fnc12/sqlite_orm)
 
 For the **unit tests** you also need [doctest](https://github.com/onqtam/doctest).
 
@@ -30,6 +30,8 @@ To build *Sync*, execute `meson build` and `ninja -C build sync` from the root f
 
 
 ## Usage
+
+***Important Note: Sync does not use any form of encryption for the data transfer, so use it only in private and secure networks!***
 
 With the compiled binary `sync`, you can start a client, a server or both for synchronization.
 Once started, you also get access to a command line to further interact with the system.
@@ -44,7 +46,11 @@ To start the *client* you need to at least specify the address or hostname of th
 with the command line argument `-a` or `--server-address`.
 
 A client starts with a new synchronization round in a with `-m` specifiable interval or 
-you can choose ti immediately reload everything and start a new synchronization process with the command `sync`.
+you can choose to immediately reload everything and start a new synchronization process with the command `sync`.
+
+*Sync* uses the subdirectory `.sync`, which it creates when it's missing, to save the database with the meta-data
+and to reconstruct the new versions of the files. Therefore one shouldn't save any files in this subdirectory.
+Also files under `.sync` are not synchronized as is the specified log file.
 
 ### Configuration
 
@@ -106,7 +112,7 @@ which does not synchronize hidden files. Logging to console is enabled with leve
 and it also logs to the file `test.log` with level DEBUG. The log file will have a size of 5 MiB at most, 
 then the logger will rotate to a second file. The used configuration is logged as a DEBUG message 
 (so only visible in the log file). The file operator consist out of four worker threads and
-every 5 Minutes, the files will be reloaded and client starts another synchronization round.
+every 5 Minutes, the files will be reloaded and the client starts another synchronization round.
 
 #### JSON Config File
 
@@ -125,7 +131,7 @@ and the equivalent command line parameter (CLI) together with a description:
 | `act_as_server.address`   | string  | `--bind-address`                   | The IP-address to which to bind as server. `0.0.0.0` means *listen to all* |
 | `act_as_server.port`      | integer | `--bind-port`                      | The port to which to bind as server. |
 | `sync.sync_hidden_files`* | boolean | `--hidden`                         | If to sync hidden files |
-| `sync.number_of_workers`* | integer | `--number-of-file-operators`       | The number of workers for the file operator. The number must be positive  <>
+| `sync.number_of_workers`* | integer | `--number-of-file-operators`       | The number of workers for the file operator. The number must be positive |
 | `sync.minutes_between`*   | integer | `-m, --minutes-between`            | The number of minutes after which the client starts another synchronization process. the number must be positive |
 | `logger.log_to_console`*  | boolean | `-l, --log-to-console`             | If to log to the console |
 | `logger.file`*            | string  | `-f, --log-file`                   | Logging to specified file |
@@ -185,7 +191,7 @@ This command line supports all necessities you would expect from a basic command
 You can walk through a history of your last 100 calls with the up and down arrow keys 
 and execute any command again with the enter key once selected.
 (Your history isn't saved between program invocations, so you always start with an empty history).
-To exit the command line you can call the command `q`, `quit` or `exit`, or use the shortcut CTRL+D.
+To exit the command line and finish the application you can call the command `q`, `quit` or `exit`, or use the shortcut CTRL+D.
 
 The following table shows all commands which are available in the *Sync* command line with a description:
 
@@ -195,7 +201,15 @@ The following table shows all commands which are available in the *Sync* command
 | `ls, list`      | Lists all files which are to be synced |
 | `ll, list long` | Lists all files which are to be synced with more information (their signature, size and time point of last change) |
 | `sync`          | Starts synchronization with server, when possible, and reloads all files
-| `q, quit, exit` | Quits and exits the program (at least the command line) |
+| `q, quit, exit` | Exits and quits the program |
+
+### Logging
+
+The options for how to use logging have already been shown and, as also already mentioned, the log file is not synchronized.
+
+When using a log file to which the log messages are written, it is advisable to use the CLI-flag `--no-color` or any equivalent,
+since otherwise the control characters for the colored output will be written into the log file, which makes it worse readable.
+
 
 ## Algorithm
 
@@ -203,7 +217,7 @@ The algorithm used for synchronizing the data between a client and a server
 is based on the [rsync algorithm](https://en.wikipedia.org/wiki/Rsync#Algorithm)
 as described in the [PhD theses by Andrew Tridgell](https://www.samba.org/~tridge/phd_thesis.pdf).
 
-The messages used for communication between client and server can be viewed in `messages/`
+The messages used for the communication between client and server can be viewed in `messages/`
 and the algorithm's implementation is in `src/file_operator/`.
 
 

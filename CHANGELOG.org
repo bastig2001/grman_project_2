@@ -1,5 +1,12 @@
 * Changelog
 
+** [Unreleased]
+*** Changed
+- Corrected typos and spelling mistakes in README
+- README includes warning about lack of encryption
+- README includes explanation about the subdirectory ".sync"
+- README includes section about logging
+
 ** [1.0.1] - 2020-04-12
 *** Added
 - Option to set number of file operator workers via CLI, JSON config file or environment variable
