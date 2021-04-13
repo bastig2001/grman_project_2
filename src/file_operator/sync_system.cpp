@@ -2,6 +2,7 @@
 #include "file_operator/filesystem.h"
 #include "file_operator/operator_utils.h"
 #include "file_operator/signatures.h"
+#include "file_operator/sync_utils.h"
 #include "config.h"
 #include "database.h"
 #include "message_utils.h"
@@ -699,49 +700,4 @@ Message SyncSystem::create_file(const FileResponse& response) {
     );
     
     return received();
-}
-
-
-Corrections* SyncSystem::get_corrections(
-    vector<BlockPair*>&& pairs,
-    const FileName& file,
-    bool final
-) {
-    return ::corrections(
-        Sequence(move(pairs))
-        .map<Result<Correction*>>([](BlockPair* pair){
-            return
-            fs::read(
-                pair->file_name(), 
-                pair->offset_server(), 
-                pair->size_server()
-            )
-            .peek(
-                [](auto){},
-                [&](Error err){ logger->error(err.msg); }
-            )
-            .map<Correction*>([&](string data){
-                auto block{::block(
-                    pair->file_name(),
-                    pair->offset_client(),
-                    pair->size_client()
-                )};
-                delete pair;
-
-                return ::correction(
-                    block,
-                    move(data)
-                );
-            });
-        })
-        .where([](Result<Correction*> result){
-            return result.is_ok();
-        })
-        .map<Correction*>([](Result<Correction*> result){ 
-            return result.get_ok(); 
-        })
-        .to_vector(),
-        file,
-        final
-    );
 }

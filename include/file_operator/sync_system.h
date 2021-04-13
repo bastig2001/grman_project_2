@@ -25,12 +25,6 @@ class SyncSystem {
 
     std::vector<Message> sync(const SyncResponse&);
 
-    Corrections* get_corrections(
-        std::vector<BlockPair*>&&,
-        const FileName&,
-        bool final = false
-    );
-
   public:
     SyncSystem(const Config&);
 
