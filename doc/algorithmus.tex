@@ -1,17 +1,17 @@
 \section{Algorithmus}
+\label{cha:Algorithmus}
 
 Ein Algorithmus zur Synchronisation von Dateien über das Netzwerk, sollte idealerweise unnötige Datentransfers vermeiden.
-Er sollte erkennen, welche Teile der Dateien gleich geblieben sind, und nur die Teile, die sich verändert haben über das Netzwerk schicken.
+Er sollte erkennen, welche Teile der Dateien gleich geblieben sind, und nur die Teile, welche sich verändert haben, über das Netzwerk schicken.
 Andererseits soll auch vermieden werden, dass die an der Synchronisation beteiligten Geräte einer größeren Rechenbelastung als nötig ausgesetzt werden,
 und unter keinen Umständen sollte es vorkommen, dass eine Datei bzw. Teile einer Datei nicht synchronisiert werden, weil das Programm annimmt,
-dass sie bereits gleich sind.
+dass diese bereits gleich sind.
 
 \subsection{rsync}
+\label{sec:rsync}
 
-Ein Synchronisations-Algorithmus, der diesen Anforderungen gerecht wird, ist der des Programms \textit{rsync}\cite{rsync}.
-\textit{rsync} ist ein open source Programm zum inkrementellen Transfer von Dateien über das Netzwerk und ist besonders auf Netzwerke mit einer geringen
-Datenübertragungsrate ausgelegt\cite{rsync}.
-
+Ein Algorithmus, der diesen Anforderungen gerecht wird, ist der des Programms \textit{rsync}\cite{rsync}. \textit{rsync} ist ein open source Programm zum 
+inkrementellen Transfer von Dateien über das Netzwerk und ist besonders auf Netzwerke mit einer geringen Datenübertragungsrate ausgelegt\cite{rsync}.
 Der Algorithmus, welchen \textit{rsync} für den inkrementellen Datentransfer verwendet, wurde von Andrew Tridgell, einem der Erschaffer von 
 \textit{rsync}\cite{wiki_rsync}, in seiner Doktorarbeit beschrieben\cite{Tridgell99} und sieht wie folgt aus:
 \\
@@ -19,49 +19,57 @@ Der Algorithmus, welchen \textit{rsync} für den inkrementellen Datentransfer ve
 Der \textbf{rsync-Algorithmus} verwendet zwei unterschiedliche Signaturen, zur Überprüfung, ob zwei Datenblöcke gleich sind, eine schwache und 
 eine starke\cite{Tridgell99}. 
 
-Die schwache Signatur kann einfach und schnell berechnet werden und ist idealerweise eine rollende Signatur\footnote{Wenn man bei einer
-rollenden Signatur die Signatur eines Blocks hat, dann kann man, um die Signatur eines verschobenen Blocks zu bekommen, von der vorangehenden Signatur
-einen bestimmten Wert subtrahieren und einen anderen zu ihr addieren.}. Wenn jetzt \emph{A} mit \emph{B} eine Datei synchronisieren will, so teilt \emph{A} es
-dessen Version dieser Datei in Blöcke einer bestimmten Größe auf und sendet die schwachen Signaturen dieser Blöcke an \emph{B}. \emph{B} berechnet sich nun
-die schwachen Signaturen aller Blöcke dieser bestimmten Größe in dessen Version der Datei, das heißt, es wird beginnend bei jedem Byte ein entsprechend
-versetzter Block zur Berechnung herangezogen -- deshalb ist es wichtig, dass die schwache Signatur eine rollende ist. \emph{B} findet nun mithilfe
-einer Hashtabelle von seinen Blöcken die, die die gleiche schwache Signatur wie je einer der Blöcke von \emph{A} hat. Für die Teile der Datei, bei denen 
-mit der schwachen Signatur keinerlei Übereinstimmungen gefunden wurden, steht nun fest, dass sie eindeutig unterschiedlich sind und ihr Inhalt muss transferiert
-werden. Für die laut der schwachen Signatur übereinstimmenden Blöcke berechnet \emph{B} die starke Signatur.
+Die \textbf{schwache Signatur} kann einfach und schnell berechnet werden und ist idealerweise eine rollende Signatur -- die schwache Signatur und das
+Prinzip der rollenden Signaturen wird in Abschnitt \ref{sec:schwache_signatur} genauer beschrieben. Wenn jetzt \emph{A} mit \emph{B} eine Datei 
+synchronisieren will, so teilt \emph{A} dessen Version dieser Datei in Blöcke einer bestimmten Größe auf und sendet die schwachen Signaturen dieser 
+Blöcke an \emph{B}. \emph{B} berechnet sich nun die schwachen Signaturen aller Blöcke dieser bestimmten Größe in dessen Version der Datei, das heißt, 
+es wird beginnend bei jedem Byte ein entsprechend versetzter Block zur Berechnung herangezogen -- deshalb ist es wichtig, dass die schwache Signatur eine 
+rollende ist. \emph{B} findet nun mithilfe einer Hashtabelle von seinen Blöcken die, welche die gleiche schwache Signatur wie je einer der Blöcke von 
+\emph{A} haben. Für die Teile der Datei, bei denen mit der schwachen Signatur keinerlei Übereinstimmungen gefunden wurden, steht nun fest, dass sie eindeutig 
+unterschiedlich sind, und ihr Inhalt muss transferiert werden. Für die laut der schwachen Signatur übereinstimmenden Blöcke berechnet \emph{B} die 
+starke Signatur.
 
-Die starke Signatur sollte bei der benutzen Blockgröße eine möglichst geringe bzw. fast unmögliche Wahrscheinlichkeit haben, dass zwei unterschiedliche Blöcke
+Die \textbf{starke Signatur} sollte bei der benutzen Blockgröße eine möglichst geringe Wahrscheinlichkeit haben, dass zwei unterschiedliche Blöcke
 -- vor allem zwei nur leicht unterschiedliche Blöcke, da viele der stark unterschiedliche Blöcke schon von der schwachen Signatur unterschieden werden -- die
-gleiche Signatur haben, dafür ist die Komplexität ein geringeres Problem, da ein Teil der Blöcke bereits ausgefiltert wurden. Für diesen Zweck eignen sich 
-kryptographische Hashingfunktionen recht gut. Da diese Signaturen keine sicherheitstechnischen Bedeutungen haben, können auch Hashingfunktionen, die mittlerweile
-als kryptographisch unsicher gelten, benutzt werden. Andrew Tridgell schlug in seiner Arbeit \textit{MD4} vor\cite{Tridgell99}, inzwischen verwendet 
-\textit{rsync} aber schon \textit{MD5}\cite{rsync}\cite{wiki_rsync}. \emph{B} schickt nun die starken Signaturen der Blöcke, bei denen die Übereinstimmung bzw.
-Nicht-Übereinstimmung noch ungewiss ist, an \emph{A}. \emph{A} berechnet nun die starken Signaturen der entsprechenden Blöcke dessen Version der Datei. 
-Die Blöcke, bei denen die starken Signaturen nicht übereinstimmen, haben sich nun als unterschiedlich herausgestellt und ihr Inhalt muss transferiert werden.
-Die restlichen Blöcke, die Blöcke, bei denen sowohl die schwachen als auch die starken Signaturen unterschiedlich sind, werden nun als gleich angenommen.
+gleiche Signatur haben, dafür ist die Komplexität ein geringeres Problem, da ein Teil der Blöcke bereits ausgefiltert wurde. Für diesen Zweck eignen sich 
+kryptographische Hashingfunktionen recht gut. Da diese Signaturen keine sicherheitstechnischen Bedeutungen in der Applikation haben, können auch 
+Hashingfunktionen, die mittlerweile als kryptographisch unsicher gelten, benutzt werden. Andrew Tridgell schlug in seiner Arbeit \textit{MD4} 
+vor\cite{Tridgell99}, inzwischen verwendet \textit{rsync} aber schon \textit{MD5}\cite{rsync}\cite{wiki_rsync}. 
+\emph{B} schickt nun die starken Signaturen der Blöcke, bei denen die Übereinstimmung bzw. Nicht-Übereinstimmung noch ungewiss ist, an \emph{A}. 
+\emph{A} berechnet nun die starken Signaturen der entsprechenden Blöcke dessen Version der Datei. Die Blöcke, bei denen die starken Signaturen nicht 
+übereinstimmen, haben sich nun als unterschiedlich herausgestellt und auch ihr Inhalt muss transferiert werden. Die restlichen Blöcke, die Blöcke, 
+bei denen sowohl die schwachen als auch die starken Signaturen unterschiedlich sind, werden nun als gleich angenommen.
+Das Gerät, welches die neuere Datei haben will und die Inhalte der ungleichen Blöcke empfangen hat, kann nun die Datei lokal zusammenbauen.
+Für die als als gleich angenommenen Blöcke werden die Inhalte der lokalen Datei herangezogen und die fehlenden Daten wurden bereits transferiert.
 
-Als letzter Schritt, zur Überprüfung, ob der Inhalt aller benötigter Blöcke transferiert wurde, werden die Gesamtsignaturen der Dateien miteinander
+Als letzter Schritt, zur Überprüfung, ob der Inhalt aller benötigter Blöcke transferiert wurde, werden die \textbf{Gesamtsignaturen} der Dateien miteinander
 überprüft. Wenn \emph{B} die Datei von \emph{A} haben wollte, so wird, nachdem \emph{B} dessen neue Datei aus den Blöcken von \emph{A} und dessen eigenen
 zusammengebaut hat, die Signatur von \emph{B}`s neuer Datei mit der Signatur von \emph{A}'s Datei verglichen. Sind die beiden Dateisignaturen gleich, so
 kann davon ausgegangen werden, dass der Transfer erfolgreich war und \emph{A} und \emph{B} jetzt die gleiche Datei haben. Sind die beiden Signaturen
-nicht gleich, so steht fest, dass der Transfer nicht erfolgreich war, und der ganze Algorithmus wird nochmal ausgeführt, aber mit einer neuen Signatur für
-jeden Block.
+nicht gleich, so steht fest, dass der Transfer nicht erfolgreich war, und der ganze Algorithmus wird wiederholt, aber mit einer neuen Signatur für
+jeden Block\cite{Tridgell99}.
+\\
+
+Dieser Algorithmus schafft es Dateien über ein Netzwerk zu synchronisieren, ohne das Netzwerk und die beteiligten Geräte stark in Anspruch zu nehmen,
+und stellt damit eine ausgezeichnete Basis für meinen Algorithmus dar.
 
 \subsection{Benutze Abwandlung}
 
-Der Synchronisations-Algorithmus, welchen ich implementiert haben, ist nicht ident mit dem von \textit{rsync}.
+Der Synchronisations-Algorithmus, welchen ich implementiert haben, ist nicht ident mit dem von \textit{rsync}, da dieser eine in Teilen eine recht
+komplexe Implementierung erweisen würde, welche sowohl meine fachlichen als auch die zeitlichen Einschränkungen dieses Projekts sprengen würde. 
+Also werden aus Gründen der Einfachheit einige Details des \textit{rsync-Algorithmus}, welche durchaus bedeutend sind, ausgelassen.
 
-Aus Gründen der Einfachheit wurden einige Details des \textit{rsync-Algorithmus}, welche durchaus bedeutend sind, von mir ausgelassen.
-So wird bei der Berechnung der Signaturen, statt einer Blockgröße, die die Datei in gleich große Blöcke unterteilt\cite{Tridgell99}, 
+Bei der Berechnung der Signaturen wird, statt einer Blockgröße, welche die Datei in gleich große Blöcke unterteilt\cite{Tridgell99}, 
 immer eine statische Größe von 6.000 Byte genommen -- diese Blockgröße gehört laut Tridgell zu den effizienteren, da man ein geringe Wahrscheinlichkeit
-von Überlappungen hat, es schlimmsten Falls aber bei den Signaturen, welche ich verwende, nur zu einem Overhead von knapp über 1\% kommt (zwei
-32 Byte große Signaturen). Der letzte Block -- bzw. einzige, wenn die Datei kleiner als 6 KB ist -- kann, sofern er nicht die genau Größe von 6 KB hat, 
-daher nicht bei der Überprüfung der schwachen Signaturen nicht in die Hashtabelle gegeben werden und auch nicht mit allen versetzten Blöcken verglichen werden. 
-Stattdessen wird separat die Signatur des letzten Blocks gleicher Größe, lokal berechnet und verglichen.
-Weiters wird am Ende meines Algorithmus nicht die Gesamtsignatur der Dateien überprüft, dementsprechend wird der Algorithmus auch nie mit einer anderen 
-Signatur wiederholt.
+von Kollisionen hat und es schlimmsten Falls bei den Signaturen, welche ich verwende, nur zu einem Overhead von deutlich unter 1\% kommt (zwei
+Signaturen der insgesamten Größe von 36 Byte -- siehe die Abschnitte \ref{sec:schwache_signatur} und \ref{sec:starke_signatur} -- relative zu einem 6 KB 
+großen Block). Der letzte Block -- bzw. einzige, wenn die Datei kleiner als 6 KB ist -- kann, sofern er nicht die genau Größe von 6 KB aufweist, daher bei der 
+Überprüfung der schwachen Signaturen nicht in die Hashtabelle gegeben werden und auch nicht mit allen versetzten Blöcken verglichen werden. 
+Stattdessen wird separat die Signatur des letzten Blocks gleicher Größe, lokal berechnet und verglichen. Weiters wird am Ende meines Algorithmus nicht die 
+Gesamtsignatur der Dateien überprüft, dementsprechend wird der Algorithmus auch nie mit einer anderen Signatur wiederholt.
 
 All diese Abwandlungen und fehlenden Details machen meinen Algorithmus selbstverständlich deutlich unzuverlässiger als den von \textit{rsync},
-doch wäre die Implementation sonst deutlich aufwendiger und eine zeitliche Fertigstellung des Programms sehr unwahrscheinlich gewesen.
+doch wäre die Implementation sonst deutlich aufwendiger und eine zeitige Fertigstellung des Programms sehr unwahrscheinlich.
 
 Weiters ist zu vermerken, dass der Synchronisationsalgorithmus nur gestartet wird, wenn sich zwei Dateien mit dem selben Name bzw. selben Pfad vom
 Synchronisationsverzeichnis aus, beim Zeitstempel der letzten Änderung oder der Gesamtsignatur unterscheiden.
@@ -69,11 +77,25 @@ Dieser Algorithmus ist nicht der Lage, Umbenennungen von Dateien zu erkennen, un
 das Netzwerk transferieren und die Datei mit dem alten Namen löschen.
 
 \subsection{Schwache Signatur}
+\label{sec:schwache_signatur}
 
-Die rollende, schwache Signatur, welche in meinem Algorithmus benutzt wird, ist die selbe, die von Tridgell als erste beschrieben wurde\cite{Tridgell99}.
+Bei der schwachen Signatur ist es, wie bereits erwähnt, von großer Bedeutung für die Leistungsfähigkeit des Programms, dass diese eine
+rollende Signatur ist.
+
+\subsubsection{Rollende Signatur}
+\label{sec:rollend}
+
+Eine rollende Signatur ist eine Signatur, welche einerseits klassisch mit einer Funktion, welche die entsprechenden Daten, von welchen man die Signatur
+haben will, nimmt und sie zusammenrechnet, berechnet werden kann, andererseits aber auch inkrementell auf Basis einer bereits bekannten Signatur, 
+wodurch sich große Rechenersparnisse ergeben können. Das heißt: Wird die Signatur eines Blocks an der Stelle $k$ mit der Funktion $r(k)$ berechnet,
+so kann die Signatur des um eins versetzen Blocks an der Stelle $k+1$ mit der Funktion $r(k+1)$ auf Basis der bereits bekannten Signatur des Blocks an
+der Stelle $k$ und den Unterschieden zwischen den beiden Blöcken berechnet werden.
+\\
+
+Die rollende, schwache Signatur, welche in meinem Algorithmus benutzt wird, ist die selbe, welche von Tridgell als erste beschrieben wird\cite{Tridgell99}.
 Im Gegensatz zu einer gewöhnlichen Prüfsumme, in der alle Bytes einfach aufsummiert werden, bleibt diese Signaturfunktion nicht gleich, wenn
-vom Wert her das gleiche Byte zugerechnet wird wie abgezogen. Sie hat also ein geringere Kollisionswahrscheinlichkeit hat als eine gewöhnliche
-Prüfsumme und sieht wie folgt aus\cite{Tridgell99}:
+vom Wert her das gleiche Byte zugerechnet wie abgezogen wird. Sie hat also ein geringere Kollisionswahrscheinlichkeit  und sieht wie folgt 
+aus\cite{Tridgell99}:
 \begin{equation}
     r_1(k,L) = (\sum_{i=0}^{L-1}a_{i+k}) \textrm{ mod } M 
 \end{equation}
@@ -82,14 +104,13 @@ Prüfsumme und sieht wie folgt aus\cite{Tridgell99}:
 \end{equation}
 \begin{equation}
     r(k,L) = r_1(k,L) + M \times r_2(k,L)
+    \label{eq:r}
 \end{equation}
 
-Nummer drei (3) zeigt die endgültige Formel für die Berechnung der schwachen Signatur, welche auf der \textit{Adler-Prüfsumme} basiert\cite{Tridgell99}.
-$r(k,L)$ gibt die schwache Signatur mit der Versetzung $k$ und der Länge $L$. $a$ sind die Bytes der Datei und $M$ kann ein beliebiger Wert zum Modulorechnen sein, in
-meinem Fall ist es $2^{16}$. Das war jetzt die Formel für die \emph{Neu}-Berechnung der Signatur, der für die Leistungsfähigkeit interessant Aspekt ist aber, dass
-man diese Signatur auch \emph{rollend} berechnen kann, das heißt, um die Signatur eines Blocks zu bekommen, muss man nicht alle Bytes zusammenrechnen, sondern kann
-stattdessen auch die Signatur eines versetzten Blocks nehmen und muss mit diesem deutlich weniger rechnen. 
-Die Funktionen für die rollende Berechnung der schwachen Signatur sehen wie folgt aus\cite{Tridgell99}:
+Die Gleichung \ref{eq:r} zeigt die endgültige Formel für die Berechnung der schwachen Signatur, welche auf der \textit{Adler-Prüfsumme} 
+basiert\cite{Tridgell99}. $r(k,L)$ gibt die schwache Signatur mit der Versetzung $k$ und der Länge $L$. $a$ sind die Bytes der Datei und $M$ kann ein 
+beliebiger Wert zum Modulorechnen sein, in meinem Fall ist es $2^{16}$. Das war jetzt die Formel für die (Neu-)Berechnung der Signatur. Der für die Leistungsfähigkeit interessant Aspekt ist, dass man diese Signatur auch rollend berechnen kann und die Funktionen für die rollende Berechnung der schwachen 
+Signatur sehen wie folgt aus\cite{Tridgell99}:
 \begin{equation}
     r_1(k+1,L) = (r_1(k,L)-a_k+a_{k+L}) \textrm{ mod } M 
 \end{equation}
@@ -100,10 +121,35 @@ Die Funktionen für die rollende Berechnung der schwachen Signatur sehen wie fol
     r(k+1,L) = r_1(k+1,L) + M \times r_2(k+1,L)
 \end{equation}
 
-Diese rollende Eigenschaft der Signatur bringt große Leistungsvorteile bei der Berechnung der schwachen Signaturen aller Blöcke bei allen Versetzungen.
+Diese rollende Eigenschaft der Signatur bringt große Leistungsvorteile vor allem bei der Berechnung der schwachen Signaturen aller Blöcke mit allen 
+Versetzungen. In der Applikation wird für die Speicherung und Übertragung einer schwachen Signatur ein 32-bit großes, vorzeichenloses Integer verwendet.
+Da die Kollisionsresistent dieser Signatur bei dieser Größe natürlich zu gering ist, gibt es noch die starke Signatur.
 
 \subsection{Starke Signatur}
+\label{sec:starke_signatur}
 
-Als starke Signatur wird, wie dies auch bei \textit{rsync} der Fall ist, \textit{MD5} verwendet\cite{rsync}. Diese Hashingfunktion sollte eine genügend niedrige
-Kollisionswahrscheinlichkeit haben.
+Als starke Signatur wird, wie dies auch bei \textit{rsync} der Fall ist, \textit{MD5} verwendet\cite{rsync}. Diese Hashingfunktion sollte eine genügend 
+niedrige Kollisionswahrscheinlichkeit haben. Dass MD5 als kryptographische Hash-Funktion nicht sicher ist, muss für uns von keinem Belangen sein,
+da MD5 in keinem sicherheitsrelevanten Kontext verwendet wird.
 
+Für die Einbindung von MD5 in das Programm wird \textit{OpenSSl}\cite{openssl} verwendet, da dieses eine leicht zu benutzende Implementierung 
+von MD5 anbietet. Weiters ist noch anzumerken, dass der berechnete Hashwert von MD5 zwar nur 16 Byte groß ist, man beim Speicherverbrauch und
+Datentransfer allerdings mit 32 Byte Größe rechnen muss, da der Wert für bessere Überprüfbarkeit als 32-stellige Hexadezimalzahl in einem String
+gespeichert wird.
+
+\subsection{Verbesserungsvorschläge}
+\label{sec:verbesserung}
+
+Dieser von mir beschriebene Algorithmus hat einige Verbesserungsmöglichkeiten. So könnte man statt der beschriebenen schwachen Signaturfunktion eine andere
+mit höherer Kollisionsresistenz verwenden. Tridgell selber schlägt in seiner Arbeit einige andere rollende Signaturen, die sich als schwache Signaturen
+besser eignen, vor\cite{Tridgell99}. Als starke Signatur könnte man eventuell auch eine bessere Hash-Funktion, wie etwa \textit{SHA1}, wählen, da bei
+den heutigen Prozessoren der Unterschied in Rechenkomplexität für den Benutzer vermutlich keinen großen Unterschied machen würde.
+Mit einer geringeren Kollisionswahrscheinlichkeit könnte man die Blöcke vergrößern -- ich schätze heutzutage sind die meisten Netzwerke in der Lage,
+deutlich größere Datenmengen als 6 KB ohne Probleme zu übertragen --, die Anzahl an zu übertragenden Signaturen verringern und so den Overhead reduzieren.
+
+Der größte Kritikpunkt dieses Synchronisationsalgorithmus ist aber vermutlich die Tatsache, dass der Algorithmus auf der Annahme beruht, dass
+die lokalen Uhren der beteiligten Geräte synchron sind, damit die Zeitstempel miteinander vergleichen werden können. 
+Um diese Abhängigkeit zumindest teilweise aufzubrechen könnte die Reihenfolge der Ereignisse mit der Lamport-Uhr\cite{Lamport78} aufgezeichnet werden.
+
+Die meisten dieser Vorschläge würden aber natürlich die Implementierung des Algorithmus erschweren, weshalb entsprechende Abwägungen bezüglich
+Vor- und Nachteilen nötig wäre.
