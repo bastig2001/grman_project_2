@@ -2,7 +2,7 @@
 #include "message_utils.h"
 #include "messages/basic.h"
 #include "type/definitions.h"
-#include "messages/all.pb.h"
+#include "messages/sync.pb.h"
 
 #include <algorithm>
 #include <utility>
