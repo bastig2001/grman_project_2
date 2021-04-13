@@ -225,3 +225,10 @@ and the algorithm's implementation is in `src/file_operator/`.
 
 This project has a few unit tests and test cases for a few implementations.
 These use [doctest](https://github.com/onqtam/doctest) and can be executed with the command `unit_tests`.
+
+
+## Known Issues
+
+These are the known issues with *sync*:
+* Often, already synced files are synced again unnecessarily
+* In rare cases it can happen, that a synced file ends up with its content doubled. This might happen when synchronizations are done in to short intervals 
