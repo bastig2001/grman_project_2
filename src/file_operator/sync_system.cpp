@@ -33,6 +33,11 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
 
     if (!filesystem::exists(".sync/")) {
         filesystem::create_directory(".sync/");
+
+        if (!filesystem::exists(".sync/tmp")) {
+            // create directory for temporary builds
+            filesystem::create_directory(".sync/tmp");
+        }
     }
 
     db::create(filesystem::exists(".sync/" + db::name));
