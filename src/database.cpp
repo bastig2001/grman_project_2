@@ -22,7 +22,7 @@ mutex permanent_db_mtx{};
 mutex in_memory_db_mtx{};
 
 auto permanent_db{make_storage(
-    ".sync/db.sqlite",
+    ".sync/" + db::name,
     make_table(
         "file",
         make_column("name",      &msg::File::name, primary_key()),

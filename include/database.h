@@ -5,11 +5,14 @@
 #include "type/definitions.h"
 
 #include <optional>
+#include <string>
 #include <vector>
 
 
 // All functions to interact with the database(s)
 namespace db {
+    const std::string name{"sync_db.sqlite"};
+
     void create(bool exists);
 
     void insert_file(msg::File);

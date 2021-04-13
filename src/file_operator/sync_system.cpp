@@ -35,7 +35,7 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
         filesystem::create_directory(".sync/");
     }
 
-    db::create(filesystem::exists(".sync/db.sqlite"));
+    db::create(filesystem::exists(".sync/" + db::name));
     db::insert_files(get_files(move(file_paths)));
 }
 
