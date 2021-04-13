@@ -1,5 +1,16 @@
 * Changelog
 
+** [1.0.2] - 2020-04-13
+*** Changed
+- Correct mistake which causes an exception on the server side when synchronizing an empty file
+- Remove risk of name collisions in temporary build directory
+- Close connection between client and server mutually when exiting the client
+- Corrected typos and spelling mistakes in README
+- README includes warning about lack of encryption
+- README includes explanation about the subdirectory ".sync"
+- README includes section about logging
+- README includes known issues
+
 ** [1.0.1] - 2020-04-12
 *** Added
 - Option to set number of file operator workers via CLI, JSON config file or environment variable

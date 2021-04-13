@@ -2,6 +2,7 @@
 #include "file_operator/filesystem.h"
 #include "file_operator/operator_utils.h"
 #include "file_operator/signatures.h"
+#include "file_operator/sync_utils.h"
 #include "config.h"
 #include "database.h"
 #include "message_utils.h"
@@ -30,11 +31,18 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
 
     logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
 
-    if (!filesystem::exists(".sync/")) {
-        filesystem::create_directory(".sync/");
+    if (!filesystem::exists(".sync")) {
+        filesystem::create_directory(".sync");
     }
 
-    db::create(filesystem::exists(".sync/db.sqlite"));
+    auto tmp_file{filesystem::path{".sync"} / filesystem::path{"tmp"}};
+
+    if (!filesystem::exists(tmp_file)) {
+        // create directory for temporary builds
+        filesystem::create_directory(tmp_file);
+    }
+
+    db::create(filesystem::exists(".sync/" + db::name));
     db::insert_files(get_files(move(file_paths)));
 }
 
@@ -341,7 +349,7 @@ Result<Message> SyncSystem::sync(
             );
         }
 
-        if (last_block_smaller) {
+        if (last_block_smaller && request.weak_signatures_size() >= 1) {
             auto last_offset{local_file.size - last_block_size};
 
             return
@@ -699,49 +707,4 @@ Message SyncSystem::create_file(const FileResponse& response) {
     );
     
     return received();
-}
-
-
-Corrections* SyncSystem::get_corrections(
-    vector<BlockPair*>&& pairs,
-    const FileName& file,
-    bool final
-) {
-    return ::corrections(
-        Sequence(move(pairs))
-        .map<Result<Correction*>>([](BlockPair* pair){
-            return
-            fs::read(
-                pair->file_name(), 
-                pair->offset_server(), 
-                pair->size_server()
-            )
-            .peek(
-                [](auto){},
-                [&](Error err){ logger->error(err.msg); }
-            )
-            .map<Correction*>([&](string data){
-                auto block{::block(
-                    pair->file_name(),
-                    pair->offset_client(),
-                    pair->size_client()
-                )};
-                delete pair;
-
-                return ::correction(
-                    block,
-                    move(data)
-                );
-            });
-        })
-        .where([](Result<Correction*> result){
-            return result.is_ok();
-        })
-        .map<Correction*>([](Result<Correction*> result){ 
-            return result.get_ok(); 
-        })
-        .to_vector(),
-        file,
-        final
-    );
 }

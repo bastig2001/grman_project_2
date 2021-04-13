@@ -1,17 +1,67 @@
 \section{Bedienung}
+\label{cha:Bedienung}
 
-Es gibt viele verschiedene Möglichkeiten die Applikation zu bedienen. Parameter kann mittels CLI, Umgebungsvariablen oder einer Konfigurationsdatei in \textsl{JSON} bestimmen.
-Weiters kann man, sobald das Programm gestartet ist, über eine Kommandozeile noch zusätzlich mit dem System interagieren. Die genauen Details zu all diesen Interaktionsmöglichkeiten
-lassen sich in der \textit{README} nachlesen. Hier wird nun die grundsätzliche Bedienung überblicksmäßig beschrieben.
+Es gibt viele verschiedene Möglichkeiten die Applikation zu bedienen. Parameter können mittels CLI, Umgebungsvariablen oder einer Konfigurationsdatei im
+Format \textsl{JSON} bestimmt werden. Weiters kann man, sobald das Programm gestartet ist, über eine Kommandozeile noch zusätzlich mit dem System interagieren.
 
-Zur Synchronisation eines Verzeichnisses muss man über die Konsole in dieses Verzeichnis navigieren und von dort aus das Programm \verb|sync| starten. Das Programm übernimmt
-beim Starten das derzeitige Arbeitsverzeichnis als Synchronisationsverzeichnis. Beim Starten kann man festlegen, ob man einen Synchronisations-Server, einen Synchronisations-Client 
-oder beides haben will. Um einen Server zu starten reicht das Kommandozeilenargument \verb|-s|, dies startet einen Server der auf allen Eingangsadressen auf Port 9876 hört.
-Um einen Client zu starten, muss man das Kommandozeilenargument \verb|-a| und eine Adresse oder Hostnamen angeben, der Client verbindet sich dann zu diesem Host auf Port 9876 und 
-startet die Synchronisation. Um beide als ein Systemprozess zu starten, muss man beide Kommandozeilenargumente angeben. Der Server läuft solange bis man ihn nicht abbricht
-und der Client macht nach dem die Synchronisation vollendet ist nichts mehr, muss allerdings auch manuell abgebrochen werden.
+Zur Synchronisation eines Verzeichnisses muss man über die Konsole in dieses Verzeichnis navigieren und von dort aus das Programm \verb|sync| starten. 
+Das Programm übernimmt beim Starten das derzeitige Arbeitsverzeichnis als Synchronisationsverzeichnis. Beim Starten kann man festlegen, ob man einen 
+Synchronisations-Server, einen Synchronisations-Client oder beides haben will. Um einen Server zu starten reicht das Kommandozeilenargument \verb|-s|.
+Dies startet einen Server der auf allen Eingangsadressen auf Port 9876 hört. Um einen Client zu starten, muss man das Kommandozeilenargument \verb|-a| 
+und eine Adresse oder Hostnamen angeben, der Client verbindet sich dann zu diesem Host auf Port 9876 und startet die Synchronisation. 
+Um beide als einen Systemprozess zu starten, gibt man beide Kommandozeilenargumente an.
 
-Beim Synchronisationsverzeichnis sollte sicher gegangen werden, dass das Programm die entsprechenden Rechte hat, um alle Dateien zu lesen und zu beschreiben.
-Im Synchronisationsverzeichnis wird außerdem noch das Unterverzeichnis \textit{.sync} erstellt, in welches man lieber keine Dateien speichern sollte, da dieses Unterverzeichnis 
-die Datenbankdatei für die Applikation enthält und sämtliche temporären Dateien zum Aufbau der neueren Versionen auch hier erstellt und beschrieben werden. Außerdem werden Dateien
-im Unterverzeichnis \textit{.sync} nicht synchronisiert.
+Beim Synchronisationsverzeichnis sollte sicher gegangen werden, dass das Programm die entsprechenden Rechte hat, um alle Dateien lesen und beschreiben zu können.
+Im Synchronisationsverzeichnis wird außerdem noch das Unterverzeichnis \textit{.sync} erstellt, in welches man lieber keine Dateien speichern sollte, da dieses 
+Unterverzeichnis die Datenbankdatei für die Applikation enthält und sämtliche temporären Dateien zum Aufbau der neueren Versionen hier erstellt und beschrieben 
+werden. Außerdem werden Dateien im Unterverzeichnis \textit{.sync} nicht synchronisiert.
+
+\subsection{Konfiguration}
+\label{sec:konfiguration}
+
+Das Programm \verb|sync| kann wie bereits erwähnt auf verschiedene Weisen konfiguriert werden.
+Die konkrete Hierarchie, in der die Konfigurationswerte angewendet werden, sieht wie folgt aus:
+\begin{enumerate}
+\item Es gibt \emph{Standardwerte} für die meisten Parameter. Diese werden überschrieben durch gesetzte
+\item \emph{Umgebungsvariablen}, welche wiederum überschrieben werden durch die Werte in der
+\item \emph{JSON Konfigurationsdatei}, wenn diese bereitgestellt wurde, und das letzte Wort hat die
+\item \emph{Kommandozeilenschnittstelle} (englisch: command line interface; kurz: CLI)
+\end{enumerate}
+
+Alle konkreten Einstellungsmöglichkeiten inklusive Beschreibungen und auch Beispielen lassen sich in der \textit{README} des Projekts nachlesen.
+
+\subsection{Kommandozeile}
+\label{sec:command_line}
+
+Sobald man die Applikation gestartet hat, bekommt man Zugriff auf eine Kommandozeile, mit welcher man zusätzlich mit dem Synchronisationssystem interagieren kann.
+Diese Kommandozeile bietet alle Annehmlichkeiten, welche man sich von einer grundlegenden Kommandozeile erwartet.
+So kann man zum Beispiel mit den Pfeiltasten nach oben und unten die bereits benutzten Befehle durchgehen. 
+Um diese Kommandozeile zu verlassen und das Programm zu beenden, kann man entweder einen der äquivalenten Befehle \verb|q|, \verb|quit| oder \verb|exit|
+oder das Tastaturkürzel \verb|Strg+D| benutzen.
+
+Die folgende Tabelle zeigt alle Befehle, die in der Kommandozeile aufgerufen werden können, mit Beschreibungen:
+\begin{center}
+\begin{tabular}{ | c | p{8cm} | }
+\hline 
+\textbf{Befehl} & \textbf{Beschreibung} \\
+\hline \hline
+ \verb|h|, \verb|help|              & Gibt eine ein Hilfe aus \\ \hline
+ \verb|ls|, \verb|list|             & Listet alle Dateien, die synchronisiert werden, auf \\  \hline
+ \verb|ll|, \verb|list long|        & Listet alle Dateien, die synchronisiert werden, 
+                                      inklusive Signatur, Größe und Zeitpunkt der letzten Änderung auf \\ \hline
+ \verb|sync|                        & Startet, wenn möglich, einen Synchronisationdurchlauf mit dem Server 
+                                      und ladet alle die Informationen über alle Dateien neu \\ \hline
+ \verb|q|, \verb|quit|, \verb|exit| & Beendet und verlässt die Anwendung \\ \hline
+\end{tabular}
+\end{center}
+
+\subsection{Protokollierung}
+\label{sec:logging}
+
+Die Ausgabe des Protokolls (englisch: Log) auf die Konsole kann mit dem Kommandozeilenargument \verb|-l| aktiviert werden und mit \verb|--log-level| kann
+man einstellen, ab welchem Level (0 ... Verfolgung bis 5 ... kritisch) die protokollierten Nachrichten angezeigt werden sollen. Weiters kann man das 
+Protokoll auch in eine Datei schreiben lassen. Der Dateiname für diese Datei kann mit dem Kommandozeilenargument \verb|-f| angegeben werden.
+Existiert die angegeben Datei noch nicht, wird sie vom Programm erstellt. Außerdem wird die angegebene Protokolldatei beim Synchronisieren ignoriert.
+Es ist empfehlenswert den Kommandozeileparameter \verb|--no-color| zu setzten, wenn man das Protokoll in eine Datei schreibt, da ansonsten
+die Kontrollzeichen für die farbige Ausgabe in die Datei geschrieben werden, was das Protokoll schwerer lesbar macht.
+Weitere Einstellungsmöglichkeiten für die Protokollierung und die Protokollausgabe lassen sich in der \textit{README} des Projekts nachlesen.

@@ -1,6 +1,6 @@
 project('grman_project_2', 'cpp',
         license : ['Boost'],
-        version : '1.0.1',
+        version : '1.0.2',
         default_options : ['cpp_std=c++17', 'warning_level=3', 'werror=true'])
 
 thread = dependency('threads')
@@ -74,6 +74,7 @@ sync_src = [
     'src/file_operator/operator_utils.cpp',
     'src/file_operator/signatures.cpp',
     'src/file_operator/sync_system.cpp',
+    'src/file_operator/sync_utils.cpp',
     'src/presentation/command_line.cpp',
     'src/presentation/format_utils.cpp',
     'src/presentation/logger_config.cpp'
@@ -85,12 +86,14 @@ unit_tests_src = [
     'src/utils.cpp',
     'src/file_operator/filesystem.cpp',
     'src/file_operator/signatures.cpp',
+    'src/file_operator/sync_utils.cpp',
     'src/presentation/format_utils.cpp',
     'src/presentation/logger_config.cpp',
     'src/unit_tests/json_utils.cpp',
     'src/unit_tests/main.cpp',
     'src/unit_tests/pipe.cpp',
     'src/unit_tests/signatures.cpp',
+    'src/unit_tests/sync_utils.cpp',
     'src/unit_tests/type.cpp',
     'src/unit_tests/utils.cpp'
 ]

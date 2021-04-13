@@ -11,6 +11,7 @@
 #include <exception>
 #include <functional>
 #include <future>
+#include <thread>
 #include <vector>
 
 using namespace std;
@@ -106,6 +107,14 @@ int run_file_operator_worker(
                     request.originator.send(
                         wrap_messages(handle_msg(request.msg, system))
                     );
+                    break;
+                case InternalMsgType::Exit:
+                    client->send(InternalMsg(InternalMsgType::Exit));
+
+                    // wait for client to receive it
+                    this_thread::sleep_for(chrono::milliseconds(50));
+
+                    inbox.close();
                     break;
                 default:
                     // There shouldn't be anything else

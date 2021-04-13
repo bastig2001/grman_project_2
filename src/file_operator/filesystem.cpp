@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <mutex>
 #include <regex>
 #include <utility>
 #include <vector>
@@ -295,12 +296,17 @@ void remove_empty_dir(const path& directory) {
 }
 
 
+// only one file at a time should be build, otherwise there might be a name collision
+mutex build_mtx{}; 
+
 Result<bool> fs::build_file(
     vector<pair<msg::Data, bool /* has data */>>&& data,
     const path& path
 ) {
+    lock_guard build_lck{build_mtx};
+
     try {
-        ::path temp_path{::path{".sync"} /= path.filename()};
+        ::path temp_path{::path{".sync"} /= ::path{"tmp"} / path.filename()};
 
         ofstream file{temp_path, ios::binary};
 

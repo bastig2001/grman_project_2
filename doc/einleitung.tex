@@ -1,5 +1,9 @@
 \section{Einleitung}
+\label{cha:Einleitung}
 
 In diesem Projekt geht es um die Ausarbeitung einer Applikation zu Synchronisation von Verzeichnissen zwischen Netzwerkprozessen.
 
-Ich gehe hier unter anderem auf den Synchronisationsalgorithmus basierend auf dem von \textit{rsync}\cite{rsync} und die Implementation der internen Kommunikation mit Pipes ein.
+Ich gehe in diesem Dokument auf den Synchronisationsalgorithmus, welcher auf dem von \textit{rsync}\cite{rsync} basiert und durch die Benutzung von 
+zwei Signaturen eine möglichst geringe Netzwerkbelastung ohne übermäßige Rechenanforderungen erzielt, ein. Weiters wird auch auf die Implementierung der 
+Netzwerkkommunikation mittels \textit{Asio}\cite{asio} und \textit{Protocol Buffers}\cite{proto}, den Synchronisationsablauf und die Implementierung der 
+internen Kommunikation zwischen den einzelnen Akteuren eingegangen. Als letztes wird die Bedienung des Programms beschrieben.

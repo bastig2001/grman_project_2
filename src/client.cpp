@@ -102,10 +102,18 @@ ExitCode handle_server(
     bool finished{false};
     while (server && !finished) {
         if (auto optional_msg{inbox.receive()}) {
-            auto msg{optional_msg.value()};
+            auto operator_msg{optional_msg.value()};
+            Message msg{};
+            
+            if (operator_msg.type == InternalMsgType::Exit) {
+                msg.set_finish(true);
+            }
+            else {
+                msg = operator_msg.msg;
+            }
 
-            logger->debug("Sending:\n" + msg.msg.DebugString());
-            server << msg_to_base64(msg.msg) << "\n";
+            logger->debug("Sending:\n" + msg.DebugString());
+            server << msg_to_base64(msg) << "\n";
 
             if (server) {
                 Message response{msg_from_base64(server)};

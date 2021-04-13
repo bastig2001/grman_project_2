@@ -188,7 +188,9 @@ void CommandLine::sync() {
 }
 
 void CommandLine::exit() {
-    file_operator.close();
+    NoPipe<InternalMsg> pipe;
+    file_operator.send(InternalMsgWithOriginator(InternalMsgType::Exit, pipe));
+
     pre_output = [](){};
     post_output = [](){};
 
