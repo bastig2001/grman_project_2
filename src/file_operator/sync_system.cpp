@@ -31,13 +31,15 @@ SyncSystem::SyncSystem(const Config& config): config{config} {
 
     logger->debug("Files to sync:\n" + vector_to_string(file_paths, "\n"));
 
-    if (!filesystem::exists(".sync/")) {
-        filesystem::create_directory(".sync/");
+    if (!filesystem::exists(".sync")) {
+        filesystem::create_directory(".sync");
+    }
 
-        if (!filesystem::exists(".sync/tmp")) {
-            // create directory for temporary builds
-            filesystem::create_directory(".sync/tmp");
-        }
+    auto tmp_file{filesystem::path{".sync"} / filesystem::path{"tmp"}};
+
+    if (!filesystem::exists(tmp_file)) {
+        // create directory for temporary builds
+        filesystem::create_directory(tmp_file);
     }
 
     db::create(filesystem::exists(".sync/" + db::name));

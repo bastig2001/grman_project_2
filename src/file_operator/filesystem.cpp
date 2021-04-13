@@ -306,7 +306,7 @@ Result<bool> fs::build_file(
     lock_guard build_lck{build_mtx};
 
     try {
-        ::path temp_path{::path{".sync/tmp"} /= path.filename()};
+        ::path temp_path{::path{".sync"} /= ::path{"tmp"} / path.filename()};
 
         ofstream file{temp_path, ios::binary};
 

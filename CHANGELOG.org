@@ -4,6 +4,7 @@
 *** Changed
 - Correct mistake which causes an exception on the server side when synchronizing an empty file
 - Remove risk of name collisions in temporary build directory
+- Close connection between client and server mutually when exiting the client
 - Corrected typos and spelling mistakes in README
 - README includes warning about lack of encryption
 - README includes explanation about the subdirectory ".sync"

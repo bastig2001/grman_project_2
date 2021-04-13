@@ -11,7 +11,8 @@ enum class InternalMsgType {
     Sync,
     FileOperatorStarted,
     HandleMessage,
-    SendMessage
+    SendMessage,
+    Exit
 };
 
 // Message structure for internal communication between actors
