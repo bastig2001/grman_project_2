@@ -2,6 +2,7 @@
 
 ** [Unreleased]
 *** Changed
+- Correct mistake which causes an exception on the server side when synchronizing an empty file
 - Corrected typos and spelling mistakes in README
 - README includes warning about lack of encryption
 - README includes explanation about the subdirectory ".sync"

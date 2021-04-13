@@ -342,7 +342,7 @@ Result<Message> SyncSystem::sync(
             );
         }
 
-        if (last_block_smaller) {
+        if (last_block_smaller && request.weak_signatures_size() >= 1) {
             auto last_offset{local_file.size - last_block_size};
 
             return
