@@ -231,4 +231,4 @@ These use [doctest](https://github.com/onqtam/doctest) and can be executed with 
 
 These are the known issues with *sync*:
 * Often, already synced files are synced again unnecessarily
-* In rare cases it can happen, that a synced file ends up with its content doubled. This might happen when synchronizations are done in to short intervals 
+* In rare cases it can happen, that a synced file ends up with its content duplicated. This might happen when synchronizations are done in to short intervals 
